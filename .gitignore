@@ -1,4 +1,9 @@
-dist/app-debug.apk
+node_modules/
+dist/
+.DS_Store
+*.local
+.vscode/
+*.log
 .github_token
 .version
 
