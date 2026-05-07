@@ -100,6 +100,7 @@
           <el-menu-item index="/system/roles">角色管理</el-menu-item>
           <el-menu-item index="/system/menus">权限配置</el-menu-item>
           <el-menu-item index="/system/config">系统配置</el-menu-item>
+          <el-menu-item index="/system/upgrade">升级管理</el-menu-item>
         </el-sub-menu>
       </el-menu>
 

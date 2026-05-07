@@ -37,6 +37,8 @@ const routes = [
       { path: 'system/roles', name: 'SystemRoles', component: () => import('@/views/system/RoleList.vue'), meta: { title: '角色管理' } },
       { path: 'system/menus', name: 'SystemMenus', component: () => import('@/views/system/MenuList.vue'), meta: { title: '权限管理' } },
       { path: 'system/config', name: 'SystemConfig', component: () => import('@/views/system/ConfigList.vue'), meta: { title: '系统配置' } },
+      { path: 'system/upgrade', name: 'SystemUpgrade', component: () => import('@/views/system/UpgradeManager.vue'), meta: { title: '升级管理' } },
+      { path: 'system/upgrade', name: 'SystemUpgrade', component: () => import('@/views/system/UpgradeManager.vue'), meta: { title: '升级管理' } },
     ]
   }
 ]
