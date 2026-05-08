@@ -115,7 +115,7 @@ const fetchData = async () => {
   catch { tableData.value = [] } finally { loading.value = false }
 }
 const fetchCustomers = async () => {
-  try { const res = await request.get('/crm/customers'); customerOptions.value = res.data?.list || [] } catch { customerOptions.value = [] }
+  try { const res = await request.get('/crm/contacts'); customerOptions.value = res.data?.list || [] } catch { customerOptions.value = [] }
 }
 const resetQuery = () => { Object.assign(query, { name: '', customerId: null, page: 1 }); fetchData() }
 const handleAdd = () => { isEdit.value = false; Object.assign(form, { id: null, name: '', customerId: null, position: '', phone: '', email: '', isPrimary: 0, remark: '' }); dialogVisible.value = true }

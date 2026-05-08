@@ -16,7 +16,6 @@ export const setAuthConfirmed = (v) => { authConfirmed = v }
 // Block requests until auth is confirmed by router guard
 request.interceptors.request.use(config => {
   if (!authConfirmed) {
-    // Token exists in localStorage but router hasn't cleared the guard yet
     const token = localStorage.getItem('token')
     if (token) {
       // Token is there, just wait for router guard (≤ 1 tick)
@@ -57,13 +56,15 @@ request.interceptors.response.use(
   },
   error => {
     if (error.response?.status === 401) {
+      // If already on login page, don't clear token or redirect — avoid redirect loops
+      if (router.currentRoute.value.path === '/login') {
+        return Promise.reject(error)
+      }
       localStorage.removeItem('token')
       authConfirmed = false
       router.push('/login')
       ElMessage.error('登录已过期，请重新登录')
     } else if (error.response?.status === 403) {
-      // 403 on refresh: auth confirmed=false → token existed but backend rejected
-      // Don't show error toast, let router guard redirect silently
       return Promise.reject(error)
     } else {
       ElMessage.error(error.response?.data?.message || '网络异常')

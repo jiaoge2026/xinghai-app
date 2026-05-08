@@ -238,7 +238,7 @@ const loadData = async () => {
       startDate: dateRange.value?.[0] || '',
       endDate: dateRange.value?.[1] || ''
     }
-    const res = await request.get('/qa/feedbacks', { params })
+    const res = await request.get('/qa/feedback', { params })
     tableData.value = res.data.list || []
     pagination.total = res.data.total || 0
   } catch (e) {
@@ -279,7 +279,7 @@ const openDetail = async (row) => {
   currentRow.value = { ...row, records: [] }
   detailVisible.value = true
   try {
-    const res = await request.get(`/qa/feedbacks/${row.id}`)
+    const res = await request.get(`/qa/feedback/${row.id}`)
     if (res.data) {
       currentRow.value = { ...currentRow.value, ...res.data }
     }
@@ -314,7 +314,7 @@ const submitHandle = async () => {
 
   submitLoading.value = true
   try {
-    await request.put(`/qa/feedbacks/${currentRow.value.id}`, {
+    await request.put(`/qa/feedback/${currentRow.value.id}`, {
       status: handleForm.status,
       handlerId: handleForm.handlerId,
       remark: handleForm.remark

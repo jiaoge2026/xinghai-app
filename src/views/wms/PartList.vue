@@ -191,7 +191,7 @@ onMounted(() => {
 // ---------- 方法 ----------
 const fetchWarehouseList = async () => {
   try {
-    const res = await request.get('/wms/warehouse/list', { params: { page: 1, pageSize: 100 } })
+    const res = await request.get('/wms/warehouses', { params: { page: 1, pageSize: 100 } })
     warehouseList.value = res.data?.list || []
   } catch (e) {
     console.error('获取仓库列表失败', e)
@@ -207,7 +207,7 @@ const fetchData = async () => {
       pageSize: pagination.pageSize,
       ...searchForm
     }
-    const res = await request.get('/wms/part/page', { params })
+    const res = await request.get('/wms/parts', { params })
     tableData.value = res.data?.list || []
     pagination.total = res.data?.total || 0
   } catch (e) {
@@ -257,7 +257,7 @@ const handleSubmit = async () => {
   try {
     await formRef.value.validate()
     submitLoading.value = true
-    const url = formMode.value === 'add' ? '/wms/part/add' : '/wms/part/update'
+    const url = formMode.value === 'add' ? '/wms/parts' : '/wms/parts/' + form.value.id
     await request.post(url, form)
     ElMessage.success(formMode.value === 'add' ? '新增成功' : '更新成功')
     formDialogVisible.value = false
@@ -277,7 +277,7 @@ const openDelete = (row) => {
 const handleDelete = async () => {
   try {
     deleteLoading.value = true
-    await request.delete(`/wms/part/delete/${deleteData.value.id}`)
+    await request.delete(`/wms/parts/${deleteData.value.id}`)
     ElMessage.success('删除成功')
     deleteDialogVisible.value = false
     fetchData()

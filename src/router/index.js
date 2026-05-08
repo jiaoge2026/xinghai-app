@@ -12,6 +12,7 @@ const routes = [
       { path: 'fsm/work-orders', name: 'WorkOrders', component: () => import('@/views/fsm/WorkOrderList.vue'), meta: { title: '工单管理' } },
       { path: 'fsm/work-orders/create', name: 'WorkOrderCreate', component: () => import('@/views/fsm/WorkOrderCreate.vue'), meta: { title: '新建工单' } },
       { path: 'fsm/engineers', name: 'Engineers', component: () => import('@/views/fsm/EngineerList.vue'), meta: { title: '工程师管理' } },
+      { path: 'fsm/gps', name: 'GpsTracking', component: () => import('@/views/fsm/GpsTracking.vue'), meta: { title: 'GPS追踪' } },
       { path: 'wms/parts', name: 'Parts', component: () => import('@/views/wms/PartList.vue'), meta: { title: '配件管理' } },
       { path: 'wms/warehouses', name: 'Warehouses', component: () => import('@/views/wms/WarehouseList.vue'), meta: { title: '仓库管理' } },
       { path: 'wms/stock', name: 'Stock', component: () => import('@/views/wms/StockList.vue'), meta: { title: '库��管理' } },

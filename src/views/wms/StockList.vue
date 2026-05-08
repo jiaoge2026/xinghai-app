@@ -309,7 +309,7 @@ onMounted(() => {
 // ---------- 方法 ----------
 const fetchWarehouseList = async () => {
   try {
-    const res = await request.get('/wms/warehouse/list', { params: { page: 1, pageSize: 100 } })
+    const res = await request.get('/wms/warehouses', { params: { page: 1, pageSize: 100 } })
     warehouseList.value = res.data?.list || []
   } catch (e) {
     console.error('获取仓库列表失败', e)
@@ -319,7 +319,7 @@ const fetchWarehouseList = async () => {
 
 const fetchPartList = async () => {
   try {
-    const res = await request.get('/wms/part/list', { params: { page: 1, pageSize: 500 } })
+    const res = await request.get('/wms/parts', { params: { page: 1, pageSize: 500 } })
     partList.value = res.data?.list || []
   } catch (e) {
     console.error('获取配件列表失败', e)
@@ -335,7 +335,7 @@ const fetchData = async () => {
       pageSize: pagination.pageSize,
       ...searchForm
     }
-    const res = await request.get('/wms/stock/page', { params })
+    const res = await request.get('/wms/stock-records', { params })
     tableData.value = res.data?.list || []
     pagination.total = res.data?.total || 0
   } catch (e) {
@@ -382,7 +382,7 @@ const handleInSubmit = async () => {
   try {
     await inFormRef.value.validate()
     inSubmitLoading.value = true
-    await request.post('/wms/stock/in', {
+    await request.post('/wms/stock-records/in', {
       partId: stockForm.partId,
       warehouseId: stockForm.warehouseId,
       quantity: stockForm.quantity,
@@ -413,7 +413,7 @@ const handleOutSubmit = async () => {
   try {
     await outFormRef.value.validate()
     outSubmitLoading.value = true
-    await request.post('/wms/stock/out', {
+    await request.post('/wms/stock-records/out', {
       partId: stockForm.partId,
       warehouseId: stockForm.warehouseId,
       quantity: stockForm.quantity,
@@ -434,7 +434,7 @@ const handleOutSubmit = async () => {
 const openCheckDialog = async () => {
   checkDialogVisible.value = true
   try {
-    const res = await request.get('/wms/stock/page', { params: { page: 1, pageSize: 500 } })
+    const res = await request.get('/wms/stock-records', { params: { page: 1, pageSize: 500 } })
     checkData.value = (res.data?.list || []).map(item => ({
       ...item,
       checkStock: item.stockQuantity
@@ -459,7 +459,7 @@ const handleCheckSubmit = async () => {
       ElMessage.warning('没有需要调整的库存')
       return
     }
-    await request.post('/wms/stock/check', { list: checkList })
+    await request.post('/wms/stock-records/check', { list: checkList })
     ElMessage.success('盘点完成')
     checkDialogVisible.value = false
     fetchData()

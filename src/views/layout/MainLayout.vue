@@ -8,7 +8,7 @@
         <el-icon v-else color="#fff" :size="20"><Box /></el-icon>
       </div>
 
-      <!-- 经典模式：el-sub-menu 下拉展开 -->
+      <!-- 动态菜单（根据用户权限渲染）-->
       <el-menu
         v-if="!isTileMode"
         :default-active="$route.path"
@@ -22,87 +22,28 @@
           <span>驾驶舱</span>
         </el-menu-item>
 
-        <el-sub-menu index="fsm">
-          <template #title><el-icon><Tools /></el-icon>FSM工单</template>
-          <el-menu-item index="/fsm/work-orders">工单列表</el-menu-item>
-          <el-menu-item index="/fsm/work-orders/create">新建工单</el-menu-item>
-          <el-menu-item index="/fsm/engineers">工程师管理</el-menu-item>
-        </el-sub-menu>
-
-        <el-sub-menu index="wms">
-          <template #title><el-icon><Box /></el-icon>仓储管理</template>
-          <el-menu-item index="/wms/parts">配件管理</el-menu-item>
-          <el-menu-item index="/wms/warehouses">仓库管理</el-menu-item>
-          <el-menu-item index="/wms/stock">库��台账</el-menu-item>
-        </el-sub-menu>
-
-        <el-sub-menu index="dispatch">
-          <template #title><el-icon><Guide /></el-icon>智能派工</template>
-          <el-menu-item index="/dispatch/board">派工看板</el-menu-item>
-        </el-sub-menu>
-
-        <el-sub-menu index="finance">
-          <template #title><el-icon><Money /></el-icon>财务管理</template>
-          <el-menu-item index="/finance/vouchers">凭证管理</el-menu-item>
-          <el-menu-item index="/finance/reports">财务报表</el-menu-item>
-        </el-sub-menu>
-
-        <el-sub-menu index="hr">
-          <template #title><el-icon><User /></el-icon>人事管理</template>
-          <el-menu-item index="/hr/employees">员工管理</el-menu-item>
-          <el-menu-item index="/hr/attendance">考勤管理</el-menu-item>
-          <el-menu-item index="/hr/salary">薪资管理</el-menu-item>
-        </el-sub-menu>
-
-        <el-sub-menu index="crm">
-          <template #title><el-icon><UserFilled /></el-icon>客户管理</template>
-          <el-menu-item index="/crm/customers">客户列表</el-menu-item>
-          <el-menu-item index="/crm/contacts">联系人</el-menu-item>
-        </el-sub-menu>
-
-        <el-sub-menu index="retail">
-          <template #title><el-icon><Shop /></el-icon>零售门店</template>
-          <el-menu-item index="/retail/stores">门店管理</el-menu-item>
-          <el-menu-item index="/retail/products">商品管理</el-menu-item>
-          <el-menu-item index="/retail/orders">销售订单</el-menu-item>
-        </el-sub-menu>
-
-        <el-sub-menu index="member">
-          <template #title><el-icon><Medal /></el-icon>会员管理</template>
-          <el-menu-item index="/member/members">会员列表</el-menu-item>
-        </el-sub-menu>
-
-        <el-sub-menu index="logistics">
-          <template #title><el-icon><Van /></el-icon>物流配送</template>
-          <el-menu-item index="/logistics/drivers">司机管理</el-menu-item>
-          <el-menu-item index="/logistics/delivery">配送单</el-menu-item>
-        </el-sub-menu>
-
-        <el-sub-menu index="callcenter">
-          <template #title><el-icon><Phone /></el-icon>呼叫中心</template>
-          <el-menu-item index="/callcenter/records">来电记录</el-menu-item>
-        </el-sub-menu>
-
-        <el-sub-menu index="qa">
-          <template #title><el-icon><Stamp /></el-icon>质量管理</template>
-          <el-menu-item index="/qa/inspections">质量检查</el-menu-item>
-          <el-menu-item index="/qa/feedback">客户反馈</el-menu-item>
-        </el-sub-menu>
-
-        <el-sub-menu index="approval">
-          <template #title><el-icon><CircleCheck /></el-icon>审批流</template>
-          <el-menu-item index="/approval/list">审批列表</el-menu-item>
-        </el-sub-menu>
-
-        <el-sub-menu index="system">
-          <template #title><el-icon><Setting /></el-icon>系统设置</template>
-          <el-menu-item index="/system/users">用户管理</el-menu-item>
-          <el-menu-item index="/system/roles">角色管理</el-menu-item>
-          <el-menu-item index="/system/menus">权限配置</el-menu-item>
-          <el-menu-item index="/system/config">系统配置</el-menu-item>
-          <el-menu-item index="/system/upgrade">升级管理</el-menu-item>
-        </el-sub-menu>
+        <template v-for="menu in userStore.menus" :key="menu.id">
+          <el-sub-menu v-if="menu.children && menu.children.length > 0" :index="menu.path || String(menu.id)">
+            <template #title>
+              <el-icon><component :is="getIcon(menu.icon)" /></el-icon>
+              {{ menu.name }}
+            </template>
+            <el-menu-item
+              v-for="child in menu.children"
+              :key="child.id"
+              :index="child.path"
+              v-if="hasMenuPermission(child)"
+            >
+              {{ child.name }}
+            </el-menu-item>
+          </el-sub-menu>
+          <el-menu-item v-else :index="menu.path" v-if="hasMenuPermission(menu)">
+            <el-icon><component :is="getIcon(menu.icon)" /></el-icon>
+            <span>{{ menu.name }}</span>
+          </el-menu-item>
+        </template>
       </el-menu>
+
 
       <!-- 平铺模式：图标+一级菜单，点击展开右侧面板 -->
       <div v-else class="tile-nav">
@@ -206,7 +147,7 @@ import { useUserStore } from '@/stores/user'
 import {
   DataAnalysis, Tools, Box, Guide, Money, User, UserFilled,
   Shop, Medal, Van, Phone, Stamp, CircleCheck, Setting,
-  ArrowRight, Close, Grid, Menu
+  ArrowRight, Close, Grid, Menu, ChatDotRound, Connection
 } from '@element-plus/icons-vue'
 
 const userStore = useUserStore()
@@ -215,8 +156,26 @@ const route = useRoute()
 
 // 模式切换
 const isTileMode = ref(false)
+const isSuperAdmin = computed(() => userStore.userInfo?.username === 'admin')
+const hasPermission = (code) => {
+  if (isSuperAdmin.value) return true
+  if (!userStore.permissions || userStore.permissions.length === 0) return true
+  return userStore.permissions.includes(code)
+}
 const activeTileMenu = ref(null)
 
+
+const getIcon = (iconName) => {
+  const iconMap = {
+    Tools, Box, Guide, Money, User, UserFilled, Shop, Medal, Van, Phone, Stamp, CircleCheck, Setting, ChatDotRound, Connection
+  };
+  return iconMap[iconName] || Setting;
+};
+const hasMenuPermission = (menu) => {
+  if (isSuperAdmin.value) return true;
+  if (!menu.permissionCode) return true;
+  return hasPermission(menu.permissionCode);
+};
 const toggleTileMenu = (item) => {
   if (activeTileMenu.value?.index === item.index) {
     activeTileMenu.value = null
@@ -247,6 +206,11 @@ const tileMenuList = [
   { index: 'dispatch', label: '智能派工', icon: Guide, children: [
     { label: '派工看板', path: '/dispatch/board', sub: '实时调度与派工' },
   ]},
+    { index: 'finance', label: '财务管理', icon: Money, children: [
+    { label: '凭证管理', path: '/finance/vouchers', sub: '会计凭证录入与审核' },
+    { label: '财务报表', path: '/finance/reports', sub: '经营报表与分析' },
+  ]},
+  { index: 'ai', label: 'AI助手', icon: Connection, path: '/ai/chat' },
   { index: 'finance', label: '财务管理', icon: Money, children: [
     { label: '凭证管理', path: '/finance/vouchers', sub: '会计凭证录入与审核' },
     { label: '财务报表', path: '/finance/reports', sub: '经营报表与分析' },
@@ -257,7 +221,7 @@ const tileMenuList = [
     { label: '薪资管理', path: '/hr/salary', sub: '薪资发放与管理' },
   ]},
   { index: 'crm', label: '客户管理', icon: UserFilled, children: [
-    { label: '客户列表', path: '/crm/customers', sub: '客户信息管理' },
+    { label: '客户列表', path: '/crm/contacts', sub: '客户信息管理' },
     { label: '联系人', path: '/crm/contacts', sub: '联系人管理' },
   ]},
   { index: 'retail', label: '零售门店', icon: Shop, children: [
@@ -286,6 +250,7 @@ const tileMenuList = [
     { label: '用户管理', path: '/system/users', sub: '系统用户账号' },
     { label: '角色管理', path: '/system/roles', sub: '角色与权限分配' },
     { label: '权限配置', path: '/system/menus', sub: '菜单权限管理' },
+    { label: '角色配置', path: '/system/role-config', sub: '角色菜单权限分配' },
     { label: '系统配置', path: '/system/config', sub: '系统参数配置' },
   ]},
 ]

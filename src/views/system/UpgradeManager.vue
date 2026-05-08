@@ -11,7 +11,7 @@
         <el-col :span="8">
           <el-card shadow="hover" class="status-card">
             <div class="status-icon" :style="{ background: statusColor }">
-              <el-icon :size="28"><component :is="statusIcon" /></el-icon>
+              <el-icon :size="28"><component :is="iconMap[statusIcon]" /></el-icon>
             </div>
             <div class="status-info">
               <div class="status-label">升级状态</div>
@@ -99,6 +99,8 @@ import { ElMessage } from 'element-plus'
 import { Download, UploadFilled, CircleCheck, Warning, RefreshRight } from '@element-plus/icons-vue'
 import request from '@/utils/request'
 
+const iconMap = { CircleCheck, Warning, RefreshRight }
+
 const buildVersion = ref('v1.1')
 const building = ref(false)
 const uploading = ref(false)
@@ -123,14 +125,14 @@ const statusType = computed(() => {
   return 'info'
 })
 
-const importUrl = computed(() => `${import.meta.env.VITE_API_BASE_URL}/api/v1/system/upgrade/import`)
+const importUrl = computed(() => `${import.meta.env.VITE_API_BASE_URL || "/api"}/system/upgrade/import`)
 const uploadHeaders = computed(() => ({ Authorization: `Bearer ${localStorage.getItem('token') || ''}` }))
 
 let pollTimer = null
 
 const loadStatus = async () => {
   try {
-    const res = await request.get('/api/v1/system/upgrade/status')
+    const res = await request.get('/system/upgrade/status')
     if (res.code === 0 && res.data) {
       upgradeStatus.value = res.data.status || 'IDLE'
       statusMessage.value = res.data.message || ''
@@ -143,7 +145,7 @@ const handleBuild = async () => {
   building.value = true
   statusMessage.value = ''
   try {
-    const res = await request.post('/api/v1/system/upgrade/build', { version: buildVersion.value })
+    const res = await request.post('/system/upgrade/build', { version: buildVersion.value })
     if (res.code === 0 && res.data?.downloadUrl) {
       const link = document.createElement('a')
       link.href = res.data.downloadUrl

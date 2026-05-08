@@ -147,7 +147,7 @@ const fmt = (v) => v != null ? `¥${Number(v).toFixed(2)}` : '¥0.00'
 
 const fetchData = async () => {
   loading.value = true
-  try { const res = await request.get('/retail/sales-orders', { params: query }); tableData.value = res.data?.list || []; total.value = res.data?.total || 0 }
+  try { const res = await request.get('/retail/orders', { params: query }); tableData.value = res.data?.list || []; total.value = res.data?.total || 0 }
   catch { tableData.value = [] } finally { loading.value = false }
 }
 const fetchStores = async () => {

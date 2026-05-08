@@ -144,7 +144,7 @@ const dialogTitle = computed(() => isEdit.value ? '编辑客户' : '新增客户
 
 const fetchData = async () => {
   loading.value = true
-  try { const res = await request.get('/crm/customers', { params: query }); tableData.value = res.data?.list || []; total.value = res.data?.total || 0 }
+  try { const res = await request.get('/crm/contacts', { params: query }); tableData.value = res.data?.list || []; total.value = res.data?.total || 0 }
   catch { tableData.value = [] } finally { loading.value = false }
 }
 const resetQuery = () => { Object.assign(query, { name: '', type: null, level: '', page: 1 }); fetchData() }
@@ -157,7 +157,7 @@ const handleSubmit = async () => {
   submitting.value = true
   try {
     if (isEdit.value) { await request.put(`/crm/customers/${form.id}`, form) }
-    else { await request.post('/crm/customers', form) }
+    else { await request.post('/crm/contacts', form) }
     ElMessage.success(isEdit.value ? '编辑成功' : '新增成功'); dialogVisible.value = false; fetchData()
   } finally { submitting.value = false }
 }
