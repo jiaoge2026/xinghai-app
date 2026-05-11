@@ -18,6 +18,13 @@ import '../presentation/pages/opportunity_list_page.dart';
 import '../presentation/pages/opportunity_detail_page.dart';
 import '../presentation/pages/opportunity_form_page.dart';
 import '../presentation/pages/customer_follow_up_page.dart';
+import '../presentation/pages/customer_list_page.dart';
+import '../presentation/pages/customer_form_page.dart';
+import '../presentation/pages/quote_list_page.dart';
+import '../presentation/pages/quote_form_page.dart';
+import '../presentation/pages/project_order_list_page.dart';
+import '../presentation/pages/project_order_detail_page.dart';
+import '../presentation/pages/receivable_list_page.dart';
 import '../presentation/pages/call_record_list_page.dart';
 import '../presentation/pages/call_record_detail_page.dart';
 import '../presentation/pages/callback_request_page.dart';
@@ -68,6 +75,15 @@ class AppRoutes {
   static const String opportunityDetail = '/opportunity_detail';
   static const String opportunityForm = '/opportunity_form';
   static const String customerFollowUp = '/customer_follow_up';
+
+  // 销售路由（工程项目）
+  static const String customerList = '/sales_customer_list';
+  static const String customerForm = '/sales_customer_form';
+  static const String quoteList = '/sales_quote_list';
+  static const String quoteForm = '/sales_quote_form';
+  static const String projectOrderList = '/sales_project_order_list';
+  static const String projectOrderDetail = '/project_order_detail';
+  static const String receivableList = '/sales_receivable_list';
 
   // 呼叫中心路由
   static const String callRecordList = '/call_record_list';
@@ -201,6 +217,49 @@ class AppRoutes {
     GetPage(
       name: customerFollowUp,
       page: () => const CustomerFollowUpPage(),
+      transition: Transition.rightToLeft,
+    ),
+
+    // 工程项目销售页面
+    GetPage(
+      name: customerList,
+      page: () => const CustomerListPage(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage(
+      name: customerForm,
+      page: () {
+        final c = Get.arguments as Map<String, dynamic>?;
+        return CustomerFormPage(customer: c);
+      },
+      transition: Transition.rightToLeft,
+    ),
+    GetPage(
+      name: quoteList,
+      page: () => const QuoteListPage(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage(
+      name: quoteForm,
+      page: () {
+        final q = Get.arguments as Map<String, dynamic>?;
+        return QuoteFormPage(quote: q);
+      },
+      transition: Transition.rightToLeft,
+    ),
+    GetPage(
+      name: projectOrderList,
+      page: () => const ProjectOrderListPage(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage(
+      name: projectOrderDetail,
+      page: () => const ProjectOrderDetailPage(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage(
+      name: receivableList,
+      page: () => const ReceivableListPage(),
       transition: Transition.rightToLeft,
     ),
 

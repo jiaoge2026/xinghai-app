@@ -273,6 +273,51 @@ class _HomeContentState extends State<_HomeContent> {
               ),
             ],
           ),
+          const SizedBox(height: 12),
+          const Text(
+            '销售管理',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _buildQuickActionItem(
+                  Icons.business,
+                  '工程项目客户',
+                  Colors.blue,
+                  () => Get.toNamed('/sales_customer_list'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildQuickActionItem(
+                  Icons.receipt_long,
+                  '报价单',
+                  Colors.orange,
+                  () => Get.toNamed('/sales_quote_list'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildQuickActionItem(
+                  Icons.account_balance_wallet,
+                  '应收款',
+                  Colors.red,
+                  () => Get.toNamed('/sales_receivable_list'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildQuickActionItem(
+                  Icons.business_center,
+                  '工程订单',
+                  Colors.teal,
+                  () => Get.toNamed('/sales_project_order_list'),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
