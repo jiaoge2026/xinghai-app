@@ -269,7 +269,7 @@ public class CallRecordingService extends Service {
                 os.write(("Content-Type: audio/m4a\r\n\r\n").getBytes());
 
                 // 写入文件内容
-                InputStream fis = java.io.FileInputStream(file);
+                InputStream fis = new FileInputStream(file);
                 byte[] buffer = new byte[8192];
                 int bytesRead;
                 while ((bytesRead = fis.read(buffer)) != -1) {
@@ -356,12 +356,11 @@ public class CallRecordingService extends Service {
      */
     private long getAudioDuration(String filePath) {
         try {
-            MediaRecorder mr = new MediaRecorder();
-            mr.setDataSource(filePath);
-            mr.prepare();
-            long duration = mr.getDuration();
-            mr.release();
-            return duration;
+            MediaMetadataRetriever retriever = new MediaMetadataRetriever();
+            retriever.setDataSource(filePath);
+            String durationStr = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
+            retriever.release();
+            return durationStr != null ? Long.parseLong(durationStr) : 0;
         } catch (Exception e) {
             return 0;
         }
