@@ -7,6 +7,7 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.media.MediaMetadataRetriever;
 import android.media.MediaRecorder;
 import android.os.Binder;
 import android.os.Build;
@@ -19,6 +20,7 @@ import androidx.core.app.NotificationCompat;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
