@@ -111,7 +111,7 @@ class _ProjectOrderDetailPageState extends State<ProjectOrderDetailPage> {
             _row('订单金额', '¥${o['totalAmount'] ?? 0}'),
             _divider(),
             _row('订单日期', o['orderDate'] ?? o['confirmDate'] ?? '-'),
-            if (o['confirmDate'] != null) ...[_divider(), _row('确认日期', o['confirmDate'])]),
+            if (o['confirmDate'] != null) ...[_divider(), _row('确认日期', o['confirmDate'])],
             _divider(),
             _row('销售员', o['salesman'] ?? o['salesmanName'] ?? '-'),
             if (o['remark'] != null && o['remark'].toString().isNotEmpty) ...[

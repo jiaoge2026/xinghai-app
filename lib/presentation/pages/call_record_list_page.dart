@@ -320,7 +320,7 @@ class _CallRecordListPageState extends State<CallRecordListPage> with SingleTick
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            Icons.phoneCallback_outlined,
+            Icons.call_missed_outgoing,
             size: 80,
             color: AppColors.textHint.withOpacity(0.5),
           ),

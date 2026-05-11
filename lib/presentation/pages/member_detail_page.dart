@@ -170,7 +170,7 @@ class _MemberDetailPageState extends State<MemberDetailPage> {
             children: [
               _buildInfoItem(Icons.phone, _member!.phone ?? '-'),
               _buildInfoItem(Icons.calendar_today, _member!.registerDate?.substring(0, 10) ?? '-'),
-              _buildInfoItem(Icons[str(_member!.gender == 'male' ? 'male' : 'female') as String] ?? Icons.person, _member!.genderText),
+              _buildInfoItem(_member!.gender == 'male' ? Icons.male : Icons.female, _member!.genderText),
             ],
           ),
         ],

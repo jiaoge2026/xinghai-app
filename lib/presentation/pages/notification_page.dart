@@ -6,7 +6,7 @@ class NotificationModel {
   final String title;
   final String content;
   final String time;
-  final bool isRead;
+  bool isRead;
   final int type;
 
   NotificationModel({

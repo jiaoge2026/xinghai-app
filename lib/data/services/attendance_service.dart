@@ -92,12 +92,11 @@ class AttendanceService {
     } catch (e) {
       // 后端如无此接口，返回空统计
       return AttendanceStatModel(
-        month: month,
-        normalDays: 0,
+        presentDays: 0,
         lateDays: 0,
         absentDays: 0,
         leaveDays: 0,
-        overtimeHours: 0,
+        totalWorkHours: 0,
       );
     }
   }

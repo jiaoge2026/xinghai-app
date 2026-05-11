@@ -82,9 +82,8 @@ class ApiClient {
         return handler.next(options);
       },
       onError: (error, handler) {
-        // 将DioException转换为NetworkException
-        final exception = _convertDioError(error);
-        return handler.next(exception);
+        // 直接传递原始错误，不做转换
+        return handler.next(error);
       },
     ));
   }

@@ -149,7 +149,9 @@ class _LeaveApplyPageState extends State<LeaveApplyPage> {
     setState(() { _isSubmitting = true; });
 
     try {
+      final employeeId = context.read<AuthProvider>().currentUser!.id;
       await _service.apply(
+        employeeId: employeeId,
         leaveType: _selectedLeaveType,
         startDate: _formatDate(_startDate!),
         endDate: _formatDate(_endDate!),
