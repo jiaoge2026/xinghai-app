@@ -59,6 +59,4 @@ flutter {
     source "../.."
 }
 
-dependencies {
-    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
-}
+// okhttp removed - dio handles HTTP
