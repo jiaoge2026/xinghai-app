@@ -10,7 +10,7 @@ class WorkflowService {
     int page = 1,
     int pageSize = 20,
   }) async {
-    final resp = await _client.get('/api/workflow/pending', queryParameters: {
+    final resp = await _client.get('/api/v1/workflow/pending', queryParameters: {
       'page': page,
       'pageSize': pageSize,
     });
@@ -44,7 +44,7 @@ class WorkflowService {
     };
     if (status != null) query['status'] = status;
 
-    final resp = await _client.get('/api/workflow/my-applications', queryParameters: query);
+    final resp = await _client.get('/api/v1/workflow/my-applications', queryParameters: query);
     final data = resp.data;
 
     if (data['code'] == 0 && data['data'] != null) {
@@ -65,7 +65,7 @@ class WorkflowService {
   /// 获取审批详情
   /// 后端路径: GET /api/workflow/instances/{instanceNo}
   Future<WorkflowDetailModel> getInstanceDetail(String instanceNo) async {
-    final resp = await _client.get('/api/workflow/instances/$instanceNo');
+    final resp = await _client.get('/api/v1/workflow/instances/$instanceNo');
     final data = resp.data;
 
     if (data['code'] == 0 && data['data'] != null) {
@@ -82,7 +82,7 @@ class WorkflowService {
     required int businessId,
     required Map<String, dynamic> formData,
   }) async {
-    final resp = await _client.post('/api/workflow/start', data: {
+    final resp = await _client.post('/api/v1/workflow/start', data: {
       'workflowCode': workflowCode,
       'businessType': businessType,
       'businessId': businessId,
@@ -102,7 +102,7 @@ class WorkflowService {
     required String instanceId,
     String? comment,
   }) async {
-    final resp = await _client.post('/api/workflow/approve', data: {
+    final resp = await _client.post('/api/v1/workflow/approve', data: {
       'instanceId': instanceId,
       if (comment != null) 'comment': comment,
     });
@@ -119,7 +119,7 @@ class WorkflowService {
     required String instanceId,
     required String comment,
   }) async {
-    final resp = await _client.post('/api/workflow/reject', data: {
+    final resp = await _client.post('/api/v1/workflow/reject', data: {
       'instanceId': instanceId,
       'comment': comment,
     });
@@ -133,7 +133,7 @@ class WorkflowService {
   /// 撤回申请
   /// 后端路径: POST /api/workflow/cancel
   Future<void> cancel(String instanceId) async {
-    final resp = await _client.post('/api/workflow/cancel', data: {
+    final resp = await _client.post('/api/v1/workflow/cancel', data: {
       'instanceId': instanceId,
     });
     final data = resp.data;
@@ -146,7 +146,7 @@ class WorkflowService {
   /// 获取流程定义列表
   /// 后端路径: GET /api/workflow/definitions
   Future<List<WorkflowDefinitionModel>> getDefinitions() async {
-    final resp = await _client.get('/api/workflow/definitions');
+    final resp = await _client.get('/api/v1/workflow/definitions');
     final data = resp.data;
 
     if (data['code'] == 0 && data['data'] != null) {
@@ -160,7 +160,7 @@ class WorkflowService {
   /// 后端路径: GET /api/workflow/pending/count
   Future<int> getPendingCount() async {
     try {
-      final resp = await _client.get('/api/workflow/pending/count');
+      final resp = await _client.get('/api/v1/workflow/pending/count');
       final data = resp.data;
 
       if (data['code'] == 0 && data['data'] != null) {

@@ -22,7 +22,7 @@ class AttendanceService {
     if (employeeId != null) query['employeeId'] = employeeId;
 
     // 后端实际路径: /api/hr/attendances
-    final resp = await _client.get('/api/hr/attendances', queryParameters: query);
+    final resp = await _client.get('/api/v1/hr/attendances', queryParameters: query);
     final data = resp.data;
 
     if (data['code'] == 0 && data['data'] != null) {
@@ -46,7 +46,7 @@ class AttendanceService {
   /// 注意：后端可能需要先确认是否有独立的打卡接口
   Future<Map<String, dynamic>> clockIn() async {
     try {
-      final resp = await _client.post('/api/hr/attendances/clock-in', data: {});
+      final resp = await _client.post('/api/v1/hr/attendances/clock-in', data: {});
       final data = resp.data;
 
       if (data['code'] == 0 && data['data'] != null) {
@@ -63,7 +63,7 @@ class AttendanceService {
   /// 后端路径: GET /api/hr/attendances/today（如无则从列表中过滤）
   Future<AttendanceModel?> getTodayAttendance() async {
     try {
-      final resp = await _client.get('/api/hr/attendances/today');
+      final resp = await _client.get('/api/v1/hr/attendances/today');
       final data = resp.data;
 
       if (data['code'] == 0 && data['data'] != null) {
@@ -80,7 +80,7 @@ class AttendanceService {
   /// 后端路径: GET /api/hr/attendances/stats（如无则返回空）
   Future<AttendanceStatModel> getMonthlyStats(String month) async {
     try {
-      final resp = await _client.get('/api/hr/attendances/stats', queryParameters: {
+      final resp = await _client.get('/api/v1/hr/attendances/stats', queryParameters: {
         'month': month,
       });
       final data = resp.data;

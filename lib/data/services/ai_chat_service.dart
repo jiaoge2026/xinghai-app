@@ -8,7 +8,7 @@ class AIChatService {
   /// 获取AI角色列表
   /// 后端路径: GET /api/ai/roles
   Future<List<AIRoleModel>> getRoles() async {
-    final resp = await _client.get('/api/ai/roles');
+    final resp = await _client.get('/api/v1/ai/roles');
     final data = resp.data;
 
     if (data['code'] == 0 && data['data'] != null) {
@@ -25,7 +25,7 @@ class AIChatService {
     required String roleCode,
     required String query,
   }) async {
-    final resp = await _client.post('/api/ai/chat', data: {
+    final resp = await _client.post('/api/v1/ai/chat', data: {
       'sessionId': sessionId,
       'roleCode': roleCode,
       'query': query,
@@ -41,7 +41,7 @@ class AIChatService {
   /// 创建会话
   /// 后端路径: POST /api/ai/sessions
   Future<String> createSession(String roleCode) async {
-    final resp = await _client.post('/api/ai/sessions', data: {
+    final resp = await _client.post('/api/v1/ai/sessions', data: {
       'roleCode': roleCode,
     });
     final data = resp.data;
@@ -55,7 +55,7 @@ class AIChatService {
   /// 获取会话列表
   /// 后端路径: GET /api/ai/sessions
   Future<List<AISessionModel>> getSessions() async {
-    final resp = await _client.get('/api/ai/sessions');
+    final resp = await _client.get('/api/v1/ai/sessions');
     final data = resp.data;
 
     if (data['code'] == 0 && data['data'] != null) {
@@ -68,7 +68,7 @@ class AIChatService {
   /// 获取历史消息
   /// 后端路径: GET /api/ai/sessions/{sessionId}/messages
   Future<List<AIMessageModel>> getSessionMessages(String sessionId) async {
-    final resp = await _client.get('/api/ai/sessions/$sessionId/messages');
+    final resp = await _client.get('/api/v1/ai/sessions/$sessionId/messages');
     final data = resp.data;
 
     if (data['code'] == 0 && data['data'] != null) {
@@ -81,7 +81,7 @@ class AIChatService {
   /// 删除会话
   /// 后端路径: DELETE /api/ai/sessions/{sessionId}
   Future<void> deleteSession(String sessionId) async {
-    final resp = await _client.delete('/api/ai/sessions/$sessionId');
+    final resp = await _client.delete('/api/v1/ai/sessions/$sessionId');
     final data = resp.data;
 
     if (data['code'] != 0) {
@@ -92,7 +92,7 @@ class AIChatService {
   /// 清空会话消息
   /// 后端路径: DELETE /api/ai/sessions/{sessionId}/messages
   Future<void> clearSession(String sessionId) async {
-    final resp = await _client.delete('/api/ai/sessions/$sessionId/messages');
+    final resp = await _client.delete('/api/v1/ai/sessions/$sessionId/messages');
     final data = resp.data;
 
     if (data['code'] != 0) {

@@ -46,7 +46,7 @@ class ContactService {
   /// 获取联系人列表
   /// 后端路径: GET /api/crm/contacts?customerId=xxx
   Future<List<ContactModel>> getContacts(int customerId) async {
-    final resp = await _client.get('/api/crm/contacts', queryParameters: {
+    final resp = await _client.get('/api/v1/crm/contacts', queryParameters: {
       'customerId': customerId,
     });
     final data = resp.data;
@@ -61,7 +61,7 @@ class ContactService {
   /// 新增联系人
   /// 后端路径: POST /api/crm/contacts
   Future<int> addContact(Map<String, dynamic> contactData) async {
-    final resp = await _client.post('/api/crm/contacts', data: contactData);
+    final resp = await _client.post('/api/v1/crm/contacts', data: contactData);
     final result = resp.data;
     if (result['code'] == 0) {
       return result['data']['id'] ?? 0;
@@ -72,7 +72,7 @@ class ContactService {
   /// 设为主联系人
   /// 后端路径: PUT /api/crm/contacts/{id}/primary
   Future<void> setPrimary(int id) async {
-    final resp = await _client.put('/api/crm/contacts/$id/primary');
+    final resp = await _client.put('/api/v1/crm/contacts/$id/primary');
     final data = resp.data;
     if (data['code'] != 0) {
       throw Exception(data['message'] ?? '设为主联系人失败');

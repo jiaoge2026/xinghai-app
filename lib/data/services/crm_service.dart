@@ -19,7 +19,7 @@ class CRMService {
     if (stage != null) query['stage'] = stage;
     if (employeeId != null) query['employeeId'] = employeeId;
 
-    final resp = await _client.get('/api/crm/opportunities', queryParameters: query);
+    final resp = await _client.get('/api/v1/crm/opportunities', queryParameters: query);
     final data = resp.data;
 
     if (data['code'] == 0 && data['data'] != null) {
@@ -40,7 +40,7 @@ class CRMService {
   /// 获取商机详情
   /// 后端路径: GET /api/crm/opportunities/{id}
   Future<OpportunityModel> getOpportunityDetail(int id) async {
-    final resp = await _client.get('/api/crm/opportunities/$id');
+    final resp = await _client.get('/api/v1/crm/opportunities/$id');
     final data = resp.data;
 
     if (data['code'] == 0 && data['data'] != null) {
@@ -52,7 +52,7 @@ class CRMService {
   /// 更新商机阶段
   /// 后端路径: PUT /api/crm/opportunities/{id}/stage
   Future<void> updateOpportunityStage(int id, int stage) async {
-    final resp = await _client.put('/api/crm/opportunities/$id/stage', data: {
+    final resp = await _client.put('/api/v1/crm/opportunities/$id/stage', data: {
       'stage': stage,
     });
     final data = resp.data;
@@ -64,7 +64,7 @@ class CRMService {
   /// 创建商机
   /// 后端路径: POST /api/crm/opportunities
   Future<int> createOpportunity(Map<String, dynamic> data) async {
-    final resp = await _client.post('/api/crm/opportunities', data: data);
+    final resp = await _client.post('/api/v1/crm/opportunities', data: data);
     final result = resp.data;
     if (result['code'] == 0) {
       return result['data']['id'] ?? 0;
@@ -75,7 +75,7 @@ class CRMService {
   /// 更新商机
   /// 后端路径: PUT /api/crm/opportunities/{id}
   Future<void> updateOpportunity(int id, Map<String, dynamic> data) async {
-    final resp = await _client.put('/api/crm/opportunities/$id', data: data);
+    final resp = await _client.put('/api/v1/crm/opportunities/$id', data: data);
     final result = resp.data;
     if (result['code'] != 0) {
       throw Exception(result['message'] ?? '更新商机失败');
@@ -85,7 +85,7 @@ class CRMService {
   /// 获取跟进记录
   /// 后端路径: GET /api/crm/follow-ups?customerId=xxx
   Future<List<CustomerFollowUpModel>> getFollowUps(int customerId) async {
-    final resp = await _client.get('/api/crm/follow-ups', queryParameters: {
+    final resp = await _client.get('/api/v1/crm/follow-ups', queryParameters: {
       'customerId': customerId,
     });
     final data = resp.data;
@@ -100,7 +100,7 @@ class CRMService {
   /// 新增跟进记录
   /// 后端路径: POST /api/crm/follow-ups
   Future<void> addFollowUp(Map<String, dynamic> followUpData) async {
-    final resp = await _client.post('/api/crm/follow-ups', data: followUpData);
+    final resp = await _client.post('/api/v1/crm/follow-ups', data: followUpData);
     final data = resp.data;
     if (data['code'] != 0) {
       throw Exception(data['message'] ?? '添加跟进记录失败');
@@ -110,7 +110,7 @@ class CRMService {
   /// 获取漏斗统计
   /// 后端路径: GET /api/crm/opportunities/funnel
   Future<Map<String, int>> getFunnelStats() async {
-    final resp = await _client.get('/api/crm/opportunities/funnel');
+    final resp = await _client.get('/api/v1/crm/opportunities/funnel');
     final data = resp.data;
 
     if (data['code'] == 0 && data['data'] != null) {

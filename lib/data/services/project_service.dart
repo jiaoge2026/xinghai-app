@@ -20,7 +20,7 @@ class ProjectService {
     if (keyword != null && keyword.isNotEmpty) query['keyword'] = keyword;
 
     // 后端实际路径: /api/fsm/projects（无/page后缀）
-    final resp = await _client.get('/api/fsm/projects', queryParameters: query);
+    final resp = await _client.get('/api/v1/fsm/projects', queryParameters: query);
     final data = resp.data;
 
     if (data['code'] == 0 && data['data'] != null) {
@@ -41,7 +41,7 @@ class ProjectService {
   /// 获取项目详情
   /// 后端路径: GET /api/fsm/projects/{id}
   Future<ProjectModel> getDetail(int id) async {
-    final resp = await _client.get('/api/fsm/projects/$id');
+    final resp = await _client.get('/api/v1/fsm/projects/$id');
     final data = resp.data;
 
     if (data['code'] == 0 && data['data'] != null) {
@@ -53,7 +53,7 @@ class ProjectService {
   /// 获取成本汇总
   /// 后端路径: GET /api/fsm/projects/{id}/cost-summary
   Future<Map<String, dynamic>> getCostSummary(int id) async {
-    final resp = await _client.get('/api/fsm/projects/$id/cost-summary');
+    final resp = await _client.get('/api/v1/fsm/projects/$id/cost-summary');
     final data = resp.data;
 
     if (data['code'] == 0 && data['data'] != null) {

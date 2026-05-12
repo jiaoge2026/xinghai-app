@@ -7,7 +7,7 @@ class DashboardService {
   /// 获取经营概览
   /// 后端路径: GET /api/report/dashboard
   Future<DashboardOverviewModel> getOverview() async {
-    final resp = await _client.get('/api/report/dashboard');
+    final resp = await _client.get('/api/v1/report/dashboard');
     final data = resp.data;
 
     if (data['code'] == 0 && data['data'] != null) {
@@ -19,7 +19,7 @@ class DashboardService {
   /// 获取FSM驾驶舱
   /// 后端路径: GET /api/report/fsm
   Future<FsmDashboardModel> getFsmDashboard() async {
-    final resp = await _client.get('/api/report/fsm');
+    final resp = await _client.get('/api/v1/report/fsm');
     final data = resp.data;
 
     if (data['code'] == 0 && data['data'] != null) {
@@ -31,7 +31,7 @@ class DashboardService {
   /// 获取财务驾驶舱
   /// 后端路径: GET /api/report/finance
   Future<FinanceDashboardModel> getFinanceDashboard() async {
-    final resp = await _client.get('/api/report/finance');
+    final resp = await _client.get('/api/v1/report/finance');
     final data = resp.data;
 
     if (data['code'] == 0 && data['data'] != null) {
@@ -43,7 +43,7 @@ class DashboardService {
   /// 获取库存驾驶舱
   /// 后端路径: GET /api/report/inventory
   Future<InventoryDashboardModel> getInventoryDashboard() async {
-    final resp = await _client.get('/api/report/inventory');
+    final resp = await _client.get('/api/v1/report/inventory');
     final data = resp.data;
 
     if (data['code'] == 0 && data['data'] != null) {
@@ -56,7 +56,7 @@ class DashboardService {
   /// 后端路径: GET /api/report/retail（如无则返回空map）
   Future<Map<String, dynamic>> getRetailDashboard() async {
     try {
-      final resp = await _client.get('/api/report/retail');
+      final resp = await _client.get('/api/v1/report/retail');
       final data = resp.data;
 
       if (data['code'] == 0 && data['data'] != null) {
@@ -77,7 +77,7 @@ class DashboardService {
     final query = <String, dynamic>{};
     if (month != null) query['month'] = month;
 
-    final resp = await _client.get('/api/report/engineer-ranking', queryParameters: query);
+    final resp = await _client.get('/api/v1/report/engineer-ranking', queryParameters: query);
     final data = resp.data;
 
     if (data['code'] == 0 && data['data'] != null) {
@@ -98,7 +98,7 @@ class DashboardService {
     };
     if (month != null) query['month'] = month;
 
-    final resp = await _client.get('/api/report/sales-ranking', queryParameters: query);
+    final resp = await _client.get('/api/v1/report/sales-ranking', queryParameters: query);
     final data = resp.data;
 
     if (data['code'] == 0 && data['data'] != null) {

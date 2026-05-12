@@ -25,7 +25,7 @@ class WorkOrderService {
     if (endDate != null) query['endDate'] = endDate;
     if (keyword != null && keyword.isNotEmpty) query['keyword'] = keyword;
 
-    final resp = await _client.get('/api/fsm/work-orders', queryParameters: query);
+    final resp = await _client.get('/api/v1/fsm/work-orders', queryParameters: query);
     final data = resp.data;
 
     if (data['code'] == 0 && data['data'] != null) {
@@ -38,7 +38,7 @@ class WorkOrderService {
   }
 
   Future<WorkOrderModel> getDetail(int id) async {
-    final resp = await _client.get('/api/fsm/work-orders/$id');
+    final resp = await _client.get('/api/v1/fsm/work-orders/$id');
     final data = resp.data;
 
     if (data['code'] == 0 && data['data'] != null) {
@@ -48,7 +48,7 @@ class WorkOrderService {
   }
 
   Future<void> updateStatus(int id, int status, {String? remark}) async {
-    final resp = await _client.put('/api/fsm/work-orders/$id/status', data: {
+    final resp = await _client.put('/api/v1/fsm/work-orders/$id/status', data: {
       'status': status,
       if (remark != null) 'remark': remark,
     });
@@ -65,7 +65,7 @@ class WorkOrderService {
     double materialFee = 0,
     String? remark,
   }) async {
-    final resp = await _client.put('/api/fsm/work-orders/$id/complete', data: {
+    final resp = await _client.put('/api/v1/fsm/work-orders/$id/complete', data: {
       'workHours': workHours,
       'travelFee': travelFee,
       'materialFee': materialFee,
@@ -78,7 +78,7 @@ class WorkOrderService {
   }
 
   Future<void> addMaterials(int id, List<PartModel> parts, {int warehouseId = 1}) async {
-    final resp = await _client.post('/api/fsm/work-orders/$id/materials', data: {
+    final resp = await _client.post('/api/v1/fsm/work-orders/$id/materials', data: {
       'warehouseId': warehouseId,
       'materials': parts.map((e) => e.toJson()).toList(),
     });
@@ -89,7 +89,7 @@ class WorkOrderService {
   }
 
   Future<Map<String, dynamic>> getTodayStat() async {
-    final resp = await _client.get('/api/fsm/work-orders/today-stat');
+    final resp = await _client.get('/api/v1/fsm/work-orders/today-stat');
     final data = resp.data;
     if (data['code'] == 0 && data['data'] != null) {
       return data['data'];

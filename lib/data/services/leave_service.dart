@@ -20,7 +20,7 @@ class LeaveService {
     if (status != null && status.isNotEmpty) query['status'] = status;
 
     // 后端实际路径: /api/hr/leave（无s，单数）
-    final resp = await _client.get('/api/hr/leave', queryParameters: query);
+    final resp = await _client.get('/api/v1/hr/leave', queryParameters: query);
     final data = resp.data;
 
     if (data['code'] == 0 && data['data'] != null) {
@@ -41,7 +41,7 @@ class LeaveService {
     required double totalDays,
     required String reason,
   }) async {
-    final resp = await _client.post('/api/hr/leave', data: {
+    final resp = await _client.post('/api/v1/hr/leave', data: {
       'employeeId': employeeId,
       'leaveType': leaveType,
       'startDate': startDate,
@@ -59,7 +59,7 @@ class LeaveService {
   /// 后端路径: GET /api/hr/leave/balance（如后端无此接口则返回空模型）
   Future<LeaveBalanceModel> getLeaveBalance() async {
     try {
-      final resp = await _client.get('/api/hr/leave/balance');
+      final resp = await _client.get('/api/v1/hr/leave/balance');
       final data = resp.data;
 
       if (data['code'] == 0 && data['data'] != null) {

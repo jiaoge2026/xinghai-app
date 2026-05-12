@@ -5,7 +5,7 @@ class CouponService {
   final ApiClient _client = ApiClient();
 
   Future<List<CouponModel>> getAvailableCoupons(int memberId) async {
-    final resp = await _client.get('/api/member/members/$memberId/coupons', queryParameters: {
+    final resp = await _client.get('/api/v1/member/members/$memberId/coupons', queryParameters: {
       'status': 1,
     });
     final data = resp.data;
@@ -29,7 +29,7 @@ class CouponService {
     };
     if (status != null) query['status'] = status;
 
-    final resp = await _client.get('/api/member/members/$memberId/coupons', queryParameters: query);
+    final resp = await _client.get('/api/v1/member/members/$memberId/coupons', queryParameters: query);
     final data = resp.data;
 
     if (data['code'] == 0 && data['data'] != null) {
@@ -40,7 +40,7 @@ class CouponService {
   }
 
   Future<void> receiveCoupon(int couponId, int memberId) async {
-    final resp = await _client.post('/api/member/coupons/$couponId/receive', data: {
+    final resp = await _client.post('/api/v1/member/coupons/$couponId/receive', data: {
       'memberId': memberId,
     });
     final data = resp.data;
@@ -53,7 +53,7 @@ class CouponService {
     int page = 1,
     int pageSize = 20,
   }) async {
-    final resp = await _client.get('/api/member/coupon-templates', queryParameters: {
+    final resp = await _client.get('/api/v1/member/coupon-templates', queryParameters: {
       'page': page,
       'pageSize': pageSize,
     });

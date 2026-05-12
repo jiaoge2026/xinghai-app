@@ -7,7 +7,7 @@ class EngineerService {
   /// 获取工程师详情
   /// 后端路径: GET /api/fsm/engineers/{id}
   Future<EngineerModel> getDetail(int id) async {
-    final resp = await _client.get('/api/fsm/engineers/$id');
+    final resp = await _client.get('/api/v1/fsm/engineers/$id');
     final data = resp.data;
     if (data['code'] == 0 && data['data'] != null) {
       return EngineerModel.fromJson(data['data']);
@@ -18,7 +18,7 @@ class EngineerService {
   /// 更新工程师接单状态
   /// 后端路径: PUT /api/fsm/engineers/{id}/status
   Future<void> updateStatus(int id, int status) async {
-    final resp = await _client.put('/api/fsm/engineers/$id/status', data: {
+    final resp = await _client.put('/api/v1/fsm/engineers/$id/status', data: {
       'status': status,
     });
     final data = resp.data;
@@ -35,7 +35,7 @@ class EngineerService {
     if (area != null) query['area'] = area;
     if (skill != null) query['skill'] = skill;
 
-    final resp = await _client.get('/api/fsm/engineers/available', queryParameters: query);
+    final resp = await _client.get('/api/v1/fsm/engineers/available', queryParameters: query);
     final data = resp.data;
     if (data['code'] == 0 && data['data'] != null) {
       final list = data['data'] as List<dynamic>? ?? [];
@@ -57,7 +57,7 @@ class EngineerService {
     };
     if (keyword != null && keyword.isNotEmpty) query['keyword'] = keyword;
 
-    final resp = await _client.get('/api/fsm/engineers', queryParameters: query);
+    final resp = await _client.get('/api/v1/fsm/engineers', queryParameters: query);
     final data = resp.data;
     if (data['code'] == 0 && data['data'] != null) {
       final dataBody = data['data'];

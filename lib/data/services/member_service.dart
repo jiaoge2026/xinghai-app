@@ -15,7 +15,7 @@ class MemberService {
     String? idCard,
     String? address,
   }) async {
-    final resp = await _client.post('/api/member/members/register', data: {
+    final resp = await _client.post('/api/v1/member/members/register', data: {
       'phone': phone,
       if (memberName != null) 'memberName': memberName,
       if (gender != null) 'gender': gender,
@@ -35,7 +35,7 @@ class MemberService {
   /// 根据手机号查询会员
   /// 后端路径: GET /api/member/members/phone/{phone}
   Future<MemberModel?> getMemberByPhone(String phone) async {
-    final resp = await _client.get('/api/member/members/phone/$phone');
+    final resp = await _client.get('/api/v1/member/members/phone/$phone');
     final data = resp.data;
 
     if (data['code'] == 0 && data['data'] != null) {
@@ -50,7 +50,7 @@ class MemberService {
   /// 获取会员详情
   /// 后端路径: GET /api/member/members/{id}
   Future<MemberModel> getMemberDetail(int id) async {
-    final resp = await _client.get('/api/member/members/$id');
+    final resp = await _client.get('/api/v1/member/members/$id');
     final data = resp.data;
 
     if (data['code'] == 0 && data['data'] != null) {
@@ -71,7 +71,7 @@ class MemberService {
       'pageSize': pageSize,
     };
 
-    final resp = await _client.get('/api/member/members/$memberId/points', queryParameters: query);
+    final resp = await _client.get('/api/v1/member/members/$memberId/points', queryParameters: query);
     final data = resp.data;
 
     if (data['code'] == 0 && data['data'] != null) {
@@ -97,7 +97,7 @@ class MemberService {
     String? orderId,
     String? remark,
   }) async {
-    final resp = await _client.post('/api/member/members/$memberId/redeem', data: {
+    final resp = await _client.post('/api/v1/member/members/$memberId/redeem', data: {
       'points': points,
       if (orderId != null) 'orderId': orderId,
       if (remark != null) 'remark': remark,
@@ -121,7 +121,7 @@ class MemberService {
     };
     if (keyword != null && keyword.isNotEmpty) query['keyword'] = keyword;
 
-    final resp = await _client.get('/api/member/members', queryParameters: query);
+    final resp = await _client.get('/api/v1/member/members', queryParameters: query);
     final data = resp.data;
 
     if (data['code'] == 0 && data['data'] != null) {

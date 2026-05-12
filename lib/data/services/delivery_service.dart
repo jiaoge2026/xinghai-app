@@ -20,7 +20,7 @@ class DeliveryService {
     if (status != null) query['status'] = status;
 
     // 后端实际路径: /api/logistics/delivery-orders
-    final resp = await _client.get('/api/logistics/delivery-orders', queryParameters: query);
+    final resp = await _client.get('/api/v1/logistics/delivery-orders', queryParameters: query);
     final data = resp.data;
 
     if (data['code'] == 0 && data['data'] != null) {
@@ -41,7 +41,7 @@ class DeliveryService {
   /// 获取配送单详情
   /// 后端路径: GET /api/logistics/delivery-orders/{id}
   Future<DeliveryOrderModel> getDeliveryOrderDetail(int id) async {
-    final resp = await _client.get('/api/logistics/delivery-orders/$id');
+    final resp = await _client.get('/api/v1/logistics/delivery-orders/$id');
     final data = resp.data;
 
     if (data['code'] == 0 && data['data'] != null) {
@@ -53,7 +53,7 @@ class DeliveryService {
   /// 更新配送状态
   /// 后端路径: PUT /api/logistics/delivery-orders/{id}/status
   Future<void> updateStatus(int id, int status, {String? remark}) async {
-    final resp = await _client.put('/api/logistics/delivery-orders/$id/status', data: {
+    final resp = await _client.put('/api/v1/logistics/delivery-orders/$id/status', data: {
       'status': status,
       if (remark != null) 'remark': remark,
     });
@@ -82,7 +82,7 @@ class DeliveryService {
     List<String>? photoUrls,
     String? remark,
   }) async {
-    final resp = await _client.put('/api/logistics/delivery-orders/$id/complete', data: {
+    final resp = await _client.put('/api/v1/logistics/delivery-orders/$id/complete', data: {
       if (recipientName != null) 'recipientName': recipientName,
       if (photoUrls != null) 'photoUrls': photoUrls,
       if (remark != null) 'remark': remark,
@@ -96,7 +96,7 @@ class DeliveryService {
   /// 上报司机位置
   /// 后端路径: POST /api/logistics/delivery-orders/driver/location
   Future<void> clockLocation(double lat, double lng) async {
-    final resp = await _client.post('/api/logistics/delivery-orders/driver/location', data: {
+    final resp = await _client.post('/api/v1/logistics/delivery-orders/driver/location', data: {
       'locationLat': lat,
       'locationLng': lng,
     });

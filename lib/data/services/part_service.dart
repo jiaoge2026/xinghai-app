@@ -18,7 +18,7 @@ class PartService {
     if (keyword != null && keyword.isNotEmpty) query['keyword'] = keyword;
 
     // 后端实际路径: /api/wms/parts（无/page后缀）
-    final resp = await _client.get('/api/wms/parts', queryParameters: query);
+    final resp = await _client.get('/api/v1/wms/parts', queryParameters: query);
     final data = resp.data;
 
     if (data['code'] == 0 && data['data'] != null) {
@@ -39,7 +39,7 @@ class PartService {
   /// 获取库存列表
   /// 后端路径: GET /api/wms/parts/stock/{warehouseId}
   Future<List<PartModel>> getStock(int warehouseId) async {
-    final resp = await _client.get('/api/wms/parts/stock/$warehouseId');
+    final resp = await _client.get('/api/v1/wms/parts/stock/$warehouseId');
     final data = resp.data;
     if (data['code'] == 0 && data['data'] != null) {
       final list = data['data'] as List<dynamic>? ?? [];

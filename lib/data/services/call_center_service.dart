@@ -19,7 +19,7 @@ class CallCenterService {
     if (status != null) query['status'] = status;
     if (employeeId != null) query['employeeId'] = employeeId;
 
-    final resp = await _client.get('/api/callcenter/call-records', queryParameters: query);
+    final resp = await _client.get('/api/v1/callcenter/call-records', queryParameters: query);
     final data = resp.data;
 
     if (data['code'] == 0 && data['data'] != null) {
@@ -40,7 +40,7 @@ class CallCenterService {
   /// 获取来电详情
   /// 后端路径: GET /api/callcenter/call-records/{id}
   Future<CallRecordModel> getCallRecordDetail(int id) async {
-    final resp = await _client.get('/api/callcenter/call-records/$id');
+    final resp = await _client.get('/api/v1/callcenter/call-records/$id');
     final data = resp.data;
 
     if (data['code'] == 0 && data['data'] != null) {
@@ -57,7 +57,7 @@ class CallCenterService {
     String? associatedType,
     int? associatedId,
   }) async {
-    final resp = await _client.put('/api/callcenter/call-records/$id/process', data: {
+    final resp = await _client.put('/api/v1/callcenter/call-records/$id/process', data: {
       if (remark != null) 'processRemark': remark,
       if (associatedType != null) 'associatedType': associatedType,
       if (associatedId != null) 'associatedId': associatedId,
@@ -81,7 +81,7 @@ class CallCenterService {
     };
     if (status != null) query['status'] = status;
 
-    final resp = await _client.get('/api/callcenter/callback-requests', queryParameters: query);
+    final resp = await _client.get('/api/v1/callcenter/callback-requests', queryParameters: query);
     final data = resp.data;
 
     if (data['code'] == 0 && data['data'] != null) {
@@ -102,7 +102,7 @@ class CallCenterService {
   /// 创建回拨请求
   /// 后端路径: POST /api/callcenter/callback-requests
   Future<int> createCallbackRequest(Map<String, dynamic> requestData) async {
-    final resp = await _client.post('/api/callcenter/callback-requests', data: requestData);
+    final resp = await _client.post('/api/v1/callcenter/callback-requests', data: requestData);
     final result = resp.data;
     if (result['code'] == 0) {
       return result['data']['id'] ?? 0;

@@ -22,7 +22,7 @@ class RetailService {
     if (brand != null && brand.isNotEmpty) query['brand'] = brand;
     if (keyword != null && keyword.isNotEmpty) query['keyword'] = keyword;
 
-    final resp = await _client.get('/api/retail/products', queryParameters: query);
+    final resp = await _client.get('/api/v1/retail/products', queryParameters: query);
     final data = resp.data;
 
     if (data['code'] == 0 && data['data'] != null) {
@@ -43,7 +43,7 @@ class RetailService {
   /// 获取商品详情
   /// 后端路径: GET /api/retail/products/{id}
   Future<ProductModel> getProductDetail(int id) async {
-    final resp = await _client.get('/api/retail/products/$id');
+    final resp = await _client.get('/api/v1/retail/products/$id');
     final data = resp.data;
 
     if (data['code'] == 0 && data['data'] != null) {
@@ -64,7 +64,7 @@ class RetailService {
     String? couponId,
     String? remark,
   }) async {
-    final resp = await _client.post('/api/retail/orders', data: {
+    final resp = await _client.post('/api/v1/retail/orders', data: {
       'items': items.map((e) => e.toJson()).toList(),
       if (customerId != null) 'customerId': customerId,
       if (customerName != null) 'customerName': customerName,
@@ -97,7 +97,7 @@ class RetailService {
     if (status != null) query['status'] = status;
     if (storeId != null) query['storeId'] = storeId;
 
-    final resp = await _client.get('/api/retail/orders', queryParameters: query);
+    final resp = await _client.get('/api/v1/retail/orders', queryParameters: query);
     final data = resp.data;
 
     if (data['code'] == 0 && data['data'] != null) {
@@ -118,7 +118,7 @@ class RetailService {
   /// 获取订单详情
   /// 后端路径: GET /api/retail/orders/{id}
   Future<SalesOrderModel> getOrderDetail(int id) async {
-    final resp = await _client.get('/api/retail/orders/$id');
+    final resp = await _client.get('/api/v1/retail/orders/$id');
     final data = resp.data;
 
     if (data['code'] == 0 && data['data'] != null) {
@@ -130,7 +130,7 @@ class RetailService {
   /// 支付订单
   /// 后端路径: POST /api/retail/orders/{id}/pay
   Future<void> payOrder(int id, String paymentMethod) async {
-    final resp = await _client.post('/api/retail/orders/$id/pay', data: {
+    final resp = await _client.post('/api/v1/retail/orders/$id/pay', data: {
       'paymentMethod': paymentMethod,
     });
     final data = resp.data;
@@ -142,7 +142,7 @@ class RetailService {
   /// 退款订单
   /// 后端路径: POST /api/retail/orders/{id}/refund
   Future<void> refundOrder(int id, {double? amount}) async {
-    final resp = await _client.post('/api/retail/orders/$id/refund', data: {
+    final resp = await _client.post('/api/v1/retail/orders/$id/refund', data: {
       if (amount != null) 'amount': amount,
     });
     final data = resp.data;
@@ -162,7 +162,7 @@ class RetailService {
       if (startDate != null) query['startDate'] = startDate;
       if (endDate != null) query['endDate'] = endDate;
 
-      final resp = await _client.get('/api/retail/sales-stats', queryParameters: query);
+      final resp = await _client.get('/api/v1/retail/sales-stats', queryParameters: query);
       final data = resp.data;
 
       if (data['code'] == 0 && data['data'] != null) {
@@ -178,7 +178,7 @@ class RetailService {
   /// 获取门店库存
   /// 后端路径: GET /api/retail/stores/{storeId}/inventory
   Future<List<ProductModel>> getStoreInventory(int storeId) async {
-    final resp = await _client.get('/api/retail/stores/$storeId/inventory');
+    final resp = await _client.get('/api/v1/retail/stores/$storeId/inventory');
     final data = resp.data;
 
     if (data['code'] == 0 && data['data'] != null) {
@@ -191,7 +191,7 @@ class RetailService {
   /// 获取商品分类列表
   /// 后端路径: GET /api/retail/products/categories（返回tb_product.category的DISTINCT值）
   Future<List<String>> getCategories() async {
-    final resp = await _client.get('/api/retail/products/categories');
+    final resp = await _client.get('/api/v1/retail/products/categories');
     final data = resp.data;
 
     if (data['code'] == 0 && data['data'] != null) {
@@ -204,7 +204,7 @@ class RetailService {
   /// 获取品牌列表
   /// 后端路径: GET /api/retail/products/brands
   Future<List<String>> getBrands() async {
-    final resp = await _client.get('/api/retail/products/brands');
+    final resp = await _client.get('/api/v1/retail/products/brands');
     final data = resp.data;
 
     if (data['code'] == 0 && data['data'] != null) {
