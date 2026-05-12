@@ -22,9 +22,7 @@ jobs:
         with:
           flutter-version: '3.24.0'
           channel: 'stable'
-          cache: true
-          cache-key: flutter-{{ hashFiles('**/pubspec.lock') }}
-          cache-path: ~/.pub-cache
+          cache: false
 
       - name: Setup China mirror
         run: |
@@ -56,13 +54,3 @@ jobs:
           name: release-apk
           path: build/app/outputs/flutter-apk/app-release.apk
           retention-days: 30
-
-      - name: Create Release
-        if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: softprops/action-gh-release@v1
-        with:
-          files: |
-            build/app/outputs/flutter-apk/app-debug.apk
-            build/app/outputs/flutter-apk/app-release.apk
-        env:
-          GITHUB_TOKEN: \${{ secrets.GITHUB_TOKEN }}
