@@ -1,7 +1,6 @@
 import 'package:dio/dio.dart';
 import '../constants/app_constants.dart';
 import 'storage_util.dart';
-import 'dart:developer' as developer;
 
 /// 网络错误类型枚举
 enum NetworkErrorType {

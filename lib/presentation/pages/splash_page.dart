@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/utils/storage_util.dart';
@@ -23,37 +23,38 @@ class _SplashPageState extends State<SplashPage> {
   }
 
   Future<void> _checkLoginAndNavigate() async {
-    debugPrint('[SplashPage] _checkLoginAndNavigate() start');
-    debugPrint('[SplashPage] baseUrl=${AppConstants.baseUrl}');
+    print('[SplashPage] _checkLoginAndNavigate() start');
+    print('[SplashPage] baseUrl=${AppConstants.baseUrl}');
     // 延迟一下以显示启动页
     await Future.delayed(const Duration(milliseconds: 800));
 
     final token = await StorageUtil.get(AppConstants.tokenKey);
-    debugPrint('[SplashPage] token from storage: ${token != null ? "exists(${token.length})" : "null"}');
+    print('[SplashPage] token from storage: ${token != null ? "exists(${token.length})" : "null"}');
 
-    final authProvider = Get.find<AuthProvider>();
+    // Provider 和 GetX 混用：用 Provider.of 读取（因为 AuthProvider 是 Provider 注册的）
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
     if (token != null && token.isNotEmpty) {
       // 有Token，尝试加载用户信息
       try {
-        debugPrint('[SplashPage] calling checkLoginStatus()...');
+        print('[SplashPage] calling checkLoginStatus()...');
         await authProvider.checkLoginStatus();
-        debugPrint('[SplashPage] checkLoginStatus done, isLoggedIn=${authProvider.isLoggedIn}');
+        print('[SplashPage] checkLoginStatus done, isLoggedIn=${authProvider.isLoggedIn}');
         if (authProvider.isLoggedIn) {
-          debugPrint('[SplashPage] navigating to HomePage');
+          print('[SplashPage] navigating to HomePage');
           Get.offAll(() => const HomePage());
         } else {
-          debugPrint('[SplashPage] not logged in, navigating to LoginPage');
+          print('[SplashPage] not logged in, navigating to LoginPage');
           Get.offAll(() => const LoginPage());
         }
       } catch (e) {
-        debugPrint('[SplashPage] checkLoginStatus exception: $e');
+        print('[SplashPage] checkLoginStatus exception: $e');
         // Token无效，跳转登录
         Get.offAll(() => const LoginPage());
       }
     } else {
       // 无Token，跳转登录
-      debugPrint('[SplashPage] no token, navigating to LoginPage');
+      print('[SplashPage] no token, navigating to LoginPage');
       Get.offAll(() => const LoginPage());
     }
   }
