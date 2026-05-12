@@ -1,3 +1,11 @@
 dist/app-debug.apk
 .github_token
 .version
+
+# Flutter build
+build/
+.dart_tool/flutter_build/
+
+# Android build
+android/.gradle/
+android/build/
