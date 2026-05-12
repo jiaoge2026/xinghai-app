@@ -26,6 +26,11 @@ jobs:
           cache-key: flutter-{{ hashFiles('**/pubspec.lock') }}
           cache-path: ~/.pub-cache
 
+      - name: Setup China mirror
+        run: |
+          echo "PUB_HOSTED_URL=https://pub.flutter-io.cn" >> $GITHUB_ENV
+          echo "FLUTTER_STORAGE_BASE_URL=https://pub.flutter-io.cn" >> $GITHUB_ENV
+
       - name: Install dependencies
         run: flutter pub get
 
