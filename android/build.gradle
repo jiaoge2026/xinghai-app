@@ -2,6 +2,14 @@ allprojects {
     repositories {
         google()
         mavenCentral()
+        // Flutter 引擎产物（flutter_embedding / x86_debug / arm64_debug 等）
+        // storage.googleapis.com 是 Flutter 官方 CDN，Google Maven 是备用
+        maven {
+            url 'https://storage.googleapis.com/download.flutter.io'
+            content {
+                includeGroup 'io.flutter'
+            }
+        }
     }
 }
 
