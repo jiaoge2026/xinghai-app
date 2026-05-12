@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- 允许所有明文流量（HTTP） -->
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+    <!-- 信任自签名证书 -->
+    <domain-config trustkitEnabled="false">
+        <domain includeSubdomains="true">47.103.11.151</domain>
+        <trust-anchors>
+            <certificates src="@raw/trusted_cert" />
+            <certificates src="system" />
+        </trust-anchors>
+    </domain-config>
+</network-security-config>

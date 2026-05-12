@@ -5,7 +5,7 @@ class AppConstants {
   static const String appVersion = '1.0.0';
 
   // API基础地址（根路径，service层补全完整路径）
-  static const String baseUrl = 'http://47.103.11.151';
+  static const String baseUrl = 'https://47.103.11.151';
 
   // 认证相关
   static const String tokenKey = 'auth_token';
