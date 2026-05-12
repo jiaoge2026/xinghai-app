@@ -26,6 +26,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _handleLogin() async {
+    debugPrint('[LoginPage] _handleLogin() called');
     if (!_formKey.currentState!.validate()) return;
     if (_isLoggingIn) return;
 
@@ -41,6 +42,7 @@ class _LoginPageState extends State<LoginPage> {
         _passwordController.text,
       );
     } catch (e) {
+      debugPrint('[LoginPage] login exception: $e');
       errorMsg = '登录异常: $e';
     }
 

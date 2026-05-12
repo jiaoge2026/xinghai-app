@@ -3,15 +3,22 @@ import '../../core/utils/storage_util.dart';
 import '../../core/constants/app_constants.dart';
 import '../models/user_model.dart';
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 
 class AuthService {
   final ApiClient _client = ApiClient();
 
   Future<UserModel> login(String username, String password) async {
+    debugPrint('[AuthService] login() called with username: $username');
+    debugPrint('[AuthService] baseUrl: ${_client.dio.options.baseUrl}');
+    debugPrint('[AuthService] full URL: ${_client.dio.options.baseUrl}/api/v1/auth/login');
+
     final resp = await _client.post('/api/v1/auth/login', data: {
       'username': username,
       'password': password,
     });
+
+    debugPrint('[AuthService] login response received: code=${resp.data['code']}');
 
     final data = resp.data;
     if (data['code'] == 0 && data['data'] != null) {

@@ -90,6 +90,7 @@ class ApiClient {
 
   /// 将DioException转换为NetworkException
   NetworkException _convertDioError(DioException error) {
+    debugPrint('[ApiClient] DioException: type=${error.type}, message=${error.message}, response=${error.response?.statusCode}');
     switch (error.type) {
       case DioExceptionType.connectionTimeout:
         return NetworkException(

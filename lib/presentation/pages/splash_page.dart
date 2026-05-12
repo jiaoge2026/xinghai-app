@@ -6,6 +6,7 @@ import '../../core/utils/storage_util.dart';
 import '../providers/auth_provider.dart';
 import 'login_page.dart';
 import 'home_page.dart';
+import 'package:flutter/foundation.dart';
 
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
@@ -22,27 +23,37 @@ class _SplashPageState extends State<SplashPage> {
   }
 
   Future<void> _checkLoginAndNavigate() async {
+    debugPrint('[SplashPage] _checkLoginAndNavigate() start');
+    debugPrint('[SplashPage] baseUrl=${AppConstants.baseUrl}');
     // 延迟一下以显示启动页
     await Future.delayed(const Duration(milliseconds: 800));
 
     final token = await StorageUtil.get(AppConstants.tokenKey);
+    debugPrint('[SplashPage] token from storage: ${token != null ? "exists(${token.length})" : "null"}');
+
     final authProvider = Get.find<AuthProvider>();
 
     if (token != null && token.isNotEmpty) {
       // 有Token，尝试加载用户信息
       try {
+        debugPrint('[SplashPage] calling checkLoginStatus()...');
         await authProvider.checkLoginStatus();
+        debugPrint('[SplashPage] checkLoginStatus done, isLoggedIn=${authProvider.isLoggedIn}');
         if (authProvider.isLoggedIn) {
+          debugPrint('[SplashPage] navigating to HomePage');
           Get.offAll(() => const HomePage());
         } else {
+          debugPrint('[SplashPage] not logged in, navigating to LoginPage');
           Get.offAll(() => const LoginPage());
         }
       } catch (e) {
+        debugPrint('[SplashPage] checkLoginStatus exception: $e');
         // Token无效，跳转登录
         Get.offAll(() => const LoginPage());
       }
     } else {
       // 无Token，跳转登录
+      debugPrint('[SplashPage] no token, navigating to LoginPage');
       Get.offAll(() => const LoginPage());
     }
   }
