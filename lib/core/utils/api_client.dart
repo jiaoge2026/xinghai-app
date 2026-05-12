@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import '../constants/app_constants.dart';
 import 'storage_util.dart';
+import 'dart:developer' as developer;
 
 /// 网络错误类型枚举
 enum NetworkErrorType {
@@ -90,7 +91,7 @@ class ApiClient {
 
   /// 将DioException转换为NetworkException
   NetworkException _convertDioError(DioException error) {
-    debugPrint('[ApiClient] DioException: type=${error.type}, message=${error.message}, response=${error.response?.statusCode}');
+    print('[ApiClient] DioException: type=${error.type}, message=${error.message}, response=${error.response?.statusCode}');
     switch (error.type) {
       case DioExceptionType.connectionTimeout:
         return NetworkException(
