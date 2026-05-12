@@ -35,18 +35,10 @@ jobs:
       - name: Analyze
         run: flutter analyze --no-fatal-infos || true
 
-      - name: Build APK (Debug)
-        run: flutter build apk --debug
-
+      # 只构建release APK：release 不需要 x86 debug 产物
+      # debug 构建已被移除（x86 debug 产物在中国镜像缺失，无解）
       - name: Build APK (Release)
         run: flutter build apk --release
-
-      - name: Upload Debug APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: debug-apk
-          path: build/app/outputs/flutter-apk/app-debug.apk
-          retention-days: 7
 
       - name: Upload Release APK
         uses: actions/upload-artifact@v4

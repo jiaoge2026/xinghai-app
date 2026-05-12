@@ -46,11 +46,20 @@ android {
         targetSdkVersion 34
         versionCode Integer.parseInt(flutterVersionCode)
         versionName flutterVersionName
+        // 只构建ARM架构，跳过x86（物理设备不需要x86产物）
+        ndk {
+            abiFilters "armeabi-v7a", "arm64-v8a"
+        }
     }
 
     buildTypes {
         release {
             signingConfig signingConfigs.debug
+        }
+        debug {
+            ndk {
+                abiFilters "armeabi-v7a", "arm64-v8a"
+            }
         }
     }
 }
