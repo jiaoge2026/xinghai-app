@@ -1,3 +1,4 @@
+// ===== 本地存储 =====
 // TabStore - 标签页状态管理 (Linear Design版本)
 import { reactive, computed } from 'vue'
 
@@ -7,6 +8,27 @@ const state = reactive({
   tabs: [],       // [{ id, title, path, component, closable }]
   activeTabId: null,
 })
+
+const saveTabs = () => {
+  try {
+    const data = state.tabs.map(t => ({ id: t.id, title: t.title, path: t.path, name: t.name, closable: t.closable }))
+    localStorage.setItem('tabs', JSON.stringify(data))
+  } catch (e) {}
+}
+
+const loadTabs = () => {
+  try {
+    const saved = localStorage.getItem('tabs')
+    if (saved) {
+      const data = JSON.parse(saved)
+      state.tabs = data
+      state.activeTabId = data[0]?.id || null
+    }
+  } catch (e) {}
+}
+
+// 初始加载
+loadTabs()
 
 export const newTabId = () => tabIdCounter++
 
@@ -122,27 +144,6 @@ export const useTabStore = () => {
     state.activeTabId = state.tabs[0]?.id || null
     saveTabs()
   }
-
-  const saveTabs = () => {
-    try {
-      const data = state.tabs.map(t => ({ id: t.id, title: t.title, path: t.path, name: t.name, closable: t.closable }))
-      localStorage.setItem('tabs', JSON.stringify(data))
-    } catch (e) {}
-  }
-
-  const loadTabs = () => {
-    try {
-      const saved = localStorage.getItem('tabs')
-      if (saved) {
-        const data = JSON.parse(saved)
-        state.tabs = data
-        state.activeTabId = data[0]?.id || null
-      }
-    } catch (e) {}
-  }
-
-  // 初始加载
-  loadTabs()
 
   return {
     // 直接引用state属性（脚本中可读写，如 tabs.splice()）

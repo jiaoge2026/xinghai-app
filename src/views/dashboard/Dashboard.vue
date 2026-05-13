@@ -2,8 +2,8 @@
   <div class="dashboard">
     <!-- 统计卡片 -->
     <el-row :gutter="16">
-      <el-col :span="6" v-for="item in stats" :key="item.title">
-        <el-card shadow="hover" class="stat-card" :body-style="{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }">
+      <el-col :span="6" v-for="(item, idx) in stats" :key="item.title">
+        <el-card shadow="hover" class="stat-card" :style="{ '--card-color': item.color }" :body-style="{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }">
           <div>
             <div class="stat-value">{{ item.value }}</div>
             <div class="stat-title">{{ item.title }}</div>
@@ -11,8 +11,8 @@
               {{ item.change >= 0 ? '↑' : '↓' }} {{ Math.abs(item.change) }}%
             </div>
           </div>
-          <div class="stat-icon" :style="{ color: item.color }">
-            <el-icon :size="36"><component :is="item.icon" /></el-icon>
+          <div class="stat-icon" :style="{ background: item.color }">
+            <el-icon :size="24" color="#fff"><component :is="item.icon" /></el-icon>
           </div>
         </el-card>
       </el-col>
@@ -272,13 +272,38 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.stat-card { cursor: default; }
-.stat-value { font-size: 28px; font-weight: bold; color: #333; }
-.stat-title { font-size: 13px; color: #999; margin-top: 4px; }
+.stat-card {
+  cursor: default;
+  border-left: 3px solid var(--card-color);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+}
+.stat-value {
+  font-size: 28px;
+  font-weight: bold;
+  color: #222;
+  line-height: 1.2;
+}
+.stat-title { font-size: 13px; color: #888; margin-top: 4px; }
 .stat-change { font-size: 12px; margin-top: 4px; }
 .stat-change.up { color: #67C23A; }
 .stat-change.down { color: #F56C6C; }
-.stat-icon { opacity: 0.7; }
+.stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.stat-icon /deep/ .el-icon {
+  font-size: 24px;
+  color: #fff;
+}
 .card-header { display: flex; justify-content: space-between; align-items: center; }
 
 .pending-list { display: flex; flex-direction: column; gap: 8px; }
