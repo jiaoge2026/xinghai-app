@@ -1,8 +1,10 @@
 <script setup>
 import { ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { Close, ArrowDown } from '@element-plus/icons-vue'
 import { useTabStore } from '@/stores/tab'
 
+const router = useRouter()
 const tabStore = useTabStore()
 const scrollRef = ref(null)
 
@@ -47,7 +49,7 @@ watch(() => tabStore.activeTabId, () => {
             v-for="tab in tabStore.tabs"
             :key="tab.id"
             :class="['tab-item', { active: tab.id === tabStore.activeTabId }]"
-            @click="tabStore.switchTab(tab.id)"
+            @click="router.push(tab.path)"
           >
             <span class="tab-title">{{ tab.title }}</span>
             <el-icon
