@@ -132,18 +132,47 @@
         </div>
       </el-header>
 
+      <!-- 标签页栏 -->
+      <div class="tab-bar" v-if="tabStore.tabs.value?.length > 0">
+        <div class="tab-list">
+          <div
+            v-for="tab in tabStore.tabs.value"
+            :key="tab.id"
+            class="tab-item"
+            :class="{ active: tab.id === tabStore.activeTabId.value }"
+            @click="switchTab(tab)"
+          >
+            <span class="tab-title">{{ tab.title }}</span>
+            <el-icon
+              v-if="tab.closable"
+              class="tab-close"
+              @click.stop="closeTab(tab.id)"
+            ><Close /></el-icon>
+          </div>
+        </div>
+      </div>
+
       <!-- 主内容 -->
       <el-main class="layout-main">
-        <router-view />
+        <!-- 动态 Tab 内容 -->
+        <component
+          v-if="activeComponent"
+          :is="activeComponent"
+          :key="tabStore.activeTabId.value"
+        />
+        <!-- 无 Tab 时显示路由默认页面 -->
+        <router-view v-else />
       </el-main>
     </el-container>
   </el-container>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, reactive } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/user'
+import { useTabStore } from '@/stores/tab'
+import COMPONENT_MAP from '@/utils/tab'
 import {
   DataAnalysis, Tools, Box, Guide, Money, User, UserFilled,
   Shop, Medal, Van, Phone, Stamp, CircleCheck, Setting,
@@ -151,8 +180,46 @@ import {
 } from '@element-plus/icons-vue'
 
 const userStore = useUserStore()
+const tabStore = useTabStore()
 const router = useRouter()
 const route = useRoute()
+
+// Tab 逻辑：resolvedComponents 缓存已解析的组件对象
+const resolvedComponents = reactive({})
+const loadingComponents = reactive({})
+
+const activeComponent = computed(() => {
+  const activeTab = tabStore.getActiveTab()
+  if (!activeTab) return null
+  const name = activeTab.name
+  // 已有缓存的直接返回
+  if (resolvedComponents[name]) return resolvedComponents[name]
+  // 正在加载中的返回 null（避免重复触发）
+  if (loadingComponents[name]) return null
+  // 触发异步加载
+  const loader = COMPONENT_MAP[name]
+  if (loader) {
+    loadingComponents[name] = true
+    loader().then(mod => {
+      resolvedComponents[name] = mod.default || mod
+      loadingComponents[name] = false
+    }).catch(() => {
+      delete loadingComponents[name]
+    })
+  }
+  return null
+})
+
+const switchTab = (tab) => {
+  tabStore.setActiveTab(tab.id)
+  router.push(tab.path)
+}
+
+const closeTab = (tabId) => {
+  tabStore.closeTab(tabId)
+  const active = tabStore.getActiveTab()
+  if (active) router.push(active.path)
+}
 
 // 模式切换
 const isTileMode = ref(false)
@@ -350,4 +417,64 @@ const handleCommand = (command) => {
 .fade-slide-enter-from .tile-panel { transform: translateX(-20px); }
 .fade-slide-leave-to { opacity: 0; }
 .fade-slide-leave-to .tile-panel { transform: translateX(-20px); }
+
+/* ===== 标签页栏 ===== */
+.tab-bar {
+  background: #fff;
+  border-bottom: 1px solid #e8e8e8;
+  padding: 0 8px;
+  display: flex;
+  align-items: center;
+  height: 38px;
+  overflow: hidden;
+}
+.tab-list {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  overflow-x: auto;
+  flex: 1;
+}
+.tab-list::-webkit-scrollbar { display: none; }
+.tab-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 6px 6px 0 0;
+  cursor: pointer;
+  font-size: 13px;
+  color: #666;
+  background: #f5f7fa;
+  border: 1px solid transparent;
+  border-bottom: none;
+  white-space: nowrap;
+  max-width: 180px;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+.tab-item:hover {
+  background: #ecf5ff;
+  color: #409EFF;
+}
+.tab-item.active {
+  background: #409EFF;
+  color: #fff;
+  border-color: #409EFF;
+}
+.tab-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
+}
+.tab-close {
+  font-size: 12px;
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+.tab-close:hover {
+  opacity: 1;
+  background: rgba(0,0,0,0.1);
+  border-radius: 3px;
+}
 </style>

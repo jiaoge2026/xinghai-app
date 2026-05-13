@@ -35,7 +35,7 @@
       <el-dialog v-model="popupVisible" title="来电弹屏" width="500px" :close-on-click-modal="false">
         <div v-if="popupData" class="popup-box">
           <div class="popup-header">
-            <el-icon name="phone" size="32" color="#67C23A" />
+            <el-icon size="32" color="#67C23A"><Phone /></el-icon>
             <span class="popup-phone">{{ popupData.phone }}</span>
             <el-tag :type="popupData.matched ? 'success' : 'info'" size="large">
               {{ popupData.matched ? '已匹配客户' : '陌生来电' }}
@@ -110,7 +110,7 @@
 <script setup>
 import { ref, reactive } from "vue";
 import { ElMessage } from "element-plus";
-import { phone } from "@element-plus/icons-vue";
+import { Phone } from "@element-plus/icons-vue";
 
 const API = "/api/fsm/caller-id";
 
