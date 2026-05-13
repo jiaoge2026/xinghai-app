@@ -1,501 +1,780 @@
 <template>
-  <el-container class="layout-container">
+  <div class="layout-container" :class="{ 'is-collapsed': isCollapsed }">
 
-    <!-- ==================== 顶部栏 ==================== -->
-    <el-header class="layout-header">
-      <div class="header-left">
-        <div class="logo-area">
-          <div class="logo-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <rect x="3" y="3" width="8" height="8" rx="2" fill="#409EFF"/>
-              <rect x="13" y="3" width="8" height="8" rx="2" fill="#409EFF" opacity="0.6"/>
-              <rect x="3" y="13" width="8" height="8" rx="2" fill="#409EFF" opacity="0.6"/>
-              <rect x="13" y="13" width="8" height="8" rx="2" fill="#409EFF" opacity="0.3"/>
-            </svg>
-          </div>
-          <span class="logo-text">星海ERP</span>
+    <!-- ========== 侧边栏 ========== -->
+    <aside class="ls-sidebar" :class="{ 'is-collapsed': isCollapsed }">
+      <!-- Logo区 -->
+      <div class="ls-logo">
+        <div class="ls-logo-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <rect x="3" y="3" width="8" height="8" rx="2" fill="white"/>
+            <rect x="13" y="3" width="8" height="8" rx="2" fill="white" opacity="0.6"/>
+            <rect x="3" y="13" width="8" height="8" rx="2" fill="white" opacity="0.6"/>
+            <rect x="13" y="13" width="8" height="8" rx="2" fill="white" opacity="0.3"/>
+          </svg>
         </div>
-        <div class="header-divider"></div>
-        <span class="page-title">{{ currentTitle }}</span>
-      </div>
-
-      <div class="header-right">
-        <!-- 账套切换 -->
-        <el-dropdown trigger="click" @command="userStore.setAccountType">
-          <span class="account-btn">
-            <el-icon :size="13"><OfficeBuilding /></el-icon>
-            {{ userStore.accountType === 'BUSINESS' ? '业务' : '财务' }}
-            <el-icon :size="11"><ArrowDown /></el-icon>
-          </span>
-          <template #dropdown>
-            <el-dropdown-menu>
-              <el-dropdown-item command="BUSINESS" :disabled="userStore.accountType === 'BUSINESS'">
-                <el-icon><Grid /></el-icon> 业务端
-              </el-dropdown-item>
-              <el-dropdown-item command="FINANCE" :disabled="userStore.accountType === 'FINANCE'">
-                <el-icon><Money /></el-icon> 财务端
-              </el-dropdown-item>
-            </el-dropdown-menu>
-          </template>
-        </el-dropdown>
-
-        <div class="header-sep"></div>
-
-        <!-- 用户 -->
-        <el-dropdown trigger="click" @command="handleCommand">
-          <span class="user-chip">
-            <el-icon :size="13"><UserFilled /></el-icon>
-            {{ userStore.userInfo?.realName || '管理员' }}
-          </span>
-          <template #dropdown>
-            <el-dropdown-menu>
-              <el-dropdown-item command="logout" divided>退出登录</el-dropdown-item>
-            </el-dropdown-menu>
-          </template>
-        </el-dropdown>
-      </div>
-    </el-header>
-
-    <!-- ==================== 标签栏（始终显示） ==================== -->
-    <TabBar />
-
-    <!-- ==================== 主区域 ==================== -->
-    <el-container class="main-area">
-
-      <!-- 左侧一级导航 -->
-      <el-aside class="layout-aside">
-        <!-- 侧边栏容器：hover事件在document级处理（避免el-menu-item内部.stopPropagation冲突） -->
-        <div class="nav-sidebar">
-          <!-- 一级菜单：只显示父级，hover悬浮面板 -->
-          <el-menu
-            :default-active="activeMenuPath"
-            :collapse="false"
-            :router="false"
-            class="sidebar-menu"
-          >
-            <el-menu-item
-              index="/dashboard"
-              class="dashboard-item nav-item"
-            >
-              <el-icon><DataAnalysis /></el-icon>
-              <template #title>驾驶舱</template>
-            </el-menu-item>
-
-            <template v-for="menu in userStore.filteredMenus" :key="menu.id">
-              <el-menu-item
-                v-if="menu.children?.length"
-                :index="menu.path || String(menu.id)"
-                class="nav-item has-children"
-              >
-                <el-icon><component :is="getIcon(menu.icon)" /></el-icon>
-                <template #title>{{ menu.name }}</template>
-              </el-menu-item>
-              <el-menu-item
-                v-else
-                :index="menu.path"
-                class="nav-item no-children"
-              >
-                <el-icon><component :is="getIcon(menu.icon)" /></el-icon>
-                <template #title>{{ menu.name }}</template>
-              </el-menu-item>
-            </template>
-          </el-menu>
-        </div>
-
-        <!-- 悬浮面板：从左侧菜单右侧展开，覆盖主内容区 -->
-        <transition name="panel-slide">
-          <div
-            v-if="hoveredNav && activePanel"
-            class="float-panel"
-            @mouseenter="cancelLeaveTimer"
-            @mouseleave="onSidebarLeave"
-            @click.stop
-          >
-            <!-- 面板头部 -->
-            <div class="panel-header">
-              <div class="panel-header-icon">
-                <el-icon :size="16" color="#fff"><component :is="getIcon(activePanel.icon)" /></el-icon>
-              </div>
-              <div class="panel-header-text">
-                <span class="panel-title">{{ activePanel.name }}</span>
-                <span class="panel-subtitle">{{ activePanel.children?.length || 0 }} 个功能</span>
-              </div>
-              <button class="panel-close" @click="closePanel">
-                <el-icon :size="14"><Close /></el-icon>
-              </button>
-            </div>
-
-            <!-- 子菜单网格（无子菜单时显示直接进入提示） -->
-            <div
-              v-if="!activePanel.children?.length"
-              class="panel-direct"
-              @click.stop="handleMenuClick(activePanel.path, activePanel.path)"
-            >
-              <el-icon><ArrowRight /></el-icon>
-              <span>进入 {{ activePanel.name }}</span>
-            </div>
-            <div v-else class="panel-grid">
-              <div
-                v-for="child in activePanel.children"
-                :key="child.path"
-                class="panel-card"
-                :class="{ 'is-active': currentPath === child.path }"
-                @click.stop="handleMenuClick(child.path, child.path)"
-              >
-                <div class="card-icon-wrap">
-                  <el-icon :size="20" color="#409EFF"><component :is="getIcon(child.icon)" /></el-icon>
-                </div>
-                <div class="card-text">
-                  <div class="card-name">{{ child.name }}</div>
-                </div>
-              </div>
-            </div>
-          </div>
+        <transition name="ls-label-fade">
+          <span v-if="!isCollapsed" class="ls-logo-text">星海ERP</span>
         </transition>
-      </el-aside>
+      </div>
 
-      <!-- ==================== 内容区 ==================== -->
-      <el-container class="content-wrapper">
-        <el-main class="layout-main">
-          <router-view />
-        </el-main>
-      </el-container>
-    </el-container>
-  </el-container>
+      <!-- 导航区 -->
+      <div class="ls-nav">
+        <template v-for="menu in userStore.filteredMenus" :key="menu.id">
+          <!-- 有子菜单：hover显示悬浮面板 -->
+          <template v-if="menu.children && menu.children.length">
+            <div
+              class="ls-item ls-item--group"
+              :class="{ 'is-open': openGroups.includes(menu.path) }"
+              :data-path="menu.path"
+              @click="toggleGroup(menu.path)"
+              @mouseover="showPanel(menu)"
+            >
+              <div class="ls-item-row">
+                <el-icon class="ls-item-icon" :size="16"><component :is="getIcon(menu.icon)" /></el-icon>
+                <transition name="ls-label-fade">
+                  <span v-if="!isCollapsed">{{ menu.name }}</span>
+                </transition>
+              </div>
+              <transition name="ls-label-fade">
+                <el-icon v-if="!isCollapsed" class="ls-item-arrow" :size="12"><ArrowRight /></el-icon>
+              </transition>
+            </div>
+          </template>
+          <!-- 无子菜单 -->
+          <div
+            v-else
+            class="ls-item"
+            :class="{ 'is-active': currentPath === menu.path }"
+            :data-path="menu.path"
+            @click="handleNavClick(menu.path)"
+          >
+            <el-icon class="ls-item-icon" :size="16"><component :is="getIcon(menu.icon)" /></el-icon>
+            <transition name="ls-label-fade">
+              <span v-if="!isCollapsed" class="ls-item-row">{{ menu.name }}</span>
+            </transition>
+          </div>
+        </template>
+      </div>
+
+      <!-- 底部折叠按钮 -->
+      <div class="ls-footer">
+        <div
+          class="ls-item ls-item--toggle"
+          @click="toggleCollapse"
+        >
+          <el-icon class="ls-item-icon" :size="16">
+            <DArrowLeft v-if="!isCollapsed" />
+            <DArrowRight v-else />
+          </el-icon>
+          <transition name="ls-label-fade">
+            <span v-if="!isCollapsed">收起</span>
+          </transition>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ========== 主区域 ========== -->
+    <div class="layout-main-wrapper">
+      <!-- 顶栏 -->
+      <header class="layout-header">
+        <div class="header-left">
+          <div class="logo-area">
+            <div class="logo-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <rect x="3" y="3" width="8" height="8" rx="2" fill="#5e6ad2"/>
+                <rect x="13" y="3" width="8" height="8" rx="2" fill="#5e6ad2" opacity="0.6"/>
+                <rect x="3" y="13" width="8" height="8" rx="2" fill="#5e6ad2" opacity="0.6"/>
+                <rect x="13" y="13" width="8" height="8" rx="2" fill="#5e6ad2" opacity="0.3"/>
+              </svg>
+            </div>
+            <span class="logo-text">星海ERP</span>
+          </div>
+          <div class="header-divider"></div>
+          <span class="page-title">{{ currentTitle }}</span>
+        </div>
+        <div class="header-right">
+          <!-- 账套切换 -->
+          <el-dropdown trigger="click" @command="userStore.setAccountType">
+            <span class="account-btn">
+              <el-icon :size="13"><OfficeBuilding /></el-icon>
+              {{ userStore.accountType === 'BUSINESS' ? '业务' : '财务' }}
+              <el-icon :size="11"><ArrowDown /></el-icon>
+            </span>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item command="BUSINESS" :disabled="userStore.accountType === 'BUSINESS'">
+                  <el-icon><Grid /></el-icon> 业务端
+                </el-dropdown-item>
+                <el-dropdown-item command="FINANCE" :disabled="userStore.accountType === 'FINANCE'">
+                  <el-icon><Money /></el-icon> 财务端
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
+          <div class="header-sep"></div>
+          <!-- 用户 -->
+          <el-dropdown trigger="click" @command="handleCommand">
+            <span class="user-chip">
+              <el-icon :size="13"><UserFilled /></el-icon>
+              {{ userStore.userInfo?.realName || '管理员' }}
+            </span>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item command="logout" divided>退出登录</el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
+        </div>
+      </header>
+
+      <!-- 标签栏 -->
+      <TabBar />
+
+      <!-- 内容区 -->
+      <main class="layout-main">
+        <router-view />
+      </main>
+    </div>
+
+    <!-- ========== 悬浮面板（3列卡片网格） ========== -->
+    <transition name="flat-fade">
+      <div
+        v-if="activePanel"
+        class="flat-panel"
+        @mouseover="hoverPanel"
+        @mouseleave="leavePanel"
+        @click.stop
+      >
+        <div class="flat-panel-header">
+          <el-icon class="flat-panel-icon" :size="20" color="#7170ff"><component :is="getIcon(activePanel.icon)" /></el-icon>
+          <span class="flat-panel-title">{{ activePanel.name }}</span>
+          <span class="flat-panel-hint">{{ activePanel.children?.length || 0 }} 个功能</span>
+          <el-icon class="flat-panel-close" :size="14" @click="closePanel"><Close /></el-icon>
+        </div>
+        <div class="flat-panel-grid">
+          <div
+            v-for="child in (activePanel.children || [])"
+            :key="child.path"
+            class="flat-item"
+            :class="{ 'is-active': currentPath === child.path }"
+            @click="handlePanelClick(child.path)"
+          >
+            <div class="flat-item-icon">
+              <el-icon :size="18"><component :is="getIcon(child.icon || menu.icon)" /></el-icon>
+            </div>
+            <div class="flat-item-info">
+              <div class="flat-item-name">{{ child.name }}</div>
+              <div class="flat-item-desc">功能模块</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </transition>
+
+  </div>
 </template>
 
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/user'
-import { useTabStore } from '@/stores/tab'
-import TabBar from '@/components/tab/TabBar.vue'
 import {
-  DataAnalysis, Grid, Menu, UserFilled, ArrowRight,
-  ArrowDown, OfficeBuilding, Money, Setting, Tools, Box,
-  Guide, User, Shop, Medal, Van, Phone, Stamp,
-  CircleCheck, ChatDotRound, Connection, Box as BoxIcon, Close
+  DataAnalysis, Grid, OfficeBuilding, Money, UserFilled,
+  ArrowDown, ArrowRight, DArrowLeft, DArrowRight, Close
 } from '@element-plus/icons-vue'
 
-const userStore = useUserStore()
-const tabStore = useTabStore()
 const router = useRouter()
 const route = useRoute()
+const userStore = useUserStore()
 
-// ========== 悬浮面板状态 ==========
-const hoveredNav = ref(null)
-const activePanel = ref(null)
-let leaveTimer = null
-const STORAGE_KEY = 'xinghai_layout_mode'
-const isTiledMode = ref(localStorage.getItem(STORAGE_KEY) === 'tiled')
+// 折叠状态
+const isCollapsed = ref(false)
 
-function setMode(tiled) {
-  isTiledMode.value = tiled
-  localStorage.setItem(STORAGE_KEY, tiled ? 'tiled' : 'classic')
-}
-
-// ========== 侧边栏宽度 ==========
-const asideWidth = computed(() => 220)
-
-// ========== 权限 ==========
-const isSuperAdmin = computed(() => userStore.userInfo?.username === 'admin')
-function hasPermission(menu) {
-  if (isSuperAdmin.value) return true
-  if (!menu.permissionCode) return true
-  return userStore.permissions?.includes(menu.permissionCode) ?? true
-}
-
-// ========== 图标映射 ==========
-const iconMap = {
-  Tools, Box: BoxIcon, Guide, Money, User, UserFilled, Shop, Medal, Van, Phone,
-  Stamp, CircleCheck, Setting, ChatDotRound, Connection
-}
-function getIcon(name) {
-  return iconMap[name] || Setting
-}
-
-// ========== 当前路由 ==========
+// 当前路由
 const currentPath = computed(() => route.path)
-const activeMenuPath = computed(() => route.path)
+const currentTitle = computed(() => {
+  const nameMap = {
+    '/dashboard': '驾驶舱',
+    '/fsm/work-orders': '工单管理',
+    '/wms/parts': '配件管理',
+    '/wms/warehouses': '仓库管理',
+    '/wms/inventory': '库存查询',
+    '/sales/customer': '客户管理',
+    '/sales/opportunity': '商机管理',
+    '/sales/quote': '报价管理',
+    '/retail/pos': '零售收银',
+    '/crm/contacts': '联系人',
+    '/finance/vouchers': '凭证管理',
+    '/hr/employees': '员工管理',
+    '/system/settings': '系统设置',
+  }
+  return nameMap[currentPath.value] || '星海ERP'
+})
 
-const routeNameMap = {
-  '/dashboard': '驾驶舱',
-  '/fsm/work-orders': '工单管理',
-  '/wms/parts': '配件管理',
-  '/wms/warehouses': '仓库管理',
-  '/wms/stock': '库存台账',
-  '/finance/vouchers': '凭证管理',
-  '/finance/reports': '财务报表',
-  '/hr/employees': '员工管理',
-  '/hr/attendance': '考勤管理',
-  '/hr/salary': '薪资管理',
-  '/hr/commission': '提成管理',
-  '/crm/customers': '客户管理',
-  '/crm/contacts': '联系人管理',
-  '/retail/orders': '销售订单',
-  '/retail/products': '商品管理',
-  '/retail/stores': '门店管理',
-  '/member/members': '会员管理',
-  '/logistics/drivers': '司机管理',
-  '/logistics/delivery': '配送单',
-  '/callcenter/records': '来电记录',
-  '/qa/inspections': '质量检查',
-  '/qa/feedback': '客户反馈',
-  '/approval/list': '审批流程',
-  '/approval/definition': '流程模板',
-  '/system/users': '用户管理',
-  '/system/roles': '角色管理',
-  '/system/menus': '权限管理',
-  '/system/role-config': '角色配置',
-  '/system/config': '系统配置',
-  '/system/upgrade': '升级管理',
-  '/ai/chat': 'AI助手',
-  '/dispatch/board': '智能派工',
-  '/sales/customers': '工程客户',
-  '/sales/quotes': '报价单',
-  '/sales/project-orders': '项目订单',
-  '/sales/receivables': '应收款',
-  '/haier/sync': '海尔同步',
-  '/haier/accounts': '海尔账号',
-  '/haier/logs': '同步日志',
-  '/report/work-orders': '工单报表',
+// 展开的分组
+const openGroups = ref([])
+
+// 悬浮面板
+const activePanel = ref(null)
+let hoverTimer = null
+
+// 图标映射
+const iconMap = {
+  DataAnalysis, Grid, OfficeBuilding, Money, UserFilled,
+  ArrowDown, ArrowRight, DArrowLeft, DArrowRight, Close
 }
-const currentTitle = computed(() => routeNameMap[route.path] || route.meta?.title || '星海ERP')
 
+function getIcon(name) {
+  return iconMap[name] || Grid
+}
 
-
-function onMenuHover(menu) {
-  cancelLeaveTimer()
-  hoveredNav.value = menu.path
+// 悬浮面板显示
+function showPanel(menu) {
+  if (!menu.children?.length) return
   activePanel.value = menu
+  openGroups.value = []
 }
 
+function hoverPanel() {
+  clearTimeout(hoverTimer)
+}
+
+function leavePanel() {
+  clearTimeout(hoverTimer)
+  hoverTimer = setTimeout(() => {
+    activePanel.value = null
+  }, 200)
+}
+
+// 切换分组展开/收起
+function toggleGroup(path) {
+  if (isCollapsed.value) {
+    toggleCollapse()
+    return
+  }
+  const idx = openGroups.value.indexOf(path)
+  if (idx >= 0) {
+    openGroups.value.splice(idx, 1)
+  } else {
+    openGroups.value.push(path)
+  }
+}
+
+// 导航点击
+function handleNavClick(path) {
+  if (!path) return
+  router.push(path)
+  closePanel()
+}
+
+// 面板点击
+function handlePanelClick(path) {
+  if (!path) return
+  router.push(path)
+  closePanel()
+}
+
+// 折叠
+function toggleCollapse() {
+  isCollapsed.value = !isCollapsed.value
+  if (isCollapsed.value) {
+    closePanel()
+    openGroups.value = []
+  }
+}
+
+// 关闭面板
 function closePanel() {
-  hoveredNav.value = null
   activePanel.value = null
+  openGroups.value = []
+  clearTimeout(hoverTimer)
 }
 
-function handleMenuClick(menuPath, targetPath) {
-  if (!targetPath) return
-  const base = window.location.origin
-  window.location.href = base + targetPath
+// 鼠标离开sidebar时延迟关面板
+function onSidebarMouseLeave() {
+  hoverTimer = setTimeout(() => {
+    activePanel.value = null
+  }, 200)
 }
 
 onMounted(() => {
-  const sidebar = document.querySelector('.nav-sidebar')
-  if (!sidebar) return
-  sidebar.addEventListener('mouseover', onSidebarMouseOver, true)
-  sidebar.addEventListener('click', onSidebarClick, true)
-})
-
-onUnmounted(() => {
-  const sidebar = document.querySelector('.nav-sidebar')
-  if (!sidebar) return
-  sidebar.removeEventListener('mouseover', onSidebarMouseOver, true)
-  sidebar.removeEventListener('click', onSidebarClick, true)
-  cancelLeaveTimer()
-})
-
-// sidebar容器拦截hover事件（capture阶段，优先于el-menu的事件处理）
-function onSidebarMouseOver(e) {
-  const menuItem = e.target.closest('.el-menu-item')
-  if (!menuItem) return
-  cancelLeaveTimer()
-  const index = menuItem.getAttribute('index')
-  if (!index) return
-  let menuData = null
-  if (index === '/dashboard') {
-    menuData = { path: '/dashboard', name: '驾驶舱', icon: 'DataAnalysis', children: [] }
-  } else {
-    const found = userStore.filteredMenus.find(m => m.path === index)
-    if (!found) return
-    menuData = { path: found.path, name: found.name, icon: found.icon, children: found.children || [] }
+  const sidebar = document.querySelector('.ls-sidebar')
+  if (sidebar) {
+    sidebar.addEventListener('mouseleave', onSidebarMouseLeave, true)
   }
-  hoveredNav.value = menuData.path
-  activePanel.value = menuData
-}
+})
+onUnmounted(() => {
+  const sidebar = document.querySelector('.ls-sidebar')
+  if (sidebar) {
+    sidebar.removeEventListener('mouseleave', onSidebarMouseLeave, true)
+  }
+  clearTimeout(hoverTimer)
+})
 
-// sidebar容器拦截点击事件（capture阶段，阻止el-menu的document委托）
-function onSidebarClick(e) {
-  const menuItem = e.target.closest('.el-menu-item')
-  if (!menuItem) return
-  e.stopPropagation()
-  e.preventDefault()
-  const index = menuItem.getAttribute('index')
-  if (!index) return
-  window.location.href = window.location.origin + index
-}
+// 路由变化关闭面板
+watch(() => route.path, () => closePanel())
 
-function onSidebarLeave() {
-  leaveTimer = setTimeout(() => {
-    hoveredNav.value = null
-    activePanel.value = null
-  }, 180)
-}
+// 账套切换时关闭面板
+watch(() => userStore.accountType, () => closePanel())
 
-function cancelLeaveTimer() {
-  if (leaveTimer) { clearTimeout(leaveTimer); leaveTimer = null }
-}
-
-// ========== 用户菜单 ==========
+// 指令处理
 function handleCommand(cmd) {
   if (cmd === 'logout') {
     userStore.logout()
     router.push('/login')
   }
 }
-
-// ========== 路由变化时同步Tab ==========
-watch(() => route.path, (path) => {
-  // 路由变化时自动关闭悬浮面板
-  hoveredNav.value = null
-  activePanel.value = null
-  if (path && path !== '/login') {
-    tabStore.addTab({
-      path,
-      title: routeNameMap[path] || route.meta?.title || '未命名',
-      name: route.name
-    })
-  }
-}, { immediate: true })
 </script>
+
 <style scoped>
 /* ========== 布局容器 ========== */
 .layout-container {
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  --primary: #409EFF;
-  --primary-light: #53A8FF;
-  --primary-dark: #337ECC;
-  --sidebar-bg: #0f1011;
-  --sidebar-text: #d0d6e0;
-  --sidebar-text-dim: #6b7280;
-  --sidebar-hover-bg: rgba(255,255,255,0.06);
-  --sidebar-active-bg: rgba(64,158,255,0.15);
+  --sidebar-w: 220px;
+  --sidebar-collapsed-w: 56px;
   --header-h: 52px;
   --tabbar-h: 40px;
+  --ls-bg: #0f1011;
+  --ls-surface: #191a1b;
+  --ls-elevated: #28282c;
+  --ls-border: rgba(255,255,255,.06);
+  --ls-border-std: rgba(255,255,255,.08);
+  --ls-text-pri: #f7f8f8;
+  --ls-text-sec: #d0d6e0;
+  --ls-text-ter: #8a8f98;
+  --ls-text-muted: #62666d;
+  --ls-accent: #7170ff;
+  --ls-accent-bg: rgba(113,112,255,.15);
+
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  font-family: Inter, system-ui, -apple-system, sans-serif;
 }
 
-/* ========== 顶部栏 ========== */
-.layout-header {
+/* ========== 侧边栏 ========== */
+.ls-sidebar {
+  width: var(--sidebar-w);
+  background: var(--ls-bg);
+  border-right: 1px solid var(--ls-border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  overflow: hidden;
+  transition: width .22s cubic-bezier(.4,0,.2,1);
+  position: relative;
+  z-index: 100;
+}
+.ls-sidebar.is-collapsed {
+  width: var(--sidebar-collapsed-w);
+}
+
+/* ========== Logo区 ========== */
+.ls-logo {
   height: var(--header-h);
-  background: linear-gradient(to right, #fff 0%, #f8f9fb 60%, #e8eaef 100%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--ls-border);
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.ls-logo-icon {
+  width: 28px;
+  height: 28px;
+  background: var(--ls-accent);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #fff;
+}
+.ls-logo-text {
+  color: var(--ls-text-pri);
+  font-size: 14px;
+  font-weight: 590;
+  letter-spacing: -.01em;
+  white-space: nowrap;
+}
+
+/* ========== 导航区 ========== */
+.ls-nav {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 8px 0;
+}
+.ls-nav::-webkit-scrollbar { width: 4px; }
+.ls-nav::-webkit-scrollbar-track { background: transparent; }
+.ls-nav::-webkit-scrollbar-thumb { background: #ffffff14; border-radius: 2px; }
+
+/* ========== 菜单项 ========== */
+.ls-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 0 8px;
+  height: 34px;
+  border-radius: 6px;
+  margin: 1px 8px;
+  cursor: pointer;
+  color: var(--ls-text-ter);
+  font-size: 13px;
+  font-weight: 510;
+  letter-spacing: -.01em;
+  transition: background .1s, color .1s;
+  white-space: nowrap;
+  user-select: none;
+}
+.ls-item-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+.ls-item:hover {
+  background: #ffffff0d;
+  color: var(--ls-text-sec);
+}
+.ls-item.is-active {
+  background: var(--ls-accent-bg);
+  color: var(--ls-text-pri);
+}
+.ls-item.is-active .ls-item-icon {
+  color: var(--ls-accent);
+}
+
+.ls-item--group {
+  font-size: 12px;
+  font-weight: 590;
+  letter-spacing: .01em;
+  text-transform: uppercase;
+  color: var(--ls-text-ter);
+}
+.ls-item--group:hover {
+  color: var(--ls-text-sec);
+}
+.ls-item--group.is-open .ls-item-arrow {
+  transform: rotate(90deg);
+}
+.ls-item-arrow {
+  color: var(--ls-text-muted);
+  flex-shrink: 0;
+  transition: transform .15s;
+}
+
+.ls-item--child {
+  height: 30px;
+  font-size: 13px;
+  font-weight: 400;
+  padding-left: 36px;
+  color: var(--ls-text-ter);
+}
+.ls-item--child:hover {
+  color: var(--ls-text-sec);
+}
+.ls-item--child.is-active {
+  background: var(--ls-accent-bg);
+  color: var(--ls-text-pri);
+}
+.ls-item--child.is-active .ls-item-icon {
+  color: var(--ls-accent);
+}
+
+.ls-children {
+  overflow: hidden;
+  margin-bottom: 2px;
+}
+
+.ls-item-icon {
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--ls-text-muted);
+  transition: color .1s;
+}
+.ls-item:hover .ls-item-icon {
+  color: var(--ls-text-ter);
+}
+
+/* ========== 底部 ========== */
+.ls-footer {
+  padding: 8px 0;
+  border-top: 1px solid var(--ls-border);
+  flex-shrink: 0;
+}
+.ls-item--toggle {
+  color: var(--ls-text-muted);
+  font-size: 12px;
+  justify-content: flex-start;
+}
+.ls-item--toggle:hover {
+  color: var(--ls-text-ter);
+  background: #ffffff0d;
+}
+
+/* ========== 主区域 ========== */
+.layout-main-wrapper {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ========== 顶栏 ========== */
+.layout-header {
+  background: #fff;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 16px;
-  box-shadow: 0 1px 0 rgba(0,0,0,0.06);
+  box-shadow: 0 1px 4px #00000014;
+  height: var(--header-h);
+  gap: 8px;
   flex-shrink: 0;
-  z-index: 100;
-  position: relative;
 }
-.layout-header::after {
-  content: '';
-  position: absolute;
-  right: 0; top: 0; bottom: 0;
-  width: 220px;
-  background: linear-gradient(to right, transparent, rgba(15,16,17,0.08));
-  pointer-events: none;
-}
-.header-left { display: flex; align-items: center; gap: 12px; position: relative; z-index: 1; }
-.logo-area { display: flex; align-items: center; gap: 8px; }
-.logo-icon { width: 28px; height: 28px; background: linear-gradient(135deg, #409EFF 0%, #337ECC 100%); border-radius: 7px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 2px 8px rgba(64,158,255,0.35); }
-.logo-text { font-size: 14px; font-weight: 700; color: #1a1a1a; letter-spacing: -0.01em; white-space: nowrap; }
-.header-divider { width: 1px; height: 20px; background: #d0d5de; }
-.page-title { font-size: 14px; font-weight: 600; color: #333; }
-.header-right { display: flex; align-items: center; gap: 6px; position: relative; z-index: 1; background: rgba(15,16,17,0.04); border-radius: 8px; padding: 3px 6px; border: 1px solid rgba(0,0,0,0.06); }
-.header-sep { width: 1px; height: 18px; background: rgba(0,0,0,0.08); margin: 0 2px; }
-.account-btn { display: flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(64,158,255,0.25); font-size: 12px; color: #409EFF; font-weight: 600; cursor: pointer; transition: all 0.2s; background: rgba(64,158,255,0.05); }
-.account-btn:hover { background: rgba(64,158,255,0.12); border-color: #409EFF; }
-.user-chip { display: flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 6px; font-size: 12px; color: #555; cursor: pointer; transition: all 0.2s; }
-.user-chip:hover { background: rgba(0,0,0,0.05); color: #333; }
-
-/* ========== 主区域 ========== */
-.main-area { flex: 1; overflow: hidden; display: flex; }
-
-/* ========== 侧边栏（固定220px） ========== */
-.layout-aside {
-  width: 220px;
-  background: var(--sidebar-bg);
-  border-right: 1px solid rgba(255,255,255,0.06);
+.header-left {
   display: flex;
-  flex-direction: column;
-  flex-shrink: 0;
-  position: relative;
-  z-index: 50;
-  overflow: visible;
+  align-items: center;
+  gap: 8px;
 }
-.nav-sidebar { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; }
-
-/* ========== 菜单（一级13px） ========== */
-.sidebar-menu { border-right: none !important; width: 100% !important; flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; background: transparent !important; padding: 8px 0; }
-.sidebar-menu::-webkit-scrollbar { width: 4px; }
-.sidebar-menu::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
-
-.nav-item,
-.dashboard-item {
-  height: 40px;
-  line-height: 40px;
-  padding-left: 16px !important;
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.logo-area {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.logo-icon {
+  width: 28px;
+  height: 28px;
+  background: linear-gradient(135deg, #5e6ad2, #7170ff);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.logo-text {
+  font-size: 15px;
+  font-weight: 600;
+  color: #2c2d2e;
+  letter-spacing: -.01em;
+}
+.header-divider {
+  width: 1px;
+  height: 18px;
+  background: #e4e7ed;
+}
+.page-title {
+  font-size: 14px;
+  color: #606266;
+}
+.account-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(94,106,210,.3);
+  color: #7170ff;
   font-size: 13px;
-  font-weight: 500;
-  color: var(--sidebar-text) !important;
-  border-radius: 0;
-  transition: background 0.15s, color 0.15s;
-  margin: 0 !important;
+  cursor: pointer;
+  transition: all .15s;
 }
-.dashboard-item { margin-bottom: 4px !important; }
-.nav-item:hover, .dashboard-item:hover { background: var(--sidebar-hover-bg) !important; color: #fff !important; }
-.nav-item.is-active, .dashboard-item.is-active { background: var(--sidebar-active-bg) !important; color: var(--primary) !important; }
-
-/* ========== 悬浮面板（520px宽，向右展开） ========== */
-.float-panel {
-  position: absolute;
-  left: 220px;
-  top: 0;
-  width: 520px;
-  height: calc(100vh - 52px - 40px);
-  background: rgba(26, 27, 30, 0.92);
-  backdrop-filter: blur(20px) saturate(1.4);
-  -webkit-backdrop-filter: blur(20px) saturate(1.4);
-  border: 1px solid rgba(255,255,255,0.10);
-  border-left: none;
-  border-radius: 0 12px 12px 0;
-  box-shadow: 8px 0 40px rgba(0,0,0,0.5);
-  overflow: hidden;
+.account-btn:hover {
+  background: rgba(94,106,210,.08);
+}
+.header-sep {
+  width: 1px;
+  height: 18px;
+  background: #e4e7ed;
+}
+.user-chip {
   display: flex;
-  flex-direction: column;
-  z-index: 200;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #606266;
+  cursor: pointer;
+  transition: background .15s;
 }
-
-.panel-header { display: flex; align-items: center; gap: 12px; padding: 20px 20px 16px; border-bottom: 1px solid rgba(255,255,255,0.08); flex-shrink: 0; }
-.panel-header-icon { width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, #409EFF 0%, #337ECC 100%); display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 2px 8px rgba(64,158,255,0.4); }
-.panel-header-text { flex: 1; display: flex; flex-direction: column; gap: 2px; }
-.panel-title { font-size: 13px; font-weight: 700; color: #f0f2f5; }
-.panel-subtitle { font-size: 12px; color: rgba(255,255,255,0.35); }
-.panel-close { width: 28px; height: 28px; border-radius: 50%; border: none; background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.5); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; flex-shrink: 0; }
-.panel-close:hover { background: rgba(255,255,255,0.12); color: #fff; }
-.panel-direct { display: flex; align-items: center; gap: 10px; margin: 16px 20px 0; padding: 12px 16px; border-radius: 10px; background: rgba(64,158,255,0.12); border: 1px solid rgba(64,158,255,0.25); color: #53A8FF; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
-.panel-direct:hover { background: rgba(64,158,255,0.22); border-color: rgba(64,158,255,0.45); }
-
-/* 4列图标网格 */
-.panel-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 16px 20px; overflow-y: auto; flex: 1; }
-.panel-card { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 16px 8px 12px; border-radius: 12px; background: rgba(255,255,255,0.04); border: 1px solid transparent; cursor: pointer; transition: all 0.18s; text-align: center; }
-.panel-card:hover { background: rgba(64,158,255,0.14); border-color: rgba(64,158,255,0.35); transform: translateY(-2px); }
-.panel-card.is-active { background: rgba(64,158,255,0.20); border-color: rgba(64,158,255,0.50); }
-.card-icon-wrap { width: 44px; height: 44px; border-radius: 12px; background: rgba(64,158,255,0.12); display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.15s; }
-.panel-card:hover .card-icon-wrap { background: rgba(64,158,255,0.22); }
-.card-text { flex: 1; min-width: 0; width: 100%; }
-.card-name { font-size: 12px; font-weight: 600; color: #e8eaed; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.3; }
+.user-chip:hover {
+  background: #f5f7fa;
+}
 
 /* ========== 内容区 ========== */
-.content-wrapper { flex: 1; display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
-.layout-main { flex: 1; background: #f0f2f5; overflow-y: auto; padding: 16px; }
+.layout-main {
+  background: #f0f2f5;
+  overflow-y: auto;
+  height: calc(100vh - var(--header-h) - var(--tabbar-h));
+  flex: 1;
+  min-height: 0;
+}
+
+/* ========== 悬浮面板 ========== */
+.flat-panel {
+  position: fixed;
+  left: var(--sidebar-w);
+  top: var(--header-h);
+  width: 640px;
+  max-height: calc(100vh - var(--header-h));
+  overflow-y: auto;
+  z-index: 200;
+  background: rgba(25,26,27,0.97);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-left: 1px solid rgba(255,255,255,.06);
+  border-right: 1px solid rgba(255,255,255,.06);
+  box-shadow: 4px 0 32px rgba(0,0,0,.4);
+}
+.is-collapsed .flat-panel {
+  left: var(--sidebar-collapsed-w);
+}
+
+.flat-panel::-webkit-scrollbar { width: 4px; }
+.flat-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 2px; }
+
+.flat-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  position: sticky;
+  top: 0;
+  background: rgba(25,26,27,.98);
+}
+.flat-panel-icon {
+  color: var(--ls-accent);
+}
+.flat-panel-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ls-text-pri);
+}
+.flat-panel-hint {
+  font-size: 12px;
+  color: var(--ls-text-ter);
+  margin-left: auto;
+}
+.flat-panel-close {
+  color: var(--ls-text-muted);
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 4px;
+}
+.flat-panel-close:hover {
+  color: var(--ls-text-ter);
+  background: rgba(255,255,255,.06);
+}
+
+.flat-panel-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  padding: 16px 20px;
+}
+
+.flat-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background .15s, border-color .15s;
+  border: 1px solid transparent;
+  background: rgba(255,255,255,.04);
+}
+.flat-item:hover {
+  background: rgba(113,112,255,.15);
+  border-color: rgba(113,112,255,.3);
+}
+.flat-item.is-active {
+  background: rgba(113,112,255,.2);
+  border-color: rgba(113,112,255,.4);
+}
+.flat-item-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: rgba(113,112,255,.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--ls-accent);
+}
+.flat-item.is-active .flat-item-icon {
+  background: rgba(113,112,255,.25);
+}
+.flat-item-info {
+  flex: 1;
+  min-width: 0;
+}
+.flat-item-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ls-text-pri);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.flat-item-desc {
+  font-size: 11px;
+  color: var(--ls-text-ter);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 /* ========== 过渡动画 ========== */
-.panel-slide-enter-active { transition: opacity 0.18s ease, transform 0.18s ease; }
-.panel-slide-leave-active { transition: opacity 0.15s ease, transform 0.15s ease; }
-.panel-slide-enter-from { opacity: 0; transform: translateX(-8px); }
-.panel-slide-leave-to { opacity: 0; transform: translateX(-8px); }
+.ls-label-fade-enter-active,
+.ls-label-fade-leave-active {
+  transition: opacity .15s, transform .15s;
+  overflow: hidden;
+}
+.ls-label-fade-enter-from,
+.ls-label-fade-leave-to {
+  opacity: 0;
+  transform: translateX(-4px);
+}
+
+.ls-children-enter-active,
+.ls-children-leave-active {
+  transition: max-height .2s ease, opacity .2s;
+  max-height: 500px;
+  overflow: hidden;
+}
+.ls-children-enter-from,
+.ls-children-leave-to {
+  max-height: 0;
+  opacity: 0;
+}
+
+.flat-fade-enter-active,
+.flat-fade-leave-active {
+  transition: opacity .2s ease, transform .2s ease;
+}
+.flat-fade-enter-from,
+.flat-fade-leave-to {
+  opacity: 0;
+  transform: translateX(-8px);
+}
 </style>
