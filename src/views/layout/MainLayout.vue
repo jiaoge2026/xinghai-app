@@ -179,6 +179,7 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/user'
+import TabBar from '@/components/tab/TabBar.vue'
 import {
   DataAnalysis, Grid, OfficeBuilding, Money, UserFilled,
   ArrowDown, ArrowRight, DArrowLeft, DArrowRight, Close
