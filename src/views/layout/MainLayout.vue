@@ -293,25 +293,14 @@ function closePanel() {
   openGroups.value = []
 }
 
-// 鼠标离开sidebar时延迟关面板
-function onSidebarMouseLeave() {
-  hoverTimer = setTimeout(() => {
-    activePanel.value = null
-  }, 200)
-}
-
 onMounted(() => {
-  const sidebar = document.querySelector('.ls-sidebar')
-  if (sidebar) {
-    sidebar.addEventListener('mouseleave', onSidebarMouseLeave, true)
+  // 点击主内容区关闭面板（不在侧边栏区域）
+  const mainArea = document.querySelector('.layout-main')
+  if (mainArea) {
+    mainArea.addEventListener('click', () => {
+      if (activePanel.value) closePanel()
+    })
   }
-})
-onUnmounted(() => {
-  const sidebar = document.querySelector('.ls-sidebar')
-  if (sidebar) {
-    sidebar.removeEventListener('mouseleave', onSidebarMouseLeave, true)
-  }
-  clearTimeout(hoverTimer)
 })
 
 // 路由变化关闭面板
