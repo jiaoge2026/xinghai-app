@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { setAuthConfirmed } from '@/utils/request'
-import { useTabStore } from '@/stores/tab'
+import { addTab } from '@/stores/tab'
 import COMPONENT_MAP, { PATH_TO_NAME } from '@/utils/tab'
 
 const routes = [
@@ -91,6 +91,17 @@ router.beforeEach((to, from, next) => {
   }
   if (token) setAuthConfirmed(true)
   next()
+})
+
+// TabBar：路由变化时自动添加标签页
+router.afterEach((to) => {
+  if (to.meta?.public || !to.name) return
+  addTab({
+    name: to.name,
+    path: to.path,
+    title: to.meta.title || to.name,
+    closable: true
+  })
 })
 
 export default router

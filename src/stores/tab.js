@@ -17,6 +17,45 @@ export const loadComponentMap = (map) => {
   COMPONENT_MAP = map
 }
 
+// ===== 命名导出（供 router/其他模块使用）=====
+export const addTab = (tab) => {
+  const existing = state.tabs.find(t => t.path === tab.path)
+  if (existing) {
+    state.activeTabId = existing.id
+    return existing
+  }
+  const newTab = {
+    id: tab.path,
+    title: tab.title || tab.name || '未命名',
+    path: tab.path,
+    name: tab.name,
+    closable: tab.closable !== false,
+    ...tab,
+  }
+  state.tabs.push(newTab)
+  state.activeTabId = newTab.id
+  saveTabs()
+  return newTab
+}
+export const removeTab = (tabId) => {
+  const idx = state.tabs.findIndex(t => t.id === tabId)
+  if (idx === -1) return
+  state.tabs.splice(idx, 1)
+  if (state.activeTabId === tabId) {
+    const next = state.tabs[Math.max(0, idx - 1)]
+    state.activeTabId = next ? next.id : null
+  }
+  saveTabs()
+}
+export const clearTabs = () => {
+  state.tabs = state.tabs.filter(t => t.path === '/' || t.path === '/dashboard')
+  state.activeTabId = state.tabs[0]?.id || null
+  saveTabs()
+}
+export const getTabs = () => state.tabs
+export const getActiveTabId = () => state.activeTabId
+export const setActiveTab = (tabId) => { state.activeTabId = tabId }
+
 export const useTabStore = () => {
   const addTab = (tab) => {
     const existing = state.tabs.find(t => t.path === tab.path)
