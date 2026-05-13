@@ -28,7 +28,7 @@
               :class="{ 'is-open': openGroups.includes(menu.path) }"
               :data-path="menu.path"
               @click="showPanel(menu)"
-              @mouseover="showPanel(menu)"
+              @mouseenter="showPanel(menu)"
             >
               <div class="ls-item-row">
                 <el-icon class="ls-item-icon" :size="16"><component :is="getIcon(menu.icon)" /></el-icon>
@@ -232,6 +232,7 @@ function getIcon(name) {
 // 悬浮面板显示
 function showPanel(menu) {
   if (!menu.children?.length) return
+  clearTimeout(hoverTimer)
   activePanel.value = menu
   openGroups.value = []
 }
@@ -286,9 +287,9 @@ function toggleCollapse() {
 
 // 关闭面板
 function closePanel() {
+  clearTimeout(hoverTimer)
   activePanel.value = null
   openGroups.value = []
-  clearTimeout(hoverTimer)
 }
 
 // 鼠标离开sidebar时延迟关面板
