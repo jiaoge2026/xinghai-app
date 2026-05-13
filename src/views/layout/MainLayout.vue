@@ -107,21 +107,6 @@
           <span class="page-title">{{ $route.meta.title || '星海ERP' }}</span>
         </div>
         <div class="header-right">
-          <!-- 账套切换 -->
-          <el-dropdown @command="userStore.setAccountType" size="small">
-            <span class="account-type-switch">
-              <el-icon><OfficeBuilding /></el-icon>
-              {{ userStore.accountType === 'BUSINESS' ? '业务' : '财务' }}
-              <el-icon><ArrowDown /></el-icon>
-            </span>
-            <template #dropdown>
-              <el-dropdown-menu>
-                <el-dropdown-item command="BUSINESS" :disabled="userStore.accountType === 'BUSINESS'">业务端</el-dropdown-item>
-                <el-dropdown-item command="FINANCE" :disabled="userStore.accountType === 'FINANCE'">财务端</el-dropdown-item>
-              </el-dropdown-menu>
-            </template>
-          </el-dropdown>
-          <el-divider direction="vertical" />
           <!-- 菜单模式切换 -->
           <div class="menu-mode-switch">
             <span class="switch-label" :class="{ active: !isTileMode }">
@@ -132,6 +117,25 @@
               <el-icon><Menu /></el-icon> 平铺
             </span>
           </div>
+          <el-divider direction="vertical" />
+          <!-- 账套切换 -->
+          <el-dropdown @command="userStore.setAccountType" size="small">
+            <span class="account-type-switch">
+              <el-icon><OfficeBuilding /></el-icon>
+              {{ userStore.accountType === 'BUSINESS' ? '业务端' : '财务端' }}
+              <el-icon><ArrowDown /></el-icon>
+            </span>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item command="BUSINESS" :disabled="userStore.accountType === 'BUSINESS'">
+                  <el-icon><Grid /></el-icon> 业务端
+                </el-dropdown-item>
+                <el-dropdown-item command="FINANCE" :disabled="userStore.accountType === 'FINANCE'">
+                  <el-icon><Money /></el-icon> 财务端
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
           <el-divider direction="vertical" />
           <el-dropdown @command="handleCommand">
             <span class="user-info">
@@ -147,47 +151,18 @@
         </div>
       </el-header>
 
-      <!-- 标签页栏 -->
-      <div class="tab-bar" v-if="tabStore.tabs.value?.length > 0">
-        <div class="tab-list">
-          <div
-            v-for="tab in tabStore.tabs.value"
-            :key="tab.id"
-            class="tab-item"
-            :class="{ active: tab.id === tabStore.activeTabId.value }"
-            @click="switchTab(tab)"
-          >
-            <span class="tab-title">{{ tab.title }}</span>
-            <el-icon
-              v-if="tab.closable"
-              class="tab-close"
-              @click.stop="closeTab(tab.id)"
-            ><Close /></el-icon>
-          </div>
-        </div>
-      </div>
-
       <!-- 主内容 -->
       <el-main class="layout-main">
-        <!-- 动态 Tab 内容 -->
-        <component
-          v-if="activeComponent"
-          :is="activeComponent"
-          :key="tabStore.activeTabId.value"
-        />
-        <!-- 无 Tab 时显示路由默认页面 -->
-        <router-view v-else />
+        <router-view />
       </el-main>
     </el-container>
   </el-container>
 </template>
 
 <script setup>
-import { ref, computed, reactive } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/user'
-import { useTabStore } from '@/stores/tab'
-import COMPONENT_MAP from '@/utils/tab'
 import {
   DataAnalysis, Tools, Box, Guide, Money, User, UserFilled,
   Shop, Medal, Van, Phone, Stamp, CircleCheck, Setting,
@@ -196,46 +171,8 @@ import {
 } from '@element-plus/icons-vue'
 
 const userStore = useUserStore()
-const tabStore = useTabStore()
 const router = useRouter()
 const route = useRoute()
-
-// Tab 逻辑：resolvedComponents 缓存已解析的组件对象
-const resolvedComponents = reactive({})
-const loadingComponents = reactive({})
-
-const activeComponent = computed(() => {
-  const activeTab = tabStore.getActiveTab()
-  if (!activeTab) return null
-  const name = activeTab.name
-  // 已有缓存的直接返回
-  if (resolvedComponents[name]) return resolvedComponents[name]
-  // 正在加载中的返回 null（避免重复触发）
-  if (loadingComponents[name]) return null
-  // 触发异步加载
-  const loader = COMPONENT_MAP[name]
-  if (loader) {
-    loadingComponents[name] = true
-    loader().then(mod => {
-      resolvedComponents[name] = mod.default || mod
-      loadingComponents[name] = false
-    }).catch(() => {
-      delete loadingComponents[name]
-    })
-  }
-  return null
-})
-
-const switchTab = (tab) => {
-  tabStore.setActiveTab(tab.id)
-  router.push(tab.path)
-}
-
-const closeTab = (tabId) => {
-  tabStore.closeTab(tabId)
-  const active = tabStore.getActiveTab()
-  if (active) router.push(active.path)
-}
 
 // 模式切换
 const isTileMode = ref(false)
@@ -276,103 +213,17 @@ const goToPath = (path) => {
 // 平铺菜单：动态从 filteredMenus 生成（不再硬编码）
 const tileMenuComputed = computed(() => {
   const iconMap = { Tools, Box, Guide, Money, User, UserFilled, Shop, Medal, Van, Phone, Stamp, CircleCheck, Setting, ChatDotRound, Connection }
-  const getIconComp = (name) => iconMap[name] || Setting
-
-  // Dashboard 固定入口
-  const result = [
-    { index: 'dashboard', label: '驾驶舱', icon: DataAnalysis, path: '/dashboard' }
-  ]
-
-  // 动态菜单项
-  for (const menu of userStore.filteredMenus) {
-    if (!menu.path || menu.path === '/') continue
-    if (menu.children && menu.children.length > 0) {
-      result.push({
-        index: menu.path,
-        label: menu.name,
-        icon: getIconComp(menu.icon),
-        children: menu.children.map(child => ({
-          label: child.name,
-          path: child.path,
-          sub: child.permissionCode || ''
-        }))
-      })
-    } else {
-      result.push({
-        index: menu.path,
-        label: menu.name,
-        icon: getIconComp(menu.icon),
-        path: menu.path
-      })
-    }
-  }
-  return result
+  const getIconEl = (iconName) => iconMap[iconName] || Setting
+  return userStore.filteredMenus.map(menu => ({
+    index: menu.path || menu.name,
+    label: menu.name,
+    icon: getIconEl(menu.icon),
+    path: menu.path,
+    children: menu.children && menu.children.length > 0
+      ? menu.children.map(child => ({ label: child.name, path: child.path, sub: '' }))
+      : undefined
+  }))
 })
-
-// 平铺菜单数据（对应经典菜单的 sub-menu）
-const tileMenuList = [
-  { index: 'dashboard', label: '驾驶舱', icon: DataAnalysis, path: '/dashboard' },
-  { index: 'fsm', label: 'FSM工单', icon: Tools, children: [
-    { label: '工单列表', path: '/fsm/work-orders', sub: '查看所有工单' },
-    { label: '新建工单', path: '/fsm/work-orders/create', sub: '创建维修/安装工单' },
-    { label: '工程师管理', path: '/fsm/engineers', sub: '工程师档案管理' },
-  ]},
-  { index: 'wms', label: '仓储管理', icon: Box, children: [
-    { label: '配件管理', path: '/wms/parts', sub: '配件档案与库存' },
-    { label: '仓库管理', path: '/wms/warehouses', sub: '仓库信息维护' },
-    { label: '库存台账', path: '/wms/stock', sub: '出入库流水记录' },
-  ]},
-  { index: 'dispatch', label: '智能派工', icon: Guide, children: [
-    { label: '派工看板', path: '/dispatch/board', sub: '实时调度与派工' },
-  ]},
-    { index: 'finance', label: '财务管理', icon: Money, children: [
-    { label: '凭证管理', path: '/finance/vouchers', sub: '会计凭证录入与审核' },
-    { label: '财务报表', path: '/finance/reports', sub: '经营报表与分析' },
-  ]},
-  { index: 'ai', label: 'AI助手', icon: Connection, path: '/ai/chat' },
-  { index: 'finance', label: '财务管理', icon: Money, children: [
-    { label: '凭证管理', path: '/finance/vouchers', sub: '会计凭证录入与审核' },
-    { label: '财务报表', path: '/finance/reports', sub: '经营报表与分析' },
-  ]},
-  { index: 'hr', label: '人事管理', icon: User, children: [
-    { label: '员工管理', path: '/hr/employees', sub: '员工档案管理' },
-    { label: '考勤管理', path: '/hr/attendance', sub: '打卡与考勤记录' },
-    { label: '薪资管理', path: '/hr/salary', sub: '薪资发放与管理' },
-  ]},
-  { index: 'crm', label: '客户管理', icon: UserFilled, children: [
-    { label: '客户列表', path: '/crm/contacts', sub: '客户信息管理' },
-    { label: '联系人', path: '/crm/contacts', sub: '联系人管理' },
-  ]},
-  { index: 'retail', label: '零售门店', icon: Shop, children: [
-    { label: '门店管理', path: '/retail/stores', sub: '门店信息维护' },
-    { label: '商品管理', path: '/retail/products', sub: '商品档案与定价' },
-    { label: '销售订单', path: '/retail/orders', sub: '零售销售单据' },
-  ]},
-  { index: 'member', label: '会员管理', icon: Medal, children: [
-    { label: '会员列表', path: '/member/members', sub: '会员注册与积分' },
-  ]},
-  { index: 'logistics', label: '物流配送', icon: Van, children: [
-    { label: '司机管理', path: '/logistics/drivers', sub: '司机档案管理' },
-    { label: '配送单', path: '/logistics/delivery', sub: '配送调度单' },
-  ]},
-  { index: 'callcenter', label: '呼叫中心', icon: Phone, children: [
-    { label: '来电记录', path: '/callcenter/records', sub: '呼入通话记录' },
-  ]},
-  { index: 'qa', label: '质量管理', icon: Stamp, children: [
-    { label: '质量检查', path: '/qa/inspections', sub: '质检记录管理' },
-    { label: '客户反馈', path: '/qa/feedback', sub: '投诉与反馈处理' },
-  ]},
-  { index: 'approval', label: '审批流', icon: CircleCheck, children: [
-    { label: '审批列表', path: '/approval/list', sub: '费用与业务审批' },
-  ]},
-  { index: 'system', label: '系统设置', icon: Setting, children: [
-    { label: '用户管理', path: '/system/users', sub: '系统用户账号' },
-    { label: '角色管理', path: '/system/roles', sub: '角色与权限分配' },
-    { label: '权限配置', path: '/system/menus', sub: '菜单权限管理' },
-    { label: '角色配置', path: '/system/role-config', sub: '角色菜单权限分配' },
-    { label: '系统配置', path: '/system/config', sub: '系统参数配置' },
-  ]},
-]
 
 const handleCommand = (command) => {
   if (command === 'logout') {
@@ -463,18 +314,12 @@ const handleCommand = (command) => {
 .switch-label { font-size: 12px; color: #999; display: flex; align-items: center; gap: 3px; transition: color 0.2s; }
 .switch-label.active { color: #409EFF; font-weight: 600; }
 
-/* 账套切换 */
+/* 账套切换按钮 */
 .account-type-switch {
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 13px;
-  color: #409EFF;
-  font-weight: 600;
-  padding: 4px 8px;
-  border-radius: 4px;
-  border: 1px solid #409EFF;
+  display: flex; align-items: center; gap: 4px;
+  font-size: 13px; color: #409EFF; font-weight: 600;
+  padding: 4px 8px; border-radius: 4px; border: 1px solid #409EFF;
   transition: all 0.2s;
 }
 .account-type-switch:hover { background: #ecf5ff; }
@@ -485,64 +330,4 @@ const handleCommand = (command) => {
 .fade-slide-enter-from .tile-panel { transform: translateX(-20px); }
 .fade-slide-leave-to { opacity: 0; }
 .fade-slide-leave-to .tile-panel { transform: translateX(-20px); }
-
-/* ===== 标签页栏 ===== */
-.tab-bar {
-  background: #fff;
-  border-bottom: 1px solid #e8e8e8;
-  padding: 0 8px;
-  display: flex;
-  align-items: center;
-  height: 38px;
-  overflow: hidden;
-}
-.tab-list {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  overflow-x: auto;
-  flex: 1;
-}
-.tab-list::-webkit-scrollbar { display: none; }
-.tab-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border-radius: 6px 6px 0 0;
-  cursor: pointer;
-  font-size: 13px;
-  color: #666;
-  background: #f5f7fa;
-  border: 1px solid transparent;
-  border-bottom: none;
-  white-space: nowrap;
-  max-width: 180px;
-  transition: all 0.15s;
-  flex-shrink: 0;
-}
-.tab-item:hover {
-  background: #ecf5ff;
-  color: #409EFF;
-}
-.tab-item.active {
-  background: #409EFF;
-  color: #fff;
-  border-color: #409EFF;
-}
-.tab-title {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 140px;
-}
-.tab-close {
-  font-size: 12px;
-  opacity: 0.7;
-  flex-shrink: 0;
-}
-.tab-close:hover {
-  opacity: 1;
-  background: rgba(0,0,0,0.1);
-  border-radius: 3px;
-}
 </style>
