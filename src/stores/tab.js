@@ -1,10 +1,14 @@
-// TabStore - 标签页状态管理
+// TabStore - 标签页状态管理 (Linear Design版本)
 import { reactive, computed } from 'vue'
+
+let tabIdCounter = 1  // 用于刷新时生成新tab ID
 
 const state = reactive({
   tabs: [],       // [{ id, title, path, component, closable }]
   activeTabId: null,
 })
+
+export const newTabId = () => tabIdCounter++
 
 // 组件映射表（从 tab.js 加载）
 let COMPONENT_MAP = {}
@@ -54,6 +58,25 @@ export const useTabStore = () => {
     return state.tabs.find(t => t.id === state.activeTabId)
   }
 
+  const closeActiveTab = () => {
+    const id = state.activeTabId
+    if (id !== null) {
+      closeTab(id)
+    }
+  }
+
+  const closeOtherTabs = (keepId) => {
+    state.tabs = state.tabs.filter(t => t.id === keepId)
+    if (state.activeTabId !== keepId) {
+      state.activeTabId = keepId
+    }
+    saveTabs()
+  }
+
+  const switchTab = (tabId) => {
+    state.activeTabId = tabId
+  }
+
   const clearTabs = () => {
     // 保留首页 tab
     state.tabs = state.tabs.filter(t => t.path === '/' || t.path === '/dashboard')
@@ -83,12 +106,20 @@ export const useTabStore = () => {
   loadTabs()
 
   return {
-    tabs: computed(() => state.tabs),
-    activeTabId: computed(() => state.activeTabId),
+    // 直接引用state属性（脚本中可读写，如 tabs.splice()）
+    tabs: state.tabs,
+    activeTabId: state.activeTabId,
+    // 计算属性（模板中自动解包，保持响应式）
+    tabsComputed: computed(() => state.tabs),
+    activeTabIdComputed: computed(() => state.activeTabId),
     addTab,
     closeTab,
+    closeActiveTab,
+    closeOtherTabs,
     setActiveTab,
+    switchTab,
     getActiveTab,
     clearTabs,
+    newTabId,
   }
 }
