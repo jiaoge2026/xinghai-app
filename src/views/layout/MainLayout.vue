@@ -22,7 +22,7 @@
           <span>驾驶舱</span>
         </el-menu-item>
 
-        <template v-for="menu in userStore.menus" :key="menu.id">
+        <template v-for="menu in userStore.filteredMenus" :key="menu.id">
           <el-sub-menu v-if="menu.children && menu.children.length > 0" :index="menu.path || String(menu.id)">
             <template #title>
               <el-icon><component :is="getIcon(menu.icon)" /></el-icon>
@@ -48,7 +48,7 @@
       <!-- 平铺模式：图标+一级菜单，点击展开右侧面板 -->
       <div v-else class="tile-nav">
         <div
-          v-for="item in tileMenuList"
+          v-for="item in tileMenuComputed"
           :key="item.index"
           class="tile-nav-item"
           :class="{ active: activeTileIndex === item.index }"
@@ -107,6 +107,21 @@
           <span class="page-title">{{ $route.meta.title || '星海ERP' }}</span>
         </div>
         <div class="header-right">
+          <!-- 账套切换 -->
+          <el-dropdown @command="userStore.setAccountType" size="small">
+            <span class="account-type-switch">
+              <el-icon><OfficeBuilding /></el-icon>
+              {{ userStore.accountType === 'BUSINESS' ? '业务' : '财务' }}
+              <el-icon><ArrowDown /></el-icon>
+            </span>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item command="BUSINESS" :disabled="userStore.accountType === 'BUSINESS'">业务端</el-dropdown-item>
+                <el-dropdown-item command="FINANCE" :disabled="userStore.accountType === 'FINANCE'">财务端</el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
+          <el-divider direction="vertical" />
           <!-- 菜单模式切换 -->
           <div class="menu-mode-switch">
             <span class="switch-label" :class="{ active: !isTileMode }">
@@ -176,7 +191,8 @@ import COMPONENT_MAP from '@/utils/tab'
 import {
   DataAnalysis, Tools, Box, Guide, Money, User, UserFilled,
   Shop, Medal, Van, Phone, Stamp, CircleCheck, Setting,
-  ArrowRight, Close, Grid, Menu, ChatDotRound, Connection
+  ArrowRight, Close, Grid, Menu, ChatDotRound, Connection,
+  OfficeBuilding, ArrowDown
 } from '@element-plus/icons-vue'
 
 const userStore = useUserStore()
@@ -256,6 +272,42 @@ const goToPath = (path) => {
   router.push(path)
   activeTileMenu.value = null
 }
+
+// 平铺菜单：动态从 filteredMenus 生成（不再硬编码）
+const tileMenuComputed = computed(() => {
+  const iconMap = { Tools, Box, Guide, Money, User, UserFilled, Shop, Medal, Van, Phone, Stamp, CircleCheck, Setting, ChatDotRound, Connection }
+  const getIconComp = (name) => iconMap[name] || Setting
+
+  // Dashboard 固定入口
+  const result = [
+    { index: 'dashboard', label: '驾驶舱', icon: DataAnalysis, path: '/dashboard' }
+  ]
+
+  // 动态菜单项
+  for (const menu of userStore.filteredMenus) {
+    if (!menu.path || menu.path === '/') continue
+    if (menu.children && menu.children.length > 0) {
+      result.push({
+        index: menu.path,
+        label: menu.name,
+        icon: getIconComp(menu.icon),
+        children: menu.children.map(child => ({
+          label: child.name,
+          path: child.path,
+          sub: child.permissionCode || ''
+        }))
+      })
+    } else {
+      result.push({
+        index: menu.path,
+        label: menu.name,
+        icon: getIconComp(menu.icon),
+        path: menu.path
+      })
+    }
+  }
+  return result
+})
 
 // 平铺菜单数据（对应经典菜单的 sub-menu）
 const tileMenuList = [
@@ -410,6 +462,22 @@ const handleCommand = (command) => {
 .menu-mode-switch { display: flex; align-items: center; gap: 8px; }
 .switch-label { font-size: 12px; color: #999; display: flex; align-items: center; gap: 3px; transition: color 0.2s; }
 .switch-label.active { color: #409EFF; font-weight: 600; }
+
+/* 账套切换 */
+.account-type-switch {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: #409EFF;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid #409EFF;
+  transition: all 0.2s;
+}
+.account-type-switch:hover { background: #ecf5ff; }
 
 /* 平铺面板覆盖层 — 过渡动画（淡入+左侧滑入） */
 .fade-slide-enter-active, .fade-slide-leave-active { transition: all 0.25s ease; }

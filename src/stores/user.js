@@ -7,12 +7,16 @@ export const useUserStore = defineStore('user', {
     token: localStorage.getItem('token') || '',
     userInfo: JSON.parse(localStorage.getItem('userInfo') || '{}'),
     menus: JSON.parse(localStorage.getItem('menus') || '[]'),
-    permissions: JSON.parse(localStorage.getItem('permissions') || '[]')
+    permissions: JSON.parse(localStorage.getItem('permissions') || '[]'),
+    accountType: localStorage.getItem('accountType') || 'BUSINESS'
   }),
   getters: {
     isLoggedIn: (state) => !!state.token,
     hasPermission: (state) => (perm) => state.permissions.includes(perm),
-    hasAnyPermission: (state) => (perms) => perms.some(p => state.permissions.includes(p))
+    hasAnyPermission: (state) => (perms) => perms.some(p => state.permissions.includes(p)),
+    filteredMenus: (state) => state.menus.filter(m =>
+      m.accountType === 'BOTH' || m.accountType === state.accountType
+    )
   },
   actions: {
     async login(username, password) {
@@ -37,6 +41,10 @@ export const useUserStore = defineStore('user', {
       setAuthConfirmed(true)
       return data
     },
+    setAccountType(type) {
+      this.accountType = type
+      localStorage.setItem('accountType', type)
+    },
     logout() {
       this.token = ''
       this.userInfo = {}
@@ -46,6 +54,7 @@ export const useUserStore = defineStore('user', {
       localStorage.removeItem('userInfo')
       localStorage.removeItem('menus')
       localStorage.removeItem('permissions')
+      localStorage.removeItem('accountType')
       setAuthConfirmed(false)
     }
   }
