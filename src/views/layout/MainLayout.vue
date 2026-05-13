@@ -27,7 +27,7 @@
               class="ls-item ls-item--group"
               :class="{ 'is-open': openGroups.includes(menu.path) }"
               :data-path="menu.path"
-              @click="toggleGroup(menu.path)"
+              @click="showPanel(menu)"
               @mouseover="showPanel(menu)"
             >
               <div class="ls-item-row">
