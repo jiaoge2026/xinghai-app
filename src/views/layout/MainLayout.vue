@@ -27,8 +27,8 @@
               class="ls-item ls-item--group"
               :class="{ 'is-open': openGroups.includes(menu.path) }"
               :data-path="menu.path"
-              @click="showPanel(menu)"
-              @mouseenter="showPanel(menu)"
+              @click="showPanel(menu, $event)"
+              @mouseenter="showPanel(menu, $event)"
             >
               <div class="ls-item-row">
                 <el-icon class="ls-item-icon" :size="16"><component :is="getIcon(menu.icon)" /></el-icon>
@@ -230,8 +230,9 @@ function getIcon(name) {
 }
 
 // 悬浮面板显示
-function showPanel(menu) {
+function showPanel(menu, e) {
   if (!menu.children?.length) return
+  e?.stopPropagation()
   clearTimeout(hoverTimer)
   activePanel.value = menu
   openGroups.value = []
