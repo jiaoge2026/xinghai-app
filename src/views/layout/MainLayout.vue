@@ -4,7 +4,7 @@
     <!-- ========== 侧边栏 ========== -->
     <aside class="ls-sidebar" :class="{ 'is-collapsed': isCollapsed }">
       <!-- Logo区 -->
-      <div class="ls-logo">
+      <div class="ls-logo" @click="goHome">
         <div class="ls-logo-icon">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
             <rect x="3" y="3" width="8" height="8" rx="2" fill="white"/>
@@ -19,16 +19,15 @@
       </div>
 
       <!-- 导航区 -->
-      <div class="ls-nav">
+      <div class="ls-nav" @click="onSidebarClick">
         <template v-for="menu in userStore.filteredMenus" :key="menu.id">
           <!-- 有子菜单：hover显示悬浮面板 -->
           <template v-if="menu.children && menu.children.length">
             <div
               class="ls-item ls-item--group"
-              :class="{ 'is-open': openGroups.includes(menu.path) }"
               :data-path="menu.path"
-              @click="showPanel(menu, $event)"
-              @mouseenter="showPanel(menu, $event)"
+              @click.stop="showPanel(menu, $event)"
+              @mouseenter="hoverPanelActive(menu)"
             >
               <div class="ls-item-row">
                 <el-icon class="ls-item-icon" :size="16"><component :is="getIcon(menu.icon)" /></el-icon>
@@ -51,7 +50,7 @@
           >
             <el-icon class="ls-item-icon" :size="16"><component :is="getIcon(menu.icon)" /></el-icon>
             <transition name="ls-label-fade">
-              <span v-if="!isCollapsed" class="ls-item-row">{{ menu.name }}</span>
+              <span v-if="!isCollapsed">{{ menu.name }}</span>
             </transition>
           </div>
         </template>
@@ -142,6 +141,7 @@
       <div
         v-if="activePanel"
         class="flat-panel"
+        :class="{ 'is-collapsed': isCollapsed }"
         @mouseover="hoverPanel"
         @mouseleave="leavePanel"
         @click.stop
@@ -224,9 +224,6 @@ const currentTitle = computed(() => {
   return nameMap[currentPath.value] || '星海ERP'
 })
 
-// 展开的分组
-const openGroups = ref([])
-
 // 悬浮面板
 const activePanel = ref(null)
 let hoverTimer = null
@@ -249,11 +246,12 @@ const iconMap = {
 }
 
 function getIcon(name) {
+  if (!name) return Grid
   const icon = iconMap[name]
   if (icon) return icon
-  // 兜底：尝试 Element Plus 原名注册
-  const ep = name && name.charAt(0).toUpperCase() + name.slice(1)
-  return iconMap[ep] ? iconMap[ep] : Grid
+  // 兜底：尝试首字母大写匹配 Element Plus 原名
+  const ep = name.charAt(0).toUpperCase() + name.slice(1)
+  return iconMap[ep] ?? Grid
 }
 
 // 悬浮面板显示
@@ -262,7 +260,13 @@ function showPanel(menu, e) {
   e?.stopPropagation()
   clearTimeout(hoverTimer)
   activePanel.value = menu
-  openGroups.value = []
+}
+
+// hover显示面板（直接hover，不需要激活）
+function hoverPanelActive(menu) {
+  if (!menu.children?.length) return
+  clearTimeout(hoverTimer)
+  activePanel.value = menu
 }
 
 function hoverPanel() {
@@ -276,25 +280,16 @@ function leavePanel() {
   }, 200)
 }
 
-// 切换分组展开/收起
-function toggleGroup(path) {
-  if (isCollapsed.value) {
-    toggleCollapse()
-    return
-  }
-  const idx = openGroups.value.indexOf(path)
-  if (idx >= 0) {
-    openGroups.value.splice(idx, 1)
-  } else {
-    openGroups.value.push(path)
-  }
-}
-
 // 导航点击
 function handleNavClick(path) {
   if (!path) return
   router.push(path)
   closePanel()
+}
+
+// 返回首页
+function goHome() {
+  router.push('/dashboard')
 }
 
 // 面板点击
@@ -309,7 +304,6 @@ function toggleCollapse() {
   isCollapsed.value = !isCollapsed.value
   if (isCollapsed.value) {
     closePanel()
-    openGroups.value = []
   }
 }
 
@@ -317,17 +311,24 @@ function toggleCollapse() {
 function closePanel() {
   clearTimeout(hoverTimer)
   activePanel.value = null
-  openGroups.value = []
+}
+
+// 点击侧边栏空白区域，关闭面板
+function onSidebarClick() {
+  // 空区域点击 → 关闭面板
 }
 
 onMounted(() => {
-  // 点击主内容区关闭面板（不在侧边栏区域）
   const mainArea = document.querySelector('.layout-main')
   if (mainArea) {
     mainArea.addEventListener('click', () => {
       if (activePanel.value) closePanel()
     })
   }
+})
+
+onUnmounted(() => {
+  clearTimeout(hoverTimer)
 })
 
 // 路由变化关闭面板
@@ -477,36 +478,11 @@ function handleCommand(cmd) {
 .ls-item--group:hover {
   color: var(--ls-text-sec);
 }
-.ls-item--group.is-open .ls-item-arrow {
-  transform: rotate(90deg);
-}
+
 .ls-item-arrow {
   color: var(--ls-text-muted);
   flex-shrink: 0;
   transition: transform .15s;
-}
-
-.ls-item--child {
-  height: 30px;
-  font-size: 13px;
-  font-weight: 400;
-  padding-left: 36px;
-  color: var(--ls-text-ter);
-}
-.ls-item--child:hover {
-  color: var(--ls-text-sec);
-}
-.ls-item--child.is-active {
-  background: var(--ls-accent-bg);
-  color: var(--ls-text-pri);
-}
-.ls-item--child.is-active .ls-item-icon {
-  color: var(--ls-accent);
-}
-
-.ls-children {
-  overflow: hidden;
-  margin-bottom: 2px;
 }
 
 .ls-item-icon {
@@ -660,7 +636,7 @@ function handleCommand(cmd) {
   border-right: 1px solid rgba(255,255,255,.06);
   box-shadow: 4px 0 32px rgba(0,0,0,.4);
 }
-.is-collapsed .flat-panel {
+.flat-panel.is-collapsed {
   left: var(--sidebar-collapsed-w);
 }
 
@@ -772,18 +748,6 @@ function handleCommand(cmd) {
 .ls-label-fade-leave-to {
   opacity: 0;
   transform: translateX(-4px);
-}
-
-.ls-children-enter-active,
-.ls-children-leave-active {
-  transition: max-height .2s ease, opacity .2s;
-  max-height: 500px;
-  overflow: hidden;
-}
-.ls-children-enter-from,
-.ls-children-leave-to {
-  max-height: 0;
-  opacity: 0;
 }
 
 .flat-fade-enter-active,
