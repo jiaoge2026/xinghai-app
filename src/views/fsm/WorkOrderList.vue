@@ -6,12 +6,6 @@
           <span>工单管理</span>
           <div class="header-actions">
             <el-button type="primary" size="small" @click="openAdd">新建工单</el-button>
-            <ColumnSettings
-              :columns="localColumns"
-              page-path="/fsm/work-orders"
-              @update:columns="localColumns = $event"
-              @change="localColumns = $event"
-            />
           </div>
         </div>
       </template>
@@ -66,6 +60,27 @@
       <!-- 表格区 -->
       <div class="table-wrapper">
         <el-table v-loading="loading" :data="tableData" stripe height="calc(100vh - 300px)">
+          <!-- 序号（列设置也在这里） -->
+          <el-table-column label="序号" width="80" fixed>
+            <template #header>
+              <span class="seq-col-header">
+                序号
+                <ColumnSettings
+                  :columns="localColumns"
+                  page-path="/fsm/work-orders"
+                  @update:columns="localColumns = $event"
+                  @change="localColumns = $event"
+                >
+                  <template #trigger>
+                    <el-icon class="seq-settings-btn"><Setting /></el-icon>
+                  </template>
+                </ColumnSettings>
+              </span>
+            </template>
+            <template #default="{ row, $index }">
+              {{ (pagination.page - 1) * pagination.pageSize + $index + 1 }}
+            </template>
+          </el-table-column>
           <!-- 工单编号 -->
           <el-table-column v-if="isColVisible('hsicrmWorkorderid')" prop="hsicrmWorkorderid" label="工单编号" width="150" fixed />
           <!-- 状态 -->
@@ -307,6 +322,7 @@ import { ref, reactive, onMounted, computed } from 'vue'
 import request from '@/utils/request'
 import { ElMessage } from 'element-plus'
 import ColumnSettings from '@/views/components/ColumnSettings.vue'
+import { Setting } from '@element-plus/icons-vue'
 
 // ---------- 列定义 ----------
 const TABLE_COLUMNS = [
@@ -493,5 +509,19 @@ onMounted(() => {
   display: flex;
   gap: 8px;
   align-items: center;
+}
+.seq-col-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.seq-settings-btn {
+  cursor: pointer;
+  color: #909399;
+  font-size: 14px;
+  transition: color 0.2s;
+}
+.seq-settings-btn:hover {
+  color: #409eff;
 }
 </style>
