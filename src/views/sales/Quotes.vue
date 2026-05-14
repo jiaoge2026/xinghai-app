@@ -156,9 +156,9 @@ const handleSave = async () => {
   if (!valid) return
   try {
     if (isEdit.value) {
-      await request.put(`/sales/quote/page/${form.id}`, form)
+      await request.put(`/sales/quote/${form.id}`, form)
     } else {
-      await request.post('/sales/quote/page', form)
+      await request.post('/sales/quote', form)
     }
     ElMessage.success('保存成功')
     dialogVisible.value = false
@@ -171,7 +171,7 @@ const handleSave = async () => {
 const handleDelete = async (id) => {
   await ElMessageBox.confirm('确认删除此报价单？', '警告', { type: 'warning' })
   try {
-    await request.delete(`/sales/quote/page/${id}`)
+    await request.delete(`/sales/quote/${id}`)
     ElMessage.success('删除成功')
     loadData()
   } catch (e) {

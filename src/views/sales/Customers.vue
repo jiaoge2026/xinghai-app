@@ -19,9 +19,9 @@
 
       <el-table :data="tableData" v-loading="loading" stripe>
         <el-table-column prop="customerNo" label="编号" width="120" />
-        <el-table-column prop="name" label="名称" min-width="150" />
-        <el-table-column prop="contact" label="联系人" width="100" />
-        <el-table-column prop="phone" label="电话" width="130" />
+        <el-table-column prop="customerName" label="名称" min-width="150" />
+        <el-table-column prop="contactName" label="联系人" width="100" />
+        <el-table-column prop="contactPhone" label="电话" width="130" />
         <el-table-column prop="type" label="类型" width="90" align="center">
           <template #default="{ row }">
             <el-tag type="primary" size="small">{{ row.type }}</el-tag>
@@ -61,20 +61,20 @@
         <el-form-item label="客户编号" prop="customerNo">
           <el-input v-model="form.customerNo" placeholder="客户编号" />
         </el-form-item>
-        <el-form-item label="客户名称" prop="name">
-          <el-input v-model="form.name" placeholder="客户名称" />
+        <el-form-item label="客户名称" prop="customerName">
+          <el-input v-model="form.customerName" placeholder="客户名称" />
         </el-form-item>
-        <el-form-item label="联系人" prop="contact">
-          <el-input v-model="form.contact" placeholder="联系人" />
+        <el-form-item label="联系人" prop="contactName">
+          <el-input v-model="form.contactName" placeholder="联系人" />
         </el-form-item>
-        <el-form-item label="电话" prop="phone">
-          <el-input v-model="form.phone" placeholder="电话" />
+        <el-form-item label="电话" prop="contactPhone">
+          <el-input v-model="form.contactPhone" placeholder="电话" />
         </el-form-item>
         <el-form-item label="地址">
           <el-input v-model="form.address" type="textarea" :rows="2" placeholder="地址" />
         </el-form-item>
         <el-form-item label="类型" prop="type">
-          <el-select v-model="form.type" placeholder="请选择" style="width:100%">
+          <el-select v-model="form.industry" placeholder="请选择" style="width:100%">
             <el-option value="工程" label="工程" />
             <el-option value="渠道" label="渠道" />
             <el-option value="分销" label="分销" />
@@ -110,7 +110,7 @@ const isEdit = ref(false)
 const formRef = ref()
 
 const query = reactive({ pageNum: 1, pageSize: 20, keyword: '' })
-const form = reactive({ id: null, customerNo: '', name: '', contact: '', phone: '', address: '', type: '工程', status: '正常' })
+const form = reactive({ id: null, customerNo: '', customerName: '', contactName: '', contactPhone: '', address: '', industry: '工程', status: 1 })
 const rules = {
   customerNo: [{ required: true, message: '请输入客户编号', trigger: 'blur' }],
   name: [{ required: true, message: '请输入客户名称', trigger: 'blur' }],
@@ -146,7 +146,7 @@ const handleSearch = () => {
 
 const handleAdd = () => {
   isEdit.value = false
-  Object.assign(form, { id: null, customerNo: '', name: '', contact: '', phone: '', address: '', type: '工程', status: '正常' })
+  Object.assign(form, { id: null, customerNo: '', customerName: '', contactName: '', contactPhone: '', address: '', industry: '工程', status: 1 })
   dialogVisible.value = true
 }
 

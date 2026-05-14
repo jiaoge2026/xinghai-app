@@ -237,7 +237,7 @@ const handleSubmit = async () => {
     if (isEdit.value) {
       await request.put(`/sales/project-order/page/${form.id}`, form)
     } else {
-      await request.post('/sales/project-order/page', form)
+      await request.post('/sales/project-order', form)
     }
     ElMessage.success(isEdit.value ? '编辑成功' : '新增成功')
     dialogVisible.value = false
@@ -249,7 +249,7 @@ const handleSubmit = async () => {
 
 const handleDelete = async (row) => {
   await ElMessageBox.confirm(`确定删除订单「${row.orderNo}」？`, '提示', { type: 'warning' })
-  await request.delete(`/sales/project-order/page/${row.id}`)
+  await request.delete(`/sales/project-order/${row.id}`)
   ElMessage.success('删除成功')
   fetchData()
 }

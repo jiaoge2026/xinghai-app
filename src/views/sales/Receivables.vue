@@ -189,7 +189,7 @@ const handleSave = async () => {
   if (!valid) return
   try {
     if (isEdit.value) await request.put(`/sales/receivable/page/${form.id}`, form)
-    else await request.post('/sales/receivable/page', form)
+    else await request.post('/sales/receivable', form)
     ElMessage.success('保存成功')
     dialogVisible.value = false
     loadData()
@@ -218,7 +218,7 @@ const handleReceiveSave = async () => {
 const handleDelete = async (id) => {
   await ElMessageBox.confirm('确认删除此应收款记录？', '警告', { type: 'warning' })
   try {
-    await request.delete(`/sales/receivable/page/${id}`)
+    await request.delete(`/sales/receivable/${id}`)
     ElMessage.success('删除成功')
     loadData()
   } catch (e) {
