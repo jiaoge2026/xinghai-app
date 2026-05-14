@@ -14,7 +14,7 @@ class CallRecordingService {
   // Platform channel在Flutter端通过NativeFlutterApi调用，这里用HTTP模拟
   // 实际录音逻辑在原生Android代码中执行
 
-  static const String _apiBase = 'http://47.103.11.151:38080/api/fsm';
+  static const String _apiBase = 'http://47.103.11.151:38080/api/v1/fsm';
 
   final Dio _dio = Dio(BaseOptions(
     connectTimeout: const Duration(seconds: 30),
