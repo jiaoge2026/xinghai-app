@@ -59,6 +59,7 @@ const routes = [
       { path: 'system/role-config', name: 'SystemRoleConfig', component: () => import('@/views/system/RoleConfig.vue'), meta: { title: '角色配置' } },
       { path: 'system/config', name: 'SystemConfig', component: () => import('@/views/system/ConfigList.vue'), meta: { title: '系统配置' } },
       { path: 'system/upgrade', name: 'SystemUpgrade', component: () => import('@/views/system/UpgradeManager.vue'), meta: { title: '升级管理' } },
+      { path: 'system/export-tasks', name: 'ExportTasks', component: () => import('@/views/system/ExportTasks.vue'), meta: { title: '导出任务' } },
       // AI助手
       { path: 'ai/chat', name: 'AIChat', component: () => import('@/views/ai/AIChat.vue'), meta: { title: 'AI助手' } },
 
