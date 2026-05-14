@@ -31,7 +31,7 @@
 
       <!-- 拖拽列列表 -->
       <div class="cs-list-header">
-        <span class="cs-list-tip">拖拽排序 · 点击眼睛显隐 · 输入宽度(px)</span>
+        <span class="cs-list-tip">拖拽排序 · 点击眼睛显隐 · 输入宽度(px) · 已选{{ localColumns.value.filter(c => c.visible).length }}/30</span>
         <el-button link type="primary" size="small" @click="checkAll">全选</el-button>
         <el-button link size="small" @click="uncheckAll">取消全选</el-button>
       </div>
@@ -287,12 +287,34 @@ const onDrop = (idx) => {
 const onDragEnd = () => { draggingIdx = -1 }
 
 // --- 显隐切换 ---
+const MAX_VISIBLE = 30
 const toggleCol = (idx) => {
-  if (localColumns.value[idx].fixed) return
+  const col = localColumns.value[idx]
+  if (col.fixed) return
+  if (!col.visible) {
+    // 要显示，检查是否已达上限
+    if (localColumns.value.filter(c => c.visible).length >= MAX_VISIBLE) {
+      ElMessage.warning(`最多只能显示 ${MAX_VISIBLE} 列，请先取消其他列`)
+      return
+    }
+  }
   localColumns.value[idx] = { ...localColumns.value[idx], visible: !localColumns.value[idx].visible }
 }
 const checkAll = () => {
-  localColumns.value = localColumns.value.map(c => ({ ...c, visible: true }))
+  // 按顺序选前30个可见的
+  const fixedCols = localColumns.value.filter(c => c.fixed)
+  const nonFixed = localColumns.value.filter(c => !c.fixed)
+  const result = [...fixedCols]
+  const allowCount = MAX_VISIBLE - fixedCols.length
+  nonFixed.slice(0, allowCount).forEach(c => result.push({ ...c, visible: true }))
+  nonFixed.slice(allowCount).forEach(c => result.push({ ...c, visible: false }))
+  // 保持原始顺序
+  const map = {}
+  localColumns.value.forEach((c, i) => { map[c.prop] = i })
+  localColumns.value = localColumns.value.map(c => result.find(r => r.prop === c.prop) || c)
+  if (fixedCols.length >= MAX_VISIBLE) {
+    ElMessage.warning(`前 ${MAX_VISIBLE} 列包含固定列，已自动选中全部固定列`)
+  }
 }
 const uncheckAll = () => {
   localColumns.value = localColumns.value.map(c => c.fixed ? c : { ...c, visible: false })
