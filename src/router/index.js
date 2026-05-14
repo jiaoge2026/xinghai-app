@@ -21,6 +21,7 @@ const routes = [
       { path: 'wms/parts', name: 'Parts', component: () => import('@/views/wms/PartList.vue'), meta: { title: '配件管理' } },
       { path: 'wms/warehouses', name: 'Warehouses', component: () => import('@/views/wms/WarehouseList.vue'), meta: { title: '仓库管理' } },
       { path: 'wms/stock', name: 'Stock', component: () => import('@/views/wms/StockList.vue'), meta: { title: '库存台账' } },
+      { path: 'wms/alerts', name: 'InventoryAlerts', component: () => import('@/views/wms/InventoryAlert.vue'), meta: { title: '库存预警' } },
       // 智能派工
       { path: 'dispatch/board', name: 'DispatchBoard', component: () => import('@/views/dispatch/DispatchBoard.vue'), meta: { title: '智能派工' } },
       // 财务管理
@@ -74,6 +75,45 @@ const routes = [
 
       // ===== 新增：报表 =====
       { path: 'report/work-orders', name: 'ReportWorkOrders', component: () => import('@/views/report/ReportWorkOrder.vue'), meta: { title: '工单报表' } },
+
+      // ===== 补全：tb_menu有但router缺失的路径 =====
+      // FSM
+      { path: 'fsm/customers', name: 'FSMCustomers', component: () => import('@/views/crm/CustomerList.vue'), meta: { title: '客户列表' } },
+      { path: 'fsm/projects', name: 'FSMProjects', component: () => import('@/views/sales/ProjectOrders.vue'), meta: { title: '项目管理' } },
+      // CRM
+      { path: 'crm/opportunities', name: 'Opportunities', component: () => import('@/views/crm/ContactList.vue'), meta: { title: '商机管理' } },
+      { path: 'crm/follow-ups', name: 'FollowUps', component: () => import('@/views/crm/FollowUpList.vue'), meta: { title: '客户跟进' } },
+      { path: 'crm/tags', name: 'Tags', component: () => import('@/views/crm/TagList.vue'), meta: { title: '客户标签' } },
+      // HR
+      { path: 'hr/employees/import', name: 'EmployeeImport', component: () => import('@/views/hr/EmployeeList.vue'), meta: { title: '员工导入' } },
+      { path: 'hr/departments', name: 'Departments', component: () => import('@/views/hr/DepartmentList.vue'), meta: { title: '部门管理' } },
+      { path: 'hr/leaves', name: 'Leaves', component: () => import('@/views/hr/LeaveList.vue'), meta: { title: '请假申请' } },
+      { path: 'hr/attendances', name: 'AttendanceRecord', component: () => import('@/views/hr/AttendanceRecord.vue'), meta: { title: '考勤记录' } },
+      // QA
+      { path: 'qa/templates', name: 'QATemplates', component: () => import('@/views/qa/InspectionList.vue'), meta: { title: '质检模板' } },
+      // Finance
+      { path: 'finance/subjects', name: 'Subjects', component: () => import('@/views/finance/SubjectList.vue'), meta: { title: '会计科目' } },
+      { path: 'finance/receipts', name: 'Receipts', component: () => import('@/views/finance/ReceiptList.vue'), meta: { title: '收款单' } },
+      { path: 'finance/payments', name: 'Payments', component: () => import('@/views/finance/PaymentList.vue'), meta: { title: '付款单' } },
+      { path: 'finance/bank-accounts', name: 'BankAccounts', component: () => import('@/views/finance/BankAccountList.vue'), meta: { title: '银行账户' } },
+      // Member
+      { path: 'member/points', name: 'MemberPoints', component: () => import('@/views/member/PointList.vue'), meta: { title: '会员积分' } },
+      { path: 'member/coupons', name: 'Coupons', component: () => import('@/views/member/CouponList.vue'), meta: { title: '优惠券' } },
+      // Retail
+      { path: 'retail/inventory', name: 'RetailInventory', component: () => import('@/views/wms/StockList.vue'), meta: { title: '门店库存' } },
+      { path: 'retail/categories', name: 'Categories', component: () => import('@/views/retail/CategoryList.vue'), meta: { title: '零售分类' } },
+      // CallCenter
+      { path: 'callcenter/ivr', name: 'IVRMenu', component: () => import('@/views/callcenter/IVRMenu.vue'), meta: { title: 'IVR菜单' } },
+      { path: 'callcenter/callback', name: 'CallbackList', component: () => import('@/views/callcenter/CallbackList.vue'), meta: { title: '呼入呼出' } },
+      // Report
+      { path: 'report/fsm', name: 'ReportFSM', component: () => import('@/views/report/ReportWorkOrder.vue'), meta: { title: 'FSM报表' } },
+      { path: 'report/finance', name: 'ReportFinance', component: () => import('@/views/finance/FinanceReport.vue'), meta: { title: '财务报表' } },
+      // System
+      { path: 'system/organization', name: 'Organization', component: () => import('@/views/system/RoleList.vue'), meta: { title: '组织架构' } },
+      { path: 'system/dicts', name: 'Dicts', component: () => import('@/views/system/ConfigList.vue'), meta: { title: '数据字典' } },
+      // WeCom（后端未实现，先占位）
+      { path: 'wecom/messages', name: 'WecomMessages', component: () => import('@/views/system/ConfigList.vue'), meta: { title: '消息推送' } },
+      { path: 'wecom/callback', name: 'WeComCallback', component: () => import('@/views/system/ConfigList.vue'), meta: { title: '回调配置' } },
     ]
   }
 ]

@@ -31,7 +31,7 @@
 
       <!-- 拖拽列列表 -->
       <div class="cs-list-header">
-        <span class="cs-list-tip">拖拽排序 · 点击眼睛图标显隐</span>
+        <span class="cs-list-tip">拖拽排序 · 点击眼睛显隐 · 输入宽度(px)</span>
         <el-button link type="primary" size="small" @click="checkAll">全选</el-button>
         <el-button link size="small" @click="uncheckAll">取消全选</el-button>
       </div>
@@ -50,9 +50,24 @@
           <!-- 拖拽手柄 -->
           <el-icon class="cs-drag-handle" @click.stop><Rank /></el-icon>
           <!-- 固定列标识 -->
-          <el-tag v-if="col.fixed" size="small" type="warning" style="margin-right:4px;cursor:default">固</el-tag>
+          <el-tag v-if="col.fixed" size="small" type="warning" style="margin-right:4px;cursor:default;flex-shrink:0">固</el-tag>
           <!-- 列名 -->
           <span class="cs-item-label" @click="toggleCol(idx)">{{ col.label }}</span>
+          <!-- 宽度输入 -->
+          <div class="cs-item-width" @click.stop>
+            <span class="cs-item-width-label">W:</span>
+            <el-input-number
+              v-model="col._width"
+              :min="0"
+              :max="600"
+              :step="10"
+              controls-position="right"
+              size="small"
+              style="width:70px"
+              placeholder="auto"
+              @change="onWidthChange(idx)"
+            />
+          </div>
           <!-- 显隐按钮 -->
           <el-icon
             class="cs-eye"
@@ -164,13 +179,14 @@ const loadFromServer = async () => {
         arr.forEach(a => { map[a.prop] = a })
         localColumns.value = props.columns.map(c => ({
           ...c,
+          _width: map[c.prop] && map[c.prop].width ? map[c.prop].width : c.width || undefined,
           visible: map[c.prop] ? map[c.prop].visible : true
         }))
         return
       }
     } catch (e) { /* ignore */ }
   }
-  localColumns.value = props.columns.map(c => ({ ...c }))
+  localColumns.value = props.columns.map(c => ({ ...c, _width: c.width || undefined }))
 }
 
 // --- 加载预设列表 ---
@@ -187,7 +203,7 @@ const loadPresets = async () => {
 // --- 预设切换 ---
 const onPresetChange = async (name) => {
   if (name === '__default__') {
-    localColumns.value = props.columns.map(c => ({ ...c }))
+    localColumns.value = props.columns.map(c => ({ ...c, _width: c.width || undefined }))
     return
   }
   const p = presets.value.find(x => x.presetName === name)
@@ -200,6 +216,7 @@ const onPresetChange = async (name) => {
       const keys = JSON.parse(json.data)
       localColumns.value = props.columns.map(c => ({
         ...c,
+        _width: c.width || undefined,
         visible: keys.includes(c.prop)
       }))
     }
@@ -289,7 +306,12 @@ const resetToDefault = () => {
 
 // --- 导出 ---
 const exportConfig = () => {
-  const data = localColumns.value.map(c => ({ prop: c.prop, label: c.label, visible: c.visible }))
+  const data = localColumns.value.map(c => ({
+    prop: c.prop,
+    label: c.label,
+    visible: c.visible,
+    width: c._width || null
+  }))
   const json = JSON.stringify(data, null, 2)
   const blob = new Blob([json], { type: 'application/json' })
   const url = URL.createObjectURL(blob)
@@ -310,6 +332,7 @@ const importConfig = () => {
     data.forEach(d => { if (d.prop && d.label) map[d.prop] = d })
     localColumns.value = props.columns.map(c => ({
       ...c,
+      _width: (map[c.prop] && map[c.prop].width != null) ? map[c.prop].width : c.width,
       visible: map[c.prop] ? (map[c.prop].visible !== false) : true
     }))
     showImportDialog.value = false
@@ -323,7 +346,13 @@ const importConfig = () => {
 
 // --- 应用并关闭 ---
 const applyAndClose = async () => {
-  // 保存到服务器
+  // 收集当前列状态（含宽度）
+  const colData = localColumns.value.map((c, i) => ({
+    prop: c.prop,
+    visible: c.visible,
+    width: c._width || null
+  }))
+  // 保存到服务器（不含宽度，暂用 localStorage 存宽度）
   const data = localColumns.value.map((c, i) => ({
     columnKey: c.prop,
     visible: c.visible ? 1 : 0,
@@ -337,9 +366,9 @@ const applyAndClose = async () => {
       body: JSON.stringify({ pagePath: props.pagePath, configs: data }),
     })
   } catch (e) { /* 忽略 */ }
-  // 同时存 localStorage
+  // 同时存 localStorage（含宽度）
   const key = `cs_cols_${props.pagePath}`
-  localStorage.setItem(key, JSON.stringify(localColumns.value.map(c => ({ prop: c.prop, visible: c.visible }))))
+  localStorage.setItem(key, JSON.stringify(colData))
   emit('update:columns', localColumns.value)
   emit('change', localColumns.value)
   visible.value = false
@@ -367,7 +396,9 @@ const applyAndClose = async () => {
 .cs-item-dragging { opacity: 0.4; background: #e8f4ff; }
 .cs-item-hidden .cs-item-label { color: #c0c0c0; text-decoration: line-through; }
 .cs-drag-handle { color: #bbb; cursor: grab; margin-right: 6px; flex-shrink: 0; }
-.cs-item-label { flex: 1; font-size: 13px; cursor: pointer; }
+.cs-item-label { flex: 1; font-size: 13px; cursor: pointer; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cs-item-width { display: flex; align-items: center; gap: 2px; flex-shrink: 0; margin: 0 6px; }
+.cs-item-width-label { font-size: 11px; color: #bbb; flex-shrink: 0; }
 .cs-eye { color: #409eff; flex-shrink: 0; margin-left: 6px; cursor: pointer; }
 .cs-eye-off { color: #d0d0d0; }
 .cs-footer { display: flex; justify-content: space-between; align-items: center; }

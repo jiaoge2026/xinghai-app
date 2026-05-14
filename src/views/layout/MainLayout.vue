@@ -42,7 +42,7 @@
           </template>
           <!-- 无子菜单 -->
           <div
-            v-if="!menu.children || !menu.children.length"
+            v-if="(!menu.children || !menu.children.length) && menu.path"
             class="ls-item"
             :class="{ 'is-active': currentPath === menu.path }"
             :data-path="menu.path"
