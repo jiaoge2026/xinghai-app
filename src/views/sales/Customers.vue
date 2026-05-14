@@ -130,7 +130,7 @@ const loadData = async () => {
   loading.value = true
   try {
     const res = await request.get('/sales/customer/page', { params: query })
-    tableData.value = res.data?.list || []
+    tableData.value = res.data?.records || []
     total.value = res.data?.total || 0
   } catch {
     tableData.value = []

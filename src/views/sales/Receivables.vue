@@ -158,7 +158,7 @@ const loadData = async () => {
     if (query.startDate) params.startDate = query.startDate
     if (query.endDate) params.endDate = query.endDate
     const res = await request.get('/sales/receivable/page', params)
-    tableData.value = res.data?.list || res.data || []
+    tableData.value = res.data?.records || res.data || []
     total.value = res.data?.total || 0
   } catch (e) {
     console.error(e)

@@ -162,7 +162,7 @@ const fetchData = async () => {
 const fetchDepts = async () => {
   try {
     const res = await request.get('/hr/departments')
-    deptOptions.value = res.data?.list || []
+    deptOptions.value = Array.isArray(res.data) ? res.data : (res.data?.list || [])
   } catch { deptOptions.value = [] }
 }
 

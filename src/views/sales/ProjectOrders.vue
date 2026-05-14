@@ -197,7 +197,7 @@ const fetchData = async () => {
       params.endDate = ''
     }
     const res = await request.get('/sales/project-order/page', { params })
-    tableData.value = res.data?.list || []
+    tableData.value = res.data?.records || []
     total.value = res.data?.total || 0
   } catch {
     tableData.value = []
