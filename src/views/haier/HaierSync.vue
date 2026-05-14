@@ -79,7 +79,7 @@ const stats = reactive({ totalAccounts: 0, todaySync: 0, todayNew: 0, lastSyncTi
 const loadData = async () => {
   loading.value = true
   try {
-    const res = await request.get('/v1/haier-sync/accounts', { pageNum: pageNum.value, pageSize: 20 })
+    const res = await request.get('/haier-sync/accounts', { pageNum: pageNum.value, pageSize: 20 })
     tableData.value = res.data?.list || res.data || []
     total.value = res.data?.total || 0
   } catch (e) {
@@ -91,7 +91,7 @@ const loadData = async () => {
 
 const loadStats = async () => {
   try {
-    const res = await request.get('/v1/haier-sync/status')
+    const res = await request.get('/haier-sync/status')
     Object.assign(stats, res.data || {})
   } catch (e) {
     console.error(e)
@@ -101,7 +101,7 @@ const loadStats = async () => {
 const handleSync = async () => {
   syncing.value = true
   try {
-    await request.post('/v1/haier-sync/sync-all', {})
+    await request.post('/haier-sync/sync-all', {})
     ElMessage.success('同步任务已触发，请稍后刷新查看结果')
     setTimeout(loadStats, 3000)
   } catch (e) {

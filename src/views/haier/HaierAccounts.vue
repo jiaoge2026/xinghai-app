@@ -77,7 +77,7 @@ const rules = {
 const loadData = async () => {
   loading.value = true
   try {
-    const res = await request.get('/v1/haier-sync/accounts', { pageNum: pageNum.value, pageSize: 20 })
+    const res = await request.get('/haier-sync/accounts', { pageNum: pageNum.value, pageSize: 20 })
     tableData.value = res.data?.list || res.data || []
     total.value = res.data?.total || 0
   } catch (e) { console.error(e) }
@@ -100,8 +100,8 @@ const handleSave = async () => {
   const valid = await formRef.value.validate().catch(() => false)
   if (!valid) return
   try {
-    if (isEdit.value) await request.put(`/v1/haier-sync/accounts/${form.id}`, form)
-    else await request.post('/v1/haier-sync/accounts', form)
+    if (isEdit.value) await request.put(`/haier-sync/accounts/${form.id}`, form)
+    else await request.post('/haier-sync/accounts', form)
     ElMessage.success('保存成功')
     dialogVisible.value = false
     loadData()
@@ -109,13 +109,13 @@ const handleSave = async () => {
 }
 
 const handleToggleStatus = async (row) => {
-  try { await request.put(`/v1/haier-sync/accounts/${row.id}`, { status: row.status }) }
+  try { await request.put(`/haier-sync/accounts/${row.id}`, { status: row.status }) }
   catch (e) { ElMessage.error('修改状态失败'); loadData() }
 }
 
 const handleDelete = async (id) => {
   await ElMessageBox.confirm('确认删除此账号？', '警告', { type: 'warning' })
-  try { await request.delete(`/v1/haier-sync/accounts/${id}`); ElMessage.success('删除成功'); loadData() }
+  try { await request.delete(`/haier-sync/accounts/${id}`); ElMessage.success('删除成功'); loadData() }
   catch (e) { ElMessage.error('删除失败') }
 }
 

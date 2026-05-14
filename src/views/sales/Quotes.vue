@@ -124,7 +124,7 @@ const loadData = async () => {
     if (query.status) params.status = query.status
     if (query.startDate) params.startDate = query.startDate
     if (query.endDate) params.endDate = query.endDate
-    const res = await request.get('/v1/sales/quote/page', params)
+    const res = await request.get('/sales/quote/page', params)
     tableData.value = res.data?.list || res.data || []
     total.value = res.data?.total || 0
   } catch (e) {
@@ -156,9 +156,9 @@ const handleSave = async () => {
   if (!valid) return
   try {
     if (isEdit.value) {
-      await request.put(`/v1/sales/quote/page/${form.id}`, form)
+      await request.put(`/sales/quote/page/${form.id}`, form)
     } else {
-      await request.post('/v1/sales/quote/page', form)
+      await request.post('/sales/quote/page', form)
     }
     ElMessage.success('保存成功')
     dialogVisible.value = false
@@ -171,7 +171,7 @@ const handleSave = async () => {
 const handleDelete = async (id) => {
   await ElMessageBox.confirm('确认删除此报价单？', '警告', { type: 'warning' })
   try {
-    await request.delete(`/v1/sales/quote/page/${id}`)
+    await request.delete(`/sales/quote/page/${id}`)
     ElMessage.success('删除成功')
     loadData()
   } catch (e) {

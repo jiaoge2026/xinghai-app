@@ -129,7 +129,7 @@ const formatDate = (date) => {
 const loadData = async () => {
   loading.value = true
   try {
-    const res = await request.get('/v1/sales/customer/page', { params: query })
+    const res = await request.get('/sales/customer/page', { params: query })
     tableData.value = res.data?.list || []
     total.value = res.data?.total || 0
   } catch {
@@ -162,9 +162,9 @@ const handleSubmit = async () => {
   submitting.value = true
   try {
     if (isEdit.value) {
-      await request.put(`/v1/sales/customer/${form.id}`, form)
+      await request.put(`/sales/customer/${form.id}`, form)
     } else {
-      await request.post('/v1/sales/customer', form)
+      await request.post('/sales/customer', form)
     }
     ElMessage.success(isEdit.value ? '编辑成功' : '新建成功')
     dialogVisible.value = false
@@ -176,7 +176,7 @@ const handleSubmit = async () => {
 
 const handleDelete = async (id) => {
   await ElMessageBox.confirm('确定删除该客户？', '提示', { type: 'warning' })
-  await request.delete(`/v1/sales/customer/${id}`)
+  await request.delete(`/sales/customer/${id}`)
   ElMessage.success('删除成功')
   loadData()
 }

@@ -196,7 +196,7 @@ const fetchData = async () => {
       params.startDate = ''
       params.endDate = ''
     }
-    const res = await request.get('/v1/sales/project-order/page', { params })
+    const res = await request.get('/sales/project-order/page', { params })
     tableData.value = res.data?.list || []
     total.value = res.data?.total || 0
   } catch {
@@ -235,9 +235,9 @@ const handleSubmit = async () => {
   submitting.value = true
   try {
     if (isEdit.value) {
-      await request.put(`/v1/sales/project-order/page/${form.id}`, form)
+      await request.put(`/sales/project-order/page/${form.id}`, form)
     } else {
-      await request.post('/v1/sales/project-order/page', form)
+      await request.post('/sales/project-order/page', form)
     }
     ElMessage.success(isEdit.value ? '编辑成功' : '新增成功')
     dialogVisible.value = false
@@ -249,7 +249,7 @@ const handleSubmit = async () => {
 
 const handleDelete = async (row) => {
   await ElMessageBox.confirm(`确定删除订单「${row.orderNo}」？`, '提示', { type: 'warning' })
-  await request.delete(`/v1/sales/project-order/page/${row.id}`)
+  await request.delete(`/sales/project-order/page/${row.id}`)
   ElMessage.success('删除成功')
   fetchData()
 }

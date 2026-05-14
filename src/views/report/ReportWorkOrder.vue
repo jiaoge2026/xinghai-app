@@ -127,11 +127,13 @@ const handleDateChange = () => {
 
 const loadStats = async () => {
   try {
-    const params = {}
-    if (query.startDate) params.startDate = query.startDate
-    if (query.endDate) params.endDate = query.endDate
-    const res = await request.get('/v1/fsm/work-orders/stats', params)
-    Object.assign(stats, res.data || {})
+    const params = { type: 'month', date: query.startDate ? query.startDate.slice(0, 7) : '' }
+    const res = await request.get('/report/fsm/summary', params)
+    const d = res.data || {}
+    stats.total = d.totalCount || 0
+    stats.completed = d.completedCount || 0
+    stats.inProgress = (d.totalCount || 0) - (d.completedCount || 0)
+    stats.totalRevenue = d.totalFee || 0
   } catch (e) { console.error(e) }
 }
 
@@ -144,7 +146,7 @@ const loadData = async () => {
     if (query.engineerName) params.engineerName = query.engineerName
     if (query.startDate) params.startDate = query.startDate
     if (query.endDate) params.endDate = query.endDate
-    const res = await request.get('/v1/fsm/work-orders', params)
+    const res = await request.get('/fsm/work-orders', params)
     tableData.value = res.data?.list || res.data || []
     total.value = res.data?.total || 0
     loadStats()

@@ -65,7 +65,7 @@ const onDateChange = () => {
 
 const loadAccounts = async () => {
   try {
-    const res = await request.get('/v1/haier-sync/accounts', { pageSize: 100 })
+    const res = await request.get('/haier-sync/accounts', { pageSize: 100 })
     accounts.value = res.data?.list || res.data || []
   } catch (e) { console.error(e) }
 }
@@ -78,7 +78,7 @@ const loadData = async () => {
     if (query.status) params.status = query.status
     if (query.startDate) params.startDate = query.startDate
     if (query.endDate) params.endDate = query.endDate
-    const res = await request.get('/v1/haier-sync/logs', params)
+    const res = await request.get('/haier-sync/logs', params)
     tableData.value = res.data?.list || res.data || []
     total.value = res.data?.total || 0
   } catch (e) { console.error(e) }

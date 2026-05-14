@@ -123,20 +123,30 @@ let pieChart = null
 const orderChartRef = ref()
 const pieChartRef = ref()
 
-// 加载统计数据
+// 加载统计数据（同时调 summary + today-stat）
 const loadStats = async () => {
   try {
-    // 从工单统计接口获取
-    const res = await request.get('/report/data/workOrderStats')
-    if (res.data) {
-      stats.value[0].value = res.data.todayNew || 0
-      stats.value[1].value = res.data.inProgress || 0
-      stats.value[2].value = res.data.monthCompleted || 0
-      stats.value[3].value = res.data.monthRevenue ? '¥' + res.data.monthRevenue + '万' : '--'
-    }
+    const [summaryRes, todayRes] = await Promise.all([
+      request.get('/report/fsm/summary', { type: 'month' }),
+      request.get('/fsm/work-orders/today-stat')
+    ])
+    const summary = summaryRes.data || {}
+    const todayData = todayRes.data || []
+    const todayItem = todayData[0] || {}
+    stats.value[0].value = todayItem.total || 0
+    // inProgress 从 status 接口单独拿
+    try {
+      const statusRes = await request.get('/report/fsm/status')
+      const inProgress = (statusRes.data || []).reduce((sum, s) => {
+        if (!s.name.includes('已结单') && !s.name.includes('已取消')) return sum + (s.value || 0)
+        return sum
+      }, 0)
+      stats.value[1].value = inProgress
+    } catch (e2) { stats.value[1].value = 0 }
+    stats.value[2].value = summary.completedCount || 0
+    stats.value[3].value = summary.totalFee ? '¥' + summary.totalFee + '万' : '--'
   } catch (e) {
     console.error('loadStats error:', e)
-    // 使用默认值（--）
   }
 }
 
@@ -144,7 +154,7 @@ const loadStats = async () => {
 const loadOrderTrend = async () => {
   if (!orderChart) return
   try {
-    const res = await request.get(`/report/data/orderTrend?period=${orderPeriod.value}`)
+    const res = await request.get('/report/fsm/trend')
     const data = res.data || []
     orderChart.setOption({
       tooltip: { trigger: 'axis' },
@@ -167,7 +177,7 @@ const loadOrderTrend = async () => {
 const loadOrderStatus = async () => {
   if (!pieChart) return
   try {
-    const res = await request.get('/report/data/orderStatus')
+    const res = await request.get('/report/fsm/status')
     const data = res.data || []
     pieChart.setOption({
       tooltip: { trigger: 'item' },
@@ -187,7 +197,7 @@ const loadOrderStatus = async () => {
 const loadStockAlert = async () => {
   stockLoading.value = true
   try {
-    const res = await request.get('/wms/part-stock/low-alert')
+    const res = await request.get('/wms/alerts')
     lowStockItems.value = res.data || []
   } catch (e) {
     console.error('loadStockAlert error:', e)

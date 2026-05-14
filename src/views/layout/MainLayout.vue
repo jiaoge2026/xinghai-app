@@ -43,7 +43,7 @@
           </template>
           <!-- 无子菜单 -->
           <div
-            v-else
+            v-if="!menu.children || !menu.children.length"
             class="ls-item"
             :class="{ 'is-active': currentPath === menu.path }"
             :data-path="menu.path"
@@ -161,7 +161,7 @@
             @click="handlePanelClick(child.path)"
           >
             <div class="flat-item-icon">
-              <el-icon :size="18"><component :is="getIcon(child.icon || menu.icon)" /></el-icon>
+              <el-icon :size="18"><component :is="getIcon(child.icon || activePanel.icon)" /></el-icon>
             </div>
             <div class="flat-item-info">
               <div class="flat-item-name">{{ child.name }}</div>
@@ -181,8 +181,19 @@ import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import TabBar from '@/components/tab/TabBar.vue'
 import {
+  // 导航图标
+  ArrowDown, ArrowRight, DArrowLeft, DArrowRight, Close,
+  // 业务模块图标
   DataAnalysis, Grid, OfficeBuilding, Money, UserFilled,
-  ArrowDown, ArrowRight, DArrowLeft, DArrowRight, Close
+  Tools, Box, Van, Shop, Postcard, CreditCard,
+  Phone, CircleCheck, DataBoard, Setting, ChatDotSquare,
+  MessageBox, Upload, Document, List, Location, Coin,
+  DataLine, Connection,
+  // 子菜单图标
+  User, Briefcase, ShoppingBag, Tickets, Collection,
+  TrendCharts, PriceTag, Histogram, PieChart, Timer,
+  Calendar, Guide, Search, Bell, Memo, Promotion,
+  Medal, Trophy, Compass, Stamp,
 } from '@element-plus/icons-vue'
 
 const router = useRouter()
@@ -222,12 +233,27 @@ let hoverTimer = null
 
 // 图标映射
 const iconMap = {
+  // 导航
+  ArrowDown, ArrowRight, DArrowLeft, DArrowRight, Close,
+  // 业务模块一级
   DataAnalysis, Grid, OfficeBuilding, Money, UserFilled,
-  ArrowDown, ArrowRight, DArrowLeft, DArrowRight, Close
+  Tools, Box, Van, Shop, Postcard, CreditCard,
+  Phone, CircleCheck, DataBoard, Setting, ChatDotSquare,
+  MessageBox, Upload, Document, List, Location, Coin,
+  DataLine, Connection,
+  // 子菜单图标
+  User, Briefcase, ShoppingBag, Tickets, Collection,
+  TrendCharts, PriceTag, Histogram, PieChart, Timer,
+  Calendar, Guide, Search, Bell, Memo, Promotion,
+  Medal, Trophy, Compass, Stamp,
 }
 
 function getIcon(name) {
-  return iconMap[name] || Grid
+  const icon = iconMap[name]
+  if (icon) return icon
+  // 兜底：尝试 Element Plus 原名注册
+  const ep = name && name.charAt(0).toUpperCase() + name.slice(1)
+  return iconMap[ep] ? iconMap[ep] : Grid
 }
 
 // 悬浮面板显示

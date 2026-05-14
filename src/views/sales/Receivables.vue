@@ -157,7 +157,7 @@ const loadData = async () => {
     if (query.status) params.status = query.status
     if (query.startDate) params.startDate = query.startDate
     if (query.endDate) params.endDate = query.endDate
-    const res = await request.get('/v1/sales/receivable/page', params)
+    const res = await request.get('/sales/receivable/page', params)
     tableData.value = res.data?.list || res.data || []
     total.value = res.data?.total || 0
   } catch (e) {
@@ -188,8 +188,8 @@ const handleSave = async () => {
   const valid = await formRef.value.validate().catch(() => false)
   if (!valid) return
   try {
-    if (isEdit.value) await request.put(`/v1/sales/receivable/page/${form.id}`, form)
-    else await request.post('/v1/sales/receivable/page', form)
+    if (isEdit.value) await request.put(`/sales/receivable/page/${form.id}`, form)
+    else await request.post('/sales/receivable/page', form)
     ElMessage.success('保存成功')
     dialogVisible.value = false
     loadData()
@@ -206,7 +206,7 @@ const handleReceive = (row) => {
 const handleReceiveSave = async () => {
   if (!receiveForm.amount || receiveForm.amount <= 0) { ElMessage.warning('请输入收款金额'); return }
   try {
-    await request.post(`/v1/sales/receivable/page/${receiveForm.id}/receive`, { amount: receiveForm.amount, receiveDate: receiveForm.receiveDate })
+    await request.post(`/sales/receivable/page/${receiveForm.id}/receive`, { amount: receiveForm.amount, receiveDate: receiveForm.receiveDate })
     ElMessage.success('收款成功')
     receiveVisible.value = false
     loadData()
@@ -218,7 +218,7 @@ const handleReceiveSave = async () => {
 const handleDelete = async (id) => {
   await ElMessageBox.confirm('确认删除此应收款记录？', '警告', { type: 'warning' })
   try {
-    await request.delete(`/v1/sales/receivable/page/${id}`)
+    await request.delete(`/sales/receivable/page/${id}`)
     ElMessage.success('删除成功')
     loadData()
   } catch (e) {
