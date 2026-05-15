@@ -1,113 +1,232 @@
 <template>
   <div class="config-list">
-    <el-card>
-      <template #header>
-        <div class="card-header">
-          <span>系统配置</span>
-          <el-button type="primary" :icon="Plus" @click="handleAdd">新增配置</el-button>
-        </div>
+    <PageHeader title="系统配置">
+      <template #actions>
+        <el-button type="primary" @click="openAdd">
+          <el-icon><Plus /></el-icon> 新增配置
+        </el-button>
       </template>
+    </PageHeader>
 
-      <el-table :data="tableData" v-loading="loading" stripe>
-        <el-table-column prop="configKey" label="配置项" min-width="200" />
-        <el-table-column prop="configValue" label="配置值" min-width="250" show-overflow-tooltip />
-        <el-table-column prop="configType" label="类型" width="100" align="center">
-          <template #default="{ row }">
-            <el-tag :type="typeMap[row.configType] || 'info'" size="small">
-              {{ row.configType === 'STRING' ? '字符串' : row.configType === 'NUMBER' ? '数字' : '布尔' }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="remark" label="备注" min-width="150" show-overflow-tooltip />
-        <el-table-column prop="updatedAt" label="更新时间" width="170" />
-        <el-table-column label="操作" width="150" fixed="right">
-          <template #default="{ row }">
-            <el-button type="primary" link :icon="Edit" @click="handleEdit(row)">编辑</el-button>
-            <el-button type="danger" link :icon="Delete" @click="handleDelete(row)">删除</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
+    <div class="panel">
+      <SearchForm
+        :fields="searchFields"
+        v-model="queryParams"
+        @search="handleSearch"
+        @reset="handleReset"
+      />
+    </div>
 
-      <div class="pagination">
-        <el-pagination
-          v-model:current-page="query.page"
-          v-model:page-size="query.pageSize"
-          :total="total"
-          :page-sizes="[10, 20, 50]"
-          layout="total, sizes, prev, pager, next"
-          @change="loadData"
-        />
-      </div>
-    </el-card>
+    <div class="panel">
+      <DataTable
+        :data="tableData"
+        :columns="tableColumns"
+        :loading="loading"
+        :pagination="pagination"
+        row-key="id"
+        @page-change="handlePageChange"
+        @size-change="handleSizeChange"
+        @action="handleTableAction"
+      />
+    </div>
 
-    <!-- 新增/编辑弹窗 -->
-    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="500px" destroy-on-close>
-      <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
-        <el-form-item label="配置项名" prop="configKey">
-          <el-input v-model="form.configKey" placeholder="如：sys.default.password" :disabled="isEdit" />
-        </el-form-item>
-        <el-form-item label="配置值" prop="configValue">
-          <el-input v-model="form.configValue" type="textarea" :rows="3" placeholder="配置值" />
-        </el-form-item>
-        <el-form-item label="类型" prop="configType">
-          <el-select v-model="form.configType" style="width:100%">
-            <el-option value="STRING" label="字符串" />
-            <el-option value="NUMBER" label="数字" />
-            <el-option value="BOOLEAN" label="布尔" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="备注">
-          <el-input v-model="form.remark" placeholder="配置说明或用途" />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" :loading="submitting" @click="handleSubmit">确定</el-button>
-      </template>
-    </el-dialog>
+    <CrudDialog
+      v-model="dialogVisible"
+      :mode="dialogMode"
+      :title="dialogTitle"
+      :fields="dialogFields"
+      :model-value="formData"
+      :saving="submitting"
+      width="500px"
+      @save="handleSave"
+      @cancel="dialogVisible = false"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Edit, Delete } from '@element-plus/icons-vue'
+import { Plus } from '@element-plus/icons-vue'
 import request from '@/utils/request'
+import { SearchForm, DataTable, CrudDialog, PageHeader } from '@/components/page-components'
 
+// ============ 数据 ============
 const loading = ref(false)
 const tableData = ref([])
-const total = ref(0)
-const dialogVisible = ref(false)
-const submitting = ref(false)
-const isEdit = ref(false)
-const formRef = ref()
+const pagination = reactive({ page: 1, pageSize: 20, total: 0 })
+const queryParams = reactive({ configKey: '' })
 
+// ============ 搜索 ============
+const searchFields = [
+  { key: 'configKey', label: '配置项', type: 'input', placeholder: '配置项名称' },
+]
+
+function handleSearch(params) {
+  Object.assign(queryParams, params)
+  pagination.page = 1
+  loadData()
+}
+
+function handleReset(params) {
+  Object.assign(queryParams, params)
+  pagination.page = 1
+  loadData()
+}
+
+// ============ 表格 ============
 const typeMap = { STRING: '', NUMBER: 'success', BOOLEAN: 'warning' }
+const typeLabelMap = { STRING: '字符串', NUMBER: '数字', BOOLEAN: '布尔' }
 
-const query = reactive({ page: 1, pageSize: 20 })
+const tableColumns = [
+  { key: 'configKey', label: '配置项', minWidth: 200 },
+  { key: 'configValue', label: '配置值', minWidth: 250, showOverflowTooltip: true },
+  {
+    key: 'configType',
+    label: '类型',
+    width: 100,
+    align: 'center',
+    columnType: 'map',
+    maps: { STRING: { label: '字符串', type: '' }, NUMBER: { label: '数字', type: 'success' }, BOOLEAN: { label: '布尔', type: 'warning' } },
+  },
+  { key: 'remark', label: '备注', minWidth: 150, showOverflowTooltip: true },
+  { key: 'updatedAt', label: '更新时间', width: 170 },
+  {
+    key: 'actions',
+    label: '操作',
+    width: 150,
+    fixed: 'right',
+    columnType: 'actions',
+    actions: [
+      { key: 'edit', label: '编辑', type: 'primary', size: 'small', link: true },
+      { key: 'delete', label: '删除', type: 'danger', size: 'small', link: true, danger: true },
+    ],
+  },
+]
 
-const form = reactive({
-  id: null,
+function handleTableAction(action, row) {
+  if (action === 'edit') openEdit(row)
+  else if (action === 'delete') openDelete(row)
+}
+
+function handlePageChange(page) { pagination.page = page; loadData() }
+function handleSizeChange(size) { pagination.pageSize = size; pagination.page = 1; loadData() }
+
+// ============ 弹窗表单 ============
+const dialogVisible = ref(false)
+const dialogMode = ref('create')
+const submitting = ref(false)
+const editingId = ref(null)
+
+const dialogTitle = computed(() => dialogMode.value === 'edit' ? '编辑配置' : '新增配置')
+
+const defaultForm = () => ({
   configKey: '',
   configValue: '',
   configType: 'STRING',
-  remark: ''
+  remark: '',
 })
 
-const rules = {
-  configKey: [{ required: true, message: '请输入配置项名', trigger: 'blur' }],
-  configValue: [{ required: true, message: '请输入配置值', trigger: 'blur' }],
-  configType: [{ required: true, message: '请选择类型', trigger: 'change' }]
+const formData = reactive(defaultForm())
+
+const dialogFields = [
+  {
+    key: 'configKey',
+    label: '配置项名',
+    type: 'input',
+    required: true,
+    placeholder: '如：sys.default.password',
+    disabled: () => dialogMode.value === 'edit',
+  },
+  {
+    key: 'configValue',
+    label: '配置值',
+    type: 'textarea',
+    required: true,
+    placeholder: '配置值',
+    rows: 3,
+    cols: 2,
+  },
+  {
+    key: 'configType',
+    label: '类型',
+    type: 'select',
+    required: true,
+    placeholder: '请选择类型',
+    options: [
+      { label: '字符串', value: 'STRING' },
+      { label: '数字', value: 'NUMBER' },
+      { label: '布尔', value: 'BOOLEAN' },
+    ],
+  },
+  {
+    key: 'remark',
+    label: '备注',
+    type: 'input',
+    placeholder: '配置说明或用途',
+    cols: 2,
+  },
+]
+
+function openAdd() {
+  dialogMode.value = 'create'
+  editingId.value = null
+  Object.keys(defaultForm()).forEach(k => { formData[k] = defaultForm()[k] })
+  dialogVisible.value = true
 }
 
-const dialogTitle = computed(() => isEdit.value ? '编辑配置' : '新增配置')
+function openEdit(row) {
+  dialogMode.value = 'edit'
+  editingId.value = row.id
+  Object.assign(formData, {
+    configKey: row.configKey,
+    configValue: row.configValue,
+    configType: row.configType,
+    remark: row.remark || '',
+  })
+  dialogVisible.value = true
+}
 
-const loadData = async () => {
+async function openDelete(row) {
+  try {
+    await ElMessageBox.confirm(`确定删除配置「${row.configKey}」？`, '提示', { type: 'warning' })
+    await request.delete(`/system/configs/${row.id}`)
+    ElMessage.success('删除成功')
+    loadData()
+  } catch (e) {
+    if (e !== 'cancel') ElMessage.error('删除失败')
+  }
+}
+
+async function handleSave(data) {
+  submitting.value = true
+  try {
+    if (dialogMode.value === 'edit') {
+      await request.put(`/system/configs/${editingId.value}`, data)
+      ElMessage.success('更新成功')
+    } else {
+      await request.post('/system/configs', data)
+      ElMessage.success('新增成功')
+    }
+    dialogVisible.value = false
+    loadData()
+  } catch {
+    ElMessage.error(dialogMode.value === 'edit' ? '更新失败' : '新增失败')
+  } finally {
+    submitting.value = false
+  }
+}
+
+// ============ 加载 ============
+async function loadData() {
   loading.value = true
   try {
-    const res = await request.get('/system/configs', { params: query })
+    const params = { pageNum: pagination.page, pageSize: pagination.pageSize, ...queryParams }
+    // 去掉空值
+    Object.keys(params).forEach(k => { if (params[k] === null || params[k] === '') delete params[k] })
+    const res = await request.get('/system/configs', { params })
     tableData.value = res.data?.list || []
-    total.value = res.data?.total || 0
+    pagination.total = res.data?.total || 0
   } catch {
     tableData.value = []
   } finally {
@@ -115,48 +234,19 @@ const loadData = async () => {
   }
 }
 
-const handleAdd = () => {
-  isEdit.value = false
-  Object.assign(form, { id: null, configKey: '', configValue: '', configType: 'STRING', remark: '' })
-  dialogVisible.value = true
-}
-
-const handleEdit = (row) => {
-  isEdit.value = true
-  Object.assign(form, { ...row })
-  dialogVisible.value = true
-}
-
-const handleSubmit = async () => {
-  const valid = await formRef.value.validate().catch(() => false)
-  if (!valid) return
-  submitting.value = true
-  try {
-    if (isEdit.value) {
-      await request.put(`/system/configs/${form.id}`, form)
-      ElMessage.success('更新成功')
-    } else {
-      await request.post('/system/configs', form)
-      ElMessage.success('新增成功')
-    }
-    dialogVisible.value = false
-    loadData()
-  } finally {
-    submitting.value = false
-  }
-}
-
-const handleDelete = async (row) => {
-  await ElMessageBox.confirm(`确定删除配置「${row.configKey}」？`, '提示', { type: 'warning' })
-  await request.delete(`/system/configs/${row.id}`)
-  ElMessage.success('删除成功')
-  loadData()
-}
-
 onMounted(loadData)
 </script>
 
 <style scoped>
-.card-header { display: flex; justify-content: space-between; align-items: center; }
-.pagination { margin-top: 16px; display: flex; justify-content: flex-end; }
+.config-list {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.panel {
+  background: #fff;
+  border-radius: 4px;
+  padding: 12px 16px;
+}
 </style>
