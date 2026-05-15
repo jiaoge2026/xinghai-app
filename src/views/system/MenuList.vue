@@ -8,7 +8,12 @@
         </div>
       </template>
 
-      <el-table :data="menuTree" row-key="id" default-expand-all :tree-props="{ children: 'children', hasChildren: 'hasChildren' }">
+      <el-table
+        :data="menuTree"
+        row-key="id"
+        default-expand-all
+        :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
+      >
         <el-table-column prop="name" label="权限名称" min-width="150" />
         <el-table-column prop="path" label="路由路径" min-width="150" />
         <el-table-column prop="icon" label="图标" width="120" />
@@ -22,7 +27,12 @@
         </el-table-column>
         <el-table-column prop="status" label="状态" width="80" align="center">
           <template #default="{ row }">
-            <el-switch v-model="row.status" :active-value="1" :inactive-value="0" @change="handleStatusChange(row)" />
+            <el-switch
+              v-model="row.status"
+              :active-value="1"
+              :inactive-value="0"
+              @change="handleStatusChange(row)"
+            />
           </template>
         </el-table-column>
         <el-table-column label="操作" width="200" fixed="right">
@@ -37,7 +47,7 @@
 
     <!-- 新增/编辑弹窗 -->
     <el-dialog v-model="dialogVisible" :title="dialogTitle" width="500px" destroy-on-close>
-      <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
+      <el-form ref="formRef" :model="form" :rules="formRules" label-width="100px">
         <el-form-item label="权限类型" prop="type">
           <el-radio-group v-model="form.type">
             <el-radio :value="1">菜单</el-radio>
@@ -53,7 +63,7 @@
         <el-form-item label="上级权限" prop="parentId">
           <el-tree-select
             v-model="form.parentId"
-            :data="menuTreeData"
+            :data="menuTreeSelectData"
             check-strictly
             :render-after-expand="false"
             placeholder="顶级权限可不选"
@@ -88,13 +98,15 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Edit, Delete } from '@element-plus/icons-vue'
 import request from '@/utils/request'
 
-const menuList = ref([])
+// 状态
+const menuTree = ref([])
 const dialogVisible = ref(false)
 const submitting = ref(false)
 const isEdit = ref(false)
-const formRef = ref()
+const formRef = ref(null)
 
-const form = reactive({
+// 表单
+const createEmptyForm = () => ({
   id: null,
   name: '',
   path: '',
@@ -105,58 +117,56 @@ const form = reactive({
   status: 1
 })
 
-const rules = {
+const form = reactive(createEmptyForm())
+
+const formRules = {
   name: [{ required: true, message: '请输入权限名称', trigger: 'blur' }],
   type: [{ required: true, message: '请选择权限类型', trigger: 'change' }]
 }
 
+// 弹窗标题
 const dialogTitle = computed(() => isEdit.value ? '编辑权限' : '新增权限')
 
-// 构建树形结构
-const menuTree = computed(() => {
-  const map = {}
-  const roots = []
-  const list = [...menuList.value]
-  list.forEach(item => { map[item.id] = { ...item, children: [] } })
-  list.forEach(item => {
-    if (item.parentId && map[item.parentId]) {
-      map[item.parentId].children.push(map[item.id])
-    } else {
-      roots.push(map[item.id])
-    }
-  })
-  return roots
-})
-
-const menuTreeData = computed(() => {
-  const transform = (nodes) => nodes.map(n => ({ label: n.name, value: n.id, children: n.children?.length ? transform(n.children) : undefined }))
+// 将树形数据转换为 el-tree-select 需要的格式
+const menuTreeSelectData = computed(() => {
+  const transform = (nodes) => nodes.map(n => ({
+    label: n.name,
+    value: n.id,
+    children: n.children?.length ? transform(n.children) : undefined
+  }))
   return transform(menuTree.value)
 })
 
+// 加载数据
 const loadData = async () => {
   try {
     const res = await request.get('/system/menus')
-    menuList.value = res.data || []
-  } catch (e) {
-    menuList.value = []
+    menuTree.value = res.data || []
+  } catch {
+    menuTree.value = []
   }
 }
 
+// 新增
 const handleAdd = (parentId) => {
   isEdit.value = false
-  Object.assign(form, { id: null, name: '', path: '', type: 1, parentId, icon: '', sort: 0, status: 1 })
+  Object.assign(form, createEmptyForm())
+  form.parentId = parentId
   dialogVisible.value = true
 }
 
+// 编辑
 const handleEdit = (row) => {
   isEdit.value = true
   Object.assign(form, { ...row, type: row.type || 1 })
   dialogVisible.value = true
 }
 
+// 提交
 const handleSubmit = async () => {
-  const valid = await formRef.value.validate().catch(() => false)
+  const valid = await formRef.value?.validate().catch(() => false)
   if (!valid) return
+
   submitting.value = true
   try {
     if (isEdit.value) {
@@ -173,6 +183,7 @@ const handleSubmit = async () => {
   }
 }
 
+// 状态切换
 const handleStatusChange = async (row) => {
   try {
     await request.put(`/system/menus/${row.id}`, { status: row.status })
@@ -182,6 +193,7 @@ const handleStatusChange = async (row) => {
   }
 }
 
+// 删除
 const handleDelete = async (row) => {
   await ElMessageBox.confirm(`确定删除权限「${row.name}」？`, '提示', { type: 'warning' })
   await request.delete(`/system/menus/${row.id}`)
@@ -193,5 +205,9 @@ onMounted(loadData)
 </script>
 
 <style scoped>
-.card-header { display: flex; justify-content: space-between; align-items: center; }
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
 </style>
