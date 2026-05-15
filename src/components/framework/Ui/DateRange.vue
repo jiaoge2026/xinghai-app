@@ -17,6 +17,42 @@
   />
 </template>
 
+<script lang="ts">
+// ============ 工具函数（普通 script 块，模块级作用域，不受 defineProps 提升影响）============
+function fmtDate(d: Date): string {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+function today(): string { return fmtDate(new Date()) }
+
+function daysAgo(n: number): string {
+  const d = new Date(); d.setDate(d.getDate() - n); return fmtDate(d)
+}
+
+function monthStart(): string {
+  const d = new Date(); d.setDate(1); return fmtDate(d)
+}
+
+function lastMonthStart(): string {
+  const d = new Date(); d.setMonth(d.getMonth() - 1); d.setDate(1); return fmtDate(d)
+}
+
+function lastMonthEnd(): string {
+  const d = new Date(); d.setMonth(d.getMonth() - 1)
+  d.setDate(new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate()); return fmtDate(d)
+}
+
+function yearStart(): string {
+  const d = new Date(); d.setMonth(0); d.setDate(1); return fmtDate(d)
+}
+
+// 导出给 <script setup> 使用
+export { today, daysAgo, monthStart, lastMonthStart, lastMonthEnd, yearStart, fmtDate }
+</script>
+
 <script setup lang="ts">
 import { computed } from 'vue'
 
@@ -26,13 +62,9 @@ interface Shortcut {
 }
 
 interface Props {
-  /** v-model: [startDate, endDate] */
   modelValue: [string, string] | null
-  /** 显示格式，默认 'YYYY-MM-DD' */
   format?: string
-  /** 值格式，默认 'YYYY-MM-DD' */
   valueFormat?: string
-  /** 是否有时间选择（精确到秒） */
   showTime?: boolean
   placeholder?: string
   startPlaceholder?: string
@@ -40,7 +72,6 @@ interface Props {
   rangeSeparator?: string
   disabled?: boolean
   size?: 'large' | 'default' | 'small'
-  /** 快捷选项，默认内置6个；传空数组[]禁用快捷选项 */
   shortcuts?: Shortcut[]
 }
 
@@ -71,52 +102,6 @@ const internalValue = computed({
     emit('change', val)
   },
 })
-
-function today(): string {
-  const d = new Date()
-  return fmtDate(d)
-}
-
-function daysAgo(n: number): string {
-  const d = new Date()
-  d.setDate(d.getDate() - n)
-  return fmtDate(d)
-}
-
-function monthStart(): string {
-  const d = new Date()
-  d.setDate(1)
-  return fmtDate(d)
-}
-
-function lastMonthStart(): string {
-  const d = new Date()
-  d.setMonth(d.getMonth() - 1)
-  d.setDate(1)
-  return fmtDate(d)
-}
-
-function lastMonthEnd(): string {
-  const d = new Date()
-  d.setMonth(d.getMonth() - 1)
-  const lastDay = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate()
-  d.setDate(lastDay)
-  return fmtDate(d)
-}
-
-function yearStart(): string {
-  const d = new Date()
-  d.setMonth(0)
-  d.setDate(1)
-  return fmtDate(d)
-}
-
-function fmtDate(d: Date): string {
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${y}-${m}-${day}`
-}
 </script>
 
 <style scoped>

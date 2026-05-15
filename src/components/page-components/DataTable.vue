@@ -182,12 +182,11 @@
             <template v-for="(action, idx) in col.actions" :key="action.key || idx">
               <el-divider v-if="action.dividerBefore" direction="vertical" />
               <el-button
-                :type="action.type || 'default'"
+                :type="action.type || 'primary'"
                 :size="action.size || 'small'"
                 :icon="action.icon ? h('i', { class: `el-icon-${action.icon}` }) : undefined"
                 :disabled="isActionDisabled(action, row)"
                 :link="action.link"
-                :type="action.type || 'primary'"
                 :class="{ 'xh-data-table__action--danger': action.danger }"
                 @click.stop="handleAction(action, row)"
               >

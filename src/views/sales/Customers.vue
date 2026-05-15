@@ -1,137 +1,238 @@
 <template>
   <div class="customer-list">
-    <el-card>
-      <template #header>
-        <div class="card-header">
-          <span>工程客户</span>
-          <el-button type="primary" :icon="Plus" @click="handleAdd">新建客户</el-button>
-        </div>
+    <PageHeader title="工程客户" subtitle="客户档案管理">
+      <template #actions>
+        <el-button type="primary" @click="openAdd">
+          <el-icon><Plus /></el-icon> 新建客户
+        </el-button>
       </template>
+    </PageHeader>
 
-      <el-form :inline="true" class="search-form">
-        <el-form-item label="">
-          <el-input v-model="query.keyword" placeholder="搜索客户名称/联系人/电话" clearable style="width:220px" />
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="handleSearch">搜索</el-button>
-        </el-form-item>
-      </el-form>
+    <!-- 搜索区 -->
+    <div class="panel">
+      <SearchForm
+        :fields="searchFields"
+        v-model="queryParams"
+        @search="handleSearch"
+        @reset="handleReset"
+      />
+    </div>
 
-      <el-table :data="tableData" v-loading="loading" stripe>
-        <el-table-column prop="customerNo" label="编号" width="120" />
-        <el-table-column prop="customerName" label="名称" min-width="150" />
-        <el-table-column prop="contactName" label="联系人" width="100" />
-        <el-table-column prop="contactPhone" label="电话" width="130" />
-        <el-table-column prop="type" label="类型" width="90" align="center">
-          <template #default="{ row }">
-            <el-tag type="primary" size="small">{{ row.type }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="status" label="状态" width="80" align="center">
-          <template #default="{ row }">
-            <el-tag :type="row.status === '正常' ? 'success' : 'danger'" size="small">{{ row.status }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="createdAt" label="创建时间" width="170">
-          <template #default="{ row }">{{ formatDate(row.createdAt) }}</template>
-        </el-table-column>
-        <el-table-column label="操作" width="160" fixed="right">
-          <template #default="{ row }">
-            <el-button type="primary" link @click="handleEdit(row)">编辑</el-button>
-            <el-button type="danger" link @click="handleDelete(row.id)">删除</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-
-      <div class="pagination">
-        <el-pagination
-          v-model:current-page="query.pageNum"
-          v-model:page-size="query.pageSize"
-          :total="total"
-          :page-sizes="[20, 50, 100]"
-          layout="total, prev, pager, next"
-          @change="loadData"
-        />
-      </div>
-    </el-card>
+    <!-- 表格 -->
+    <div class="panel">
+      <DataTable
+        ref="tableRef"
+        :data="tableData"
+        :columns="tableColumns"
+        :loading="loading"
+        :pagination="pagination"
+        row-key="id"
+        :show-pagination="true"
+        @page-change="handlePageChange"
+        @size-change="handleSizeChange"
+        @action="handleTableAction"
+      />
+    </div>
 
     <!-- 新建/编辑弹窗 -->
-    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="550px" destroy-on-close>
-      <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
-        <el-form-item label="客户编号" prop="customerNo">
-          <el-input v-model="form.customerNo" placeholder="客户编号" />
-        </el-form-item>
-        <el-form-item label="客户名称" prop="customerName">
-          <el-input v-model="form.customerName" placeholder="客户名称" />
-        </el-form-item>
-        <el-form-item label="联系人" prop="contactName">
-          <el-input v-model="form.contactName" placeholder="联系人" />
-        </el-form-item>
-        <el-form-item label="电话" prop="contactPhone">
-          <el-input v-model="form.contactPhone" placeholder="电话" />
-        </el-form-item>
-        <el-form-item label="地址">
-          <el-input v-model="form.address" type="textarea" :rows="2" placeholder="地址" />
-        </el-form-item>
-        <el-form-item label="类型" prop="type">
-          <el-select v-model="form.industry" placeholder="请选择" style="width:100%">
-            <el-option value="工程" label="工程" />
-            <el-option value="渠道" label="渠道" />
-            <el-option value="分销" label="分销" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="状态" prop="status">
-          <el-select v-model="form.status" placeholder="请选择" style="width:100%">
-            <el-option value="正常" label="正常" />
-            <el-option value="禁用" label="禁用" />
-          </el-select>
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" :loading="submitting" @click="handleSubmit">确定</el-button>
-      </template>
-    </el-dialog>
+    <CrudDialog
+      v-model="dialogVisible"
+      :mode="dialogMode"
+      :fields="dialogFields"
+      :model-value="formData"
+      :saving="submitting"
+      title=""
+      @save="handleSave"
+      @cancel="dialogVisible = false"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import request from '@/utils/request'
+import { SearchForm, DataTable, CrudDialog, PageHeader } from '@/components/page-components'
 
+// ============ 数据 ============
 const loading = ref(false)
 const tableData = ref([])
-const total = ref(0)
+const pagination = reactive({ page: 1, pageSize: 20, total: 0 })
+const queryParams = reactive({ keyword: '' })
+
+// ============ 搜索 ============
+const searchFields = [
+  {
+    key: 'keyword',
+    label: '关键词',
+    type: 'input',
+    placeholder: '客户名称/联系人/电话',
+    defaultValue: '',
+  },
+]
+
+function handleSearch(params) {
+  Object.assign(queryParams, params)
+  pagination.page = 1
+  loadData()
+}
+
+function handleReset(params) {
+  Object.assign(queryParams, params)
+  pagination.page = 1
+  loadData()
+}
+
+// ============ 表格 ============
+const tableRef = ref()
+
+const tableColumns = [
+  { key: 'customerName', label: '客户名称', minWidth: 150, sortable: true },
+  { key: 'industry', label: '行业', width: 100 },
+  { key: 'contactName', label: '联系人', width: 100 },
+  { key: 'contactPhone', label: '电话', width: 130 },
+  {
+    key: 'status',
+    label: '状态',
+    width: 90,
+    align: 'center',
+    columnType: 'status',
+    statusMap: { 1: { label: '正常', type: 'success' }, 0: { label: '禁用', type: 'danger' } },
+  },
+  { key: 'createTime', label: '创建时间', width: 170, columnType: 'datetime' },
+  {
+    key: 'actions',
+    label: '操作',
+    width: 120,
+    fixed: 'right',
+    columnType: 'actions',
+    actions: [
+      { key: 'edit', label: '编辑', type: 'primary', size: 'small', link: true },
+      { key: 'delete', label: '删除', type: 'danger', size: 'small', link: true, danger: true },
+    ],
+  },
+]
+
+function handleTableAction(action, row) {
+  if (action === 'edit') handleEdit(row)
+  else if (action === 'delete') handleDelete(row)
+}
+
+function handlePageChange(page) {
+  pagination.page = page
+  loadData()
+}
+
+function handleSizeChange(size) {
+  pagination.pageSize = size
+  pagination.page = 1
+  loadData()
+}
+
+// ============ 弹窗表单 ============
 const dialogVisible = ref(false)
+const dialogMode = ref('create') // 'create' | 'edit' | 'view'
 const submitting = ref(false)
-const isEdit = ref(false)
-const formRef = ref()
+const editingId = ref(null)
 
-const query = reactive({ pageNum: 1, pageSize: 20, keyword: '' })
-const form = reactive({ id: null, customerNo: '', customerName: '', contactName: '', contactPhone: '', address: '', industry: '工程', status: 1 })
-const rules = {
-  customerNo: [{ required: true, message: '请输入客户编号', trigger: 'blur' }],
-  name: [{ required: true, message: '请输入客户名称', trigger: 'blur' }],
-  contact: [{ required: true, message: '请输入联系人', trigger: 'blur' }],
-  phone: [{ required: true, message: '请输入电话', trigger: 'blur' }],
-  type: [{ required: true, message: '请选择类型', trigger: 'change' }],
-  status: [{ required: true, message: '请选择状态', trigger: 'change' }]
+const defaultForm = () => ({
+  customerName: '',
+  industry: '',
+  contactName: '',
+  contactPhone: '',
+  contactEmail: '',
+  address: '',
+  status: 1,
+})
+
+const formData = reactive(defaultForm())
+
+const dialogFields = [
+  { key: 'customerName', label: '客户名称', type: 'input', required: true, placeholder: '请输入客户名称', cols: 2 },
+  { key: 'industry', label: '行业', type: 'select', placeholder: '请选择行业', options: [
+    { label: '酒店', value: '酒店' },
+    { label: '学校', value: '学校' },
+    { label: '医院', value: '医院' },
+    { label: '工厂', value: '工厂' },
+    { label: '楼宇', value: '楼宇' },
+    { label: '政府', value: '政府' },
+    { label: '其他', value: '其他' },
+  ], cols: 2 },
+  { key: 'contactName', label: '联系人', type: 'input', required: true, placeholder: '请输入联系人', cols: 2 },
+  { key: 'contactPhone', label: '电话', type: 'input', required: true, placeholder: '请输入电话', cols: 2 },
+  { key: 'contactEmail', label: '邮箱', type: 'input', placeholder: '请输入邮箱', cols: 2 },
+  { key: 'address', label: '地址', type: 'textarea', placeholder: '请输入详细地址', cols: 2 },
+  {
+    key: 'status',
+    label: '状态',
+    type: 'select',
+    required: true,
+    defaultValue: 1,
+    options: [
+      { label: '正常', value: 1 },
+      { label: '禁用', value: 0 },
+    ],
+    cols: 2,
+  },
+]
+
+function openAdd() {
+  dialogMode.value = 'create'
+  editingId.value = null
+  Object.keys(defaultForm()).forEach(k => { formData[k] = defaultForm()[k] })
+  dialogVisible.value = true
 }
-const dialogTitle = computed(() => isEdit.value ? '编辑客户' : '新建客户')
 
-const formatDate = (date) => {
-  if (!date) return ''
-  return new Date(date).toLocaleString()
+function handleEdit(row) {
+  dialogMode.value = 'edit'
+  editingId.value = row.id
+  Object.assign(formData, { ...row })
+  dialogVisible.value = true
 }
 
-const loadData = async () => {
+async function handleSave(data) {
+  submitting.value = true
+  try {
+    if (dialogMode.value === 'edit') {
+      await request.put(`/sales/customer/${editingId.value}`, data)
+      ElMessage.success('编辑成功')
+    } else {
+      await request.post('/sales/customer', data)
+      ElMessage.success('新建成功')
+    }
+    dialogVisible.value = false
+    loadData()
+  } catch (e) {
+    ElMessage.error(dialogMode.value === 'edit' ? '编辑失败' : '新建失败')
+  } finally {
+    submitting.value = false
+  }
+}
+
+async function handleDelete(row) {
+  try {
+    await ElMessageBox.confirm(`确定删除客户「${row.customerName}」？`, '确认删除', { type: 'warning' })
+    await request.delete(`/sales/customer/${row.id}`)
+    ElMessage.success('已删除')
+    loadData()
+  } catch (e) {
+    if (e !== 'cancel') ElMessage.error('删除失败')
+  }
+}
+
+// ============ 加载数据 ============
+async function loadData() {
   loading.value = true
   try {
-    const res = await request.get('/sales/customer/page', { params: query })
+    const params = {
+      pageNum: pagination.page,
+      pageSize: pagination.pageSize,
+      ...queryParams,
+    }
+    const res = await request.get('/sales/customer/page', { params })
     tableData.value = res.data?.records || []
-    total.value = res.data?.total || 0
+    pagination.total = res.data?.total || 0
   } catch {
     tableData.value = []
   } finally {
@@ -139,64 +240,20 @@ const loadData = async () => {
   }
 }
 
-const handleSearch = () => {
-  query.pageNum = 1
-  loadData()
-}
-
-const handleAdd = () => {
-  isEdit.value = false
-  Object.assign(form, { id: null, customerNo: '', customerName: '', contactName: '', contactPhone: '', address: '', industry: '工程', status: 1 })
-  dialogVisible.value = true
-}
-
-const handleEdit = (row) => {
-  isEdit.value = true
-  Object.assign(form, { ...row })
-  dialogVisible.value = true
-}
-
-const handleSubmit = async () => {
-  const valid = await formRef.value.validate().catch(() => false)
-  if (!valid) return
-  submitting.value = true
-  try {
-    if (isEdit.value) {
-      await request.put(`/sales/customer/${form.id}`, form)
-    } else {
-      await request.post('/sales/customer', form)
-    }
-    ElMessage.success(isEdit.value ? '编辑成功' : '新建成功')
-    dialogVisible.value = false
-    loadData()
-  } finally {
-    submitting.value = false
-  }
-}
-
-const handleDelete = async (id) => {
-  await ElMessageBox.confirm('确定删除该客户？', '提示', { type: 'warning' })
-  await request.delete(`/sales/customer/${id}`)
-  ElMessage.success('删除成功')
-  loadData()
-}
-
-const handleSizeChange = (val) => {
-  query.pageSize = val
-  query.pageNum = 1
-  loadData()
-}
-
-const handlePageChange = (val) => {
-  query.pageNum = val
-  loadData()
-}
-
 onMounted(loadData)
 </script>
 
 <style scoped>
-.card-header { display: flex; justify-content: space-between; align-items: center; }
-.search-form { margin-bottom: 12px; }
-.pagination { margin-top: 16px; display: flex; justify-content: flex-end; }
+.customer-list {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.panel {
+  background: #fff;
+  border-radius: 4px;
+  padding: 12px 16px;
+}
 </style>
