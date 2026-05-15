@@ -86,10 +86,16 @@ export const removeTab = (tabId) => {
   const wasActive = state.activeTabId === tabId
   state.tabs.splice(idx, 1)
   if (wasActive) {
-    const next = state.tabs.find(t => t.id === '/dashboard') || state.tabs[0]
-    state.activeTabId = next ? next.id : '/dashboard'
+    const prevIdx = idx - 1
+    if (prevIdx >= 0) {
+      state.activeTabId = state.tabs[prevIdx].id
+    } else if (state.tabs.length > 0) {
+      state.activeTabId = state.tabs[0].id
+    } else {
+      state.activeTabId = '/dashboard'
+    }
   }
-  saveTabs()
+  save()
 }
 export const clearTabs = () => {
   state.tabs = state.tabs.filter(t => t.path === '/' || t.path === '/dashboard')
@@ -126,12 +132,19 @@ export const useTabStore = () => {
     if (idx === -1) return
     const wasActive = state.activeTabId === tabId
     state.tabs.splice(idx, 1)
-    // 如果关闭的是当前激活的 Tab，切换到剩余的任一 Tab（优先找 Dashboard）
+    // 如果关闭的是当前激活的 Tab，切换到它的前一个 Tab（顺序保持）
     if (wasActive) {
-      const next = state.tabs.find(t => t.id === '/dashboard') || state.tabs[0]
-      state.activeTabId = next ? next.id : '/dashboard'
+      const prevIdx = idx - 1
+      if (prevIdx >= 0) {
+        state.activeTabId = state.tabs[prevIdx].id
+      } else if (state.tabs.length > 0) {
+        // 没有前一个了（关的是第一个），跳到下一个
+        state.activeTabId = state.tabs[0].id
+      } else {
+        state.activeTabId = '/dashboard'
+      }
     }
-    saveTabs()
+    save()
   }
 
   const setActiveTab = (tabId) => {
