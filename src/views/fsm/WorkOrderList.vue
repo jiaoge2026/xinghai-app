@@ -1,13 +1,36 @@
 <template>
   <div class="work-order-list">
-    <PageHeader title="工单管理">
-      <template #actions>
-        <el-button type="primary" @click="openAdd">
-          <el-icon><Plus /></el-icon>
-          新建工单
-        </el-button>
+    <PageHeader title="工单管理" :actions="headerActions" />
+
+    <!-- 导出弹窗 -->
+    <el-dialog v-model="exportDialogVisible" title="导出工单" width="480px" destroy-on-close>
+      <el-form label-width="90px" size="default">
+        <el-form-item label="筛选条件">
+          <div style="color:#909399;font-size:12px;">
+            <span v-if="queryParams.woNo">工单号: {{ queryParams.woNo }}；</span>
+            <span v-if="queryParams.customerName">客户: {{ queryParams.customerName }}；</span>
+            <span v-if="queryParams.engineerName">工程师: {{ queryParams.engineerName }}；</span>
+            <span v-if="queryParams.status">状态: {{ getStatusLabel(queryParams.status) }}；</span>
+            <span v-if="queryParams.serviceType">服务类型: {{ queryParams.serviceType }}；</span>
+            <span v-if="queryParams.dateRange && queryParams.dateRange.length === 2">
+              日期: {{ queryParams.dateRange[0] }} ~ {{ queryParams.dateRange[1] }}
+            </span>
+            <span v-if="!queryParams.woNo && !queryParams.customerName && !queryParams.engineerName && !queryParams.status && !queryParams.serviceType && !(queryParams.dateRange && queryParams.dateRange.length === 2)">
+              无筛选（导出全部）
+            </span>
+          </div>
+        </el-form-item>
+        <el-form-item label="导出说明">
+          <div style="color:#909399;font-size:12px;">
+            任务提交后可在「导出任务」页面查看进度并下载文件
+          </div>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="exportDialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="exporting" @click="confirmExport">确认导出</el-button>
       </template>
-    </PageHeader>
+    </el-dialog>
 
     <div class="panel">
       <SearchForm
@@ -252,6 +275,49 @@ const loading = ref(false)
 const tableData = ref([])
 const pagination = reactive({ page: 1, pageSize: 20, total: 0 })
 const tableHeight = computed(() => 'calc(100vh - 300px)')
+const exportDialogVisible = ref(false)
+const exporting = ref(false)
+
+const STATUS_OPTIONS = {
+  '100000010': '已到商',
+  '100000015': '已到兵',
+  '100000055': '服务商已结单',
+  '100000060': '海尔已结单',
+  '100000090': '已取消'
+}
+const getStatusLabel = (val) => STATUS_OPTIONS[val] || val || '全部'
+
+const openExport = () => {
+  exportDialogVisible.value = true
+}
+
+const confirmExport = async () => {
+  exporting.value = true
+  try {
+    const filterParams = {}
+    if (queryParams.woNo) filterParams.woNo = queryParams.woNo
+    if (queryParams.customerName) filterParams.customerName = queryParams.customerName
+    if (queryParams.phone) filterParams.phone = queryParams.phone
+    if (queryParams.engineerName) filterParams.engineerName = queryParams.engineerName
+    if (queryParams.status) filterParams.status = queryParams.status
+    if (queryParams.serviceType) filterParams.serviceType = queryParams.serviceType
+    if (queryParams.dateRange && queryParams.dateRange.length === 2) {
+      filterParams.startDate = queryParams.dateRange[0]
+      filterParams.endDate = queryParams.dateRange[1]
+    }
+    await request.post('/system/export-tasks', {
+      taskType: 'WORK_ORDER',
+      filterParams
+    })
+    ElMessage.success('导出任务已提交，请到「导出任务」页面查看进度')
+    exportDialogVisible.value = false
+  } catch (e) {
+    console.error('提交导出失败', e)
+    ElMessage.error('提交失败: ' + (e.message || '未知错误'))
+  } finally {
+    exporting.value = false
+  }
+}
 
 // ============ 列定义 ============
 const HAIER_STATUS_MAP = {
@@ -469,6 +535,11 @@ function handleSizeChange(size) {
 const openAdd = () => {
   ElMessage.info('新建工单功能开发中')
 }
+
+const headerActions = [
+  { key: 'export', label: '导出', icon: 'Download', onClick: openExport },
+  { key: 'add', label: '新建工单', type: 'primary', icon: 'Plus', onClick: openAdd }
+]
 
 // ============ 加载数据 ============
 async function loadData() {
