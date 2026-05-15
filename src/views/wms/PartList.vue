@@ -1,14 +1,6 @@
 <template>
   <div class="part-list">
-    <PageHeader title="配件管理">
-      <template #actions>
-        <el-button type="primary" @click="openAdd">
-          <el-icon><Plus /></el-icon> 新增配件
-        </el-button>
-      </template>
-    </PageHeader>
-
-    <div class="panel">
+<div class="panel">
       <SearchForm
         :fields="searchFields"
         v-model="queryParams"
@@ -19,6 +11,7 @@
 
     <div class="panel">
       <DataTable
+        :show-index="false"
         ref="tableRef"
         :data="tableData"
         :columns="tableColumns"
@@ -27,8 +20,22 @@
         row-key="id"
         @page-change="handlePageChange"
         @size-change="handleSizeChange"
-        @action="handleTableAction"
-      />
+        @action="handleTableAction">
+
+        <template #header___seq__>
+          <span>序号</span>
+          <ColumnSettings
+            :columns="tableColumns"
+            page-path="/wms/parts"
+            @change="onColumnConfigChange"
+          >
+            <template #trigger>
+              <el-icon class="seq-settings-btn"><Setting /></el-icon>
+            </template>
+          </ColumnSettings>
+        </template>
+      
+      </DataTable>
     </div>
 
     <!-- 新增/编辑弹窗 -->
@@ -45,11 +52,12 @@
 </template>
 
 <script setup>
+import { SearchForm, DataTable} from '@/components/page-components'
+import ColumnSettings from '@/views/components/ColumnSettings.vue'
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus } from '@element-plus/icons-vue'
+import { Plus, Setting } from '@element-plus/icons-vue'
 import request from '@/utils/request'
-import { SearchForm, DataTable, CrudDialog, PageHeader } from '@/components/page-components'
 
 // ============ 数据 ============
 const loading = ref(false)
@@ -88,7 +96,14 @@ function handleReset(params) {
 // ============ 表格 ============
 const tableRef = ref()
 
+
+// Column settings
+// mergedColumns uses tableColumns directly (plain array)
+const onColumnConfigChange = (cols) => { Object.assign(tableColumns, cols) }
+
 const tableColumns = [
+  { key: '__seq__', label: '', width: 60, show: true, fixed: 'left', columnType: 'seq' },
+  
   { key: 'partNo', label: '配件编码', width: 130 },
   { key: 'partName', label: '配件名称', minWidth: 150 },
   { key: 'spec', label: '规格型号', minWidth: 120, showOverflowTooltip: true },
@@ -304,4 +319,14 @@ onMounted(() => {
   color: #f56c6c;
   font-weight: bold;
 }
+
+/* seq column toolbar */
+.table-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.seq-settings-btn { cursor: pointer; color: #909399; transition: color 0.2s; }
+.seq-settings-btn:hover { color: #409eff; }
+
 </style>

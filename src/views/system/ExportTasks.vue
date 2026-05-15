@@ -112,8 +112,9 @@ async function fetchTasks() {
   loading.value = true
   try {
     const isAll = viewMode.value === 'all'
-    const res = await request.get('/system/export-tasks', { params: { all: isAll } })
-    tasks.value = res.data || []
+    const res = await request.get('/v1/system/export-tasks', { params: { all: isAll } })
+    // axios: res.data = {code, message, data: [...]}, res.data.data = array
+    tasks.value = (res.data && Array.isArray(res.data.data)) ? res.data.data : []
   } catch (e) {
     console.error('获取导出任务失败', e)
     tasks.value = []
@@ -135,7 +136,7 @@ async function downloadFile(row) {
 async function removeTask(row) {
   try {
     await ElMessageBox.confirm(`删除任务 ${row.taskNo}？`, '确认', { type: 'warning' })
-    await request.delete(`/system/export-tasks/${row.id}`)
+    await request.delete(`/v1/system/export-tasks/${row.id}`)
     ElMessage.success('已删除')
     await fetchTasks()
   } catch (e) {

@@ -1,20 +1,6 @@
 <template>
   <div class="stock-list">
-    <PageHeader title="库存台账">
-      <template #actions>
-        <el-button type="success" @click="openInDialog()">
-          <el-icon><Top /></el-icon> 入库
-        </el-button>
-        <el-button type="warning" @click="openOutDialog()">
-          <el-icon><Bottom /></el-icon> 出库
-        </el-button>
-        <el-button type="primary" @click="openCheckDialog">
-          <el-icon><Refresh /></el-icon> 库存盘点
-        </el-button>
-      </template>
-    </PageHeader>
-
-    <div class="panel">
+<div class="panel">
       <SearchForm
         :fields="searchFields"
         v-model="queryParams"
@@ -25,6 +11,7 @@
 
     <div class="panel">
       <DataTable
+        :show-index="false"
         ref="tableRef"
         :data="tableData"
         :columns="tableColumns"
@@ -33,8 +20,22 @@
         row-key="id"
         @page-change="handlePageChange"
         @size-change="handleSizeChange"
-        @action="handleTableAction"
-      />
+        @action="handleTableAction">
+
+        <template #header___seq__>
+          <span>序号</span>
+          <ColumnSettings
+            :columns="tableColumns"
+            page-path="/wms/stock"
+            @change="onColumnConfigChange"
+          >
+            <template #trigger>
+              <el-icon class="seq-settings-btn"><Setting /></el-icon>
+            </template>
+          </ColumnSettings>
+        </template>
+      
+      </DataTable>
     </div>
 
     <!-- 入库弹窗 -->
@@ -190,11 +191,12 @@
 </template>
 
 <script setup>
+import { SearchForm, DataTable} from '@/components/page-components'
+import ColumnSettings from '@/views/components/ColumnSettings.vue'
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Top, Bottom, Refresh } from '@element-plus/icons-vue'
+import { Top, Bottom, Refresh, Setting } from '@element-plus/icons-vue'
 import request from '@/utils/request'
-import { SearchForm, DataTable, PageHeader } from '@/components/page-components'
 
 // ============ 数据 ============
 const loading = ref(false)
@@ -236,7 +238,14 @@ function handleReset(params) {
 // ============ 表格 ============
 const tableRef = ref()
 
+
+// Column settings
+// mergedColumns uses tableColumns directly (plain array)
+const onColumnConfigChange = (cols) => { Object.assign(tableColumns, cols) }
+
 const tableColumns = [
+  { key: '__seq__', label: '', width: 60, show: true, fixed: 'left', columnType: 'seq' },
+  
   { key: 'partCode', label: '配件编码', width: 120 },
   { key: 'partName', label: '配件名称', minWidth: 150, showOverflowTooltip: true },
   { key: 'warehouseName', label: '仓库', width: 120, showOverflowTooltip: true },
@@ -522,4 +531,14 @@ onMounted(() => {
   color: #f56c6c;
   font-weight: bold;
 }
+
+/* seq column toolbar */
+.table-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.seq-settings-btn { cursor: pointer; color: #909399; transition: color 0.2s; }
+.seq-settings-btn:hover { color: #409eff; }
+
 </style>

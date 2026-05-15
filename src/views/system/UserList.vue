@@ -1,14 +1,6 @@
 <template>
   <div class="user-list">
-    <PageHeader title="用户管理">
-      <template #actions>
-        <el-button type="primary" @click="openAdd">
-          <el-icon><Plus /></el-icon> 新增用户
-        </el-button>
-      </template>
-    </PageHeader>
-
-    <div class="panel">
+<div class="panel">
       <SearchForm
         :fields="searchFields"
         v-model="queryParams"
@@ -19,6 +11,7 @@
 
     <div class="panel">
       <DataTable
+        :show-index="false"
         :data="tableData"
         :columns="tableColumns"
         :loading="loading"
@@ -31,6 +24,20 @@
         <template #roles="{ row }">
           <el-tag v-for="r in (row.roles || [])" :key="r.id" size="small" style="margin-right:4px">{{ r.roleName }}</el-tag>
         </template>
+      
+        <template #header___seq__>
+          <span>序号</span>
+          <ColumnSettings
+            :columns="mergedColumns"
+            page-path="/system/users"
+            @change="onColumnConfigChange"
+          >
+            <template #trigger>
+              <el-icon class="seq-settings-btn"><Setting /></el-icon>
+            </template>
+          </ColumnSettings>
+        </template>
+      
       </DataTable>
     </div>
 
@@ -61,11 +68,13 @@
 </template>
 
 <script setup>
+import { SearchForm, DataTable} from '@/components/page-components'
+import ColumnSettings from '@/views/components/ColumnSettings.vue'
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus } from '@element-plus/icons-vue'
+import {Plus, Setting} from '@element-plus/icons-vue'
 import request from '@/utils/request'
-import { SearchForm, DataTable, CrudDialog, PageHeader } from '@/components/page-components'
+
 
 // ============ 数据 ============
 const loading = ref(false)
@@ -101,7 +110,14 @@ function handleReset(params) {
 }
 
 // ============ 表格 ============
+
+// Column settings
+// mergedColumns uses tableColumns directly (plain array)
+const onColumnConfigChange = (cols) => { Object.assign(tableColumns, cols) }
+
 const tableColumns = [
+  { key: '__seq__', label: '', width: 60, show: true, fixed: 'left', columnType: 'seq' },
+  
   { key: 'username', label: '用户名', width: 150 },
   { key: 'name', label: '姓名', minWidth: 120 },
   { key: 'phone', label: '手机号', width: 130 },
@@ -287,4 +303,14 @@ export default { name: 'UserList' }
   border-radius: 4px;
   padding: 12px 16px;
 }
+
+/* seq column toolbar */
+.table-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.seq-settings-btn { cursor: pointer; color: #909399; transition: color 0.2s; }
+.seq-settings-btn:hover { color: #409eff; }
+
 </style>

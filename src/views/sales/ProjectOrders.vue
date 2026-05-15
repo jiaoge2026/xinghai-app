@@ -1,14 +1,6 @@
 <template>
   <div class="project-orders">
-    <PageHeader title="项目订单">
-      <template #actions>
-        <el-button type="primary" @click="openAdd">
-          <el-icon><Plus /></el-icon> 新增订单
-        </el-button>
-      </template>
-    </PageHeader>
-
-    <div class="panel">
+<div class="panel">
       <SearchForm
         :fields="searchFields"
         v-model="queryParams"
@@ -19,6 +11,7 @@
 
     <div class="panel">
       <DataTable
+        :show-index="false"
         :data="tableData"
         :columns="tableColumns"
         :loading="loading"
@@ -26,8 +19,22 @@
         row-key="id"
         @page-change="handlePageChange"
         @size-change="handleSizeChange"
-        @action="handleTableAction"
-      />
+        @action="handleTableAction">
+
+        <template #header___seq__>
+          <span>序号</span>
+          <ColumnSettings
+            :columns="tableColumns"
+            page-path="/sales/project-orders"
+            @change="onColumnConfigChange"
+          >
+            <template #trigger>
+              <el-icon class="seq-settings-btn"><Setting /></el-icon>
+            </template>
+          </ColumnSettings>
+        </template>
+      
+      </DataTable>
     </div>
 
     <!-- 查看详情弹窗 -->
@@ -92,11 +99,12 @@
 </template>
 
 <script setup>
+import { SearchForm, DataTable} from '@/components/page-components'
+import ColumnSettings from '@/views/components/ColumnSettings.vue'
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus } from '@element-plus/icons-vue'
+import { Plus, Setting } from '@element-plus/icons-vue'
 import request from '@/utils/request'
-import { SearchForm, DataTable, PageHeader } from '@/components/page-components'
 
 const loading = ref(false)
 const tableData = ref([])
@@ -132,7 +140,14 @@ function handleReset(params) {
   loadData()
 }
 
+
+// Column settings
+// mergedColumns uses tableColumns directly (plain array)
+const onColumnConfigChange = (cols) => { Object.assign(tableColumns, cols) }
+
 const tableColumns = [
+  { key: '__seq__', label: '', width: 60, show: true, fixed: 'left', columnType: 'seq' },
+  
   { key: 'orderNo', label: '订单号', width: 170 },
   { key: 'orderDate', label: '订单日期', width: 110 },
   { key: 'customerId', label: '客户ID', width: 80 },
@@ -288,4 +303,14 @@ onMounted(loadData)
 <style scoped>
 .project-orders { padding: 12px; display: flex; flex-direction: column; gap: 12px; }
 .panel { background: #fff; border-radius: 4px; padding: 12px 16px; }
+
+/* seq column toolbar */
+.table-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.seq-settings-btn { cursor: pointer; color: #909399; transition: color 0.2s; }
+.seq-settings-btn:hover { color: #409eff; }
+
 </style>

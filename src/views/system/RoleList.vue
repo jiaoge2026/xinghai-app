@@ -1,14 +1,6 @@
 <template>
   <div class="role-list">
-    <PageHeader title="角色管理">
-      <template #actions>
-        <el-button type="primary" @click="openAdd">
-          <el-icon><Plus /></el-icon> 新增角色
-        </el-button>
-      </template>
-    </PageHeader>
-
-    <div class="panel">
+<div class="panel">
       <SearchForm
         :fields="searchFields"
         v-model="queryParams"
@@ -19,6 +11,7 @@
 
     <div class="panel">
       <DataTable
+        :show-index="false"
         :data="tableData"
         :columns="tableColumns"
         :loading="loading"
@@ -26,8 +19,22 @@
         row-key="id"
         @page-change="handlePageChange"
         @size-change="handleSizeChange"
-        @action="handleTableAction"
-      />
+        @action="handleTableAction">
+
+        <template #header___seq__>
+          <span>序号</span>
+          <ColumnSettings
+            :columns="tableColumns"
+            page-path="/system/roles"
+            @change="onColumnConfigChange"
+          >
+            <template #trigger>
+              <el-icon class="seq-settings-btn"><Setting /></el-icon>
+            </template>
+          </ColumnSettings>
+        </template>
+      
+      </DataTable>
     </div>
 
     <!-- 分配权限 -->
@@ -82,11 +89,12 @@
 </template>
 
 <script setup>
+import { SearchForm, DataTable} from '@/components/page-components'
+import ColumnSettings from '@/views/components/ColumnSettings.vue'
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus } from '@element-plus/icons-vue'
+import { Plus, Setting } from '@element-plus/icons-vue'
 import request from '@/utils/request'
-import { SearchForm, DataTable, PageHeader } from '@/components/page-components'
 
 const loading = ref(false)
 const tableData = ref([])
@@ -112,7 +120,14 @@ function handleReset() {
 
 const statusMap = { 1: { label: '\u6d3b\u8dc3', type: 'success' }, 0: { label: '\u7981\u7528', type: 'danger' } }
 
+
+// Column settings
+// mergedColumns uses tableColumns directly (plain array)
+const onColumnConfigChange = (cols) => { Object.assign(tableColumns, cols) }
+
 const tableColumns = [
+  { key: '__seq__', label: '', width: 60, show: true, fixed: 'left', columnType: 'seq' },
+  
   { key: 'roleName', label: '\u89d2\u8272\u540d\u79f0', width: 150 },
   { key: 'roleCode', label: '\u89d2\u8272\u4ee3\u7801', width: 160 },
   { key: 'description', label: '\u63cf\u8ff0', minWidth: 200, showOverflowTooltip: true },
@@ -267,4 +282,14 @@ onMounted(loadData)
 <style scoped>
 .role-list { padding: 12px; display: flex; flex-direction: column; gap: 12px; }
 .panel { background: #fff; border-radius: 4px; padding: 12px 16px; }
+
+/* seq column toolbar */
+.table-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.seq-settings-btn { cursor: pointer; color: #909399; transition: color 0.2s; }
+.seq-settings-btn:hover { color: #409eff; }
+
 </style>

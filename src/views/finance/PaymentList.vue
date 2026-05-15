@@ -1,14 +1,6 @@
 <template>
   <div class="payment-list">
-    <PageHeader title="付款单管理">
-      <template #actions>
-        <el-button type="primary" @click="openAdd">
-          <el-icon><Plus /></el-icon> 新增付款单
-        </el-button>
-      </template>
-    </PageHeader>
-
-    <div class="panel">
+<div class="panel">
       <SearchForm
         v-model="queryParams"
         :fields="searchFields"
@@ -25,13 +17,27 @@
         :columns="tableColumns"
         :loading="loading"
         :pagination="pagination"
-        :show-index="true"
+        :show-index="false"
         :index-width="60"
         row-key="id"
         @page-change="handlePageChange"
         @size-change="handleSizeChange"
-        @action="handleTableAction"
-      />
+        @action="handleTableAction">
+
+        <template #header___seq__>
+          <span>序号</span>
+          <ColumnSettings
+            :columns="tableColumns"
+            page-path="/finance/payments"
+            @change="onColumnConfigChange"
+          >
+            <template #trigger>
+              <el-icon class="seq-settings-btn"><Setting /></el-icon>
+            </template>
+          </ColumnSettings>
+        </template>
+      
+      </DataTable>
     </div>
 
     <!-- 查看详情弹窗 -->
@@ -149,11 +155,12 @@
 </template>
 
 <script setup>
+import { SearchForm, DataTable} from '@/components/page-components'
+import ColumnSettings from '@/views/components/ColumnSettings.vue'
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus } from '@element-plus/icons-vue'
+import { Plus, Setting } from '@element-plus/icons-vue'
 import request from '@/utils/request'
-import { SearchForm, DataTable, PageHeader } from '@/components/page-components'
 
 // ============ 常量 ============
 const PAYMENT_METHOD_MAP = {
@@ -241,7 +248,14 @@ const searchFields = [
 ]
 
 // ============ 表格列定义 ============
+
+// Column settings
+// mergedColumns uses tableColumns directly (plain array)
+const onColumnConfigChange = (cols) => { Object.assign(tableColumns, cols) }
+
 const tableColumns = [
+  { key: '__seq__', label: '', width: 60, show: true, fixed: 'left', columnType: 'seq' },
+  
   { key: 'paymentNo', label: '付款单号', width: 160 },
   { key: 'paymentDate', label: '付款日期', width: 120 },
   { key: 'supplierName', label: '供应商', minWidth: 150 },
@@ -506,4 +520,14 @@ onMounted(() => {
   color: #e6a23c;
   font-weight: 500;
 }
+
+/* seq column toolbar */
+.table-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.seq-settings-btn { cursor: pointer; color: #909399; transition: color 0.2s; }
+.seq-settings-btn:hover { color: #409eff; }
+
 </style>

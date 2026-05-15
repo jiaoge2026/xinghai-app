@@ -1,0 +1,756 @@
+/**
+ * 星海ERP 全局打印样式
+ * 
+ * 使用方式：
+ *   <link rel="stylesheet" href="@/assets/print.css">
+ *   或在 iframe 内自动注入
+ * 
+ * 支持纸张：
+ *   A4 (210×297mm) — 标准
+ *   A5 (148×210mm) — 送货单
+ *   凭证纸 (241×140mm) — 会计凭证横打
+ *   热敏纸 (40×30mm / 40×20mm) — 标签
+ */
+
+/* ═══════════════════════════════════════════
+   页面尺寸定义
+   ═══════════════════════════════════════════ */
+
+@page A4-portrait {
+  size: A4 portrait;
+  margin: 15mm 15mm 15mm 15mm;
+}
+
+@page A4-landscape {
+  size: A4 landscape;
+  margin: 15mm 15mm 15mm 15mm;
+}
+
+@page A5-landscape {
+  size: A5 landscape;
+  margin: 10mm 10mm 10mm 10mm;
+}
+
+@page voucher-paper {
+  size: 241mm 140mm landscape;
+  margin: 8mm 8mm 8mm 8mm;
+}
+
+@page thermal-40x30 {
+  size: 40mm 30mm portrait;
+  margin: 2mm 2mm 2mm 2mm;
+}
+
+@page thermal-40x20 {
+  size: 40mm 20mm portrait;
+  margin: 1mm 1mm 1mm 1mm;
+}
+
+/* ═══════════════════════════════════════════
+   基础重置
+   ═══════════════════════════════════════════ */
+
+* {
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+  color-adjust: exact !important;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Microsoft YaHei', '宋体', 'SimSun', serif;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #000;
+  background: #fff;
+  margin: 0;
+  padding: 0;
+}
+
+/* ═══════════════════════════════════════════
+   隐藏非打印元素
+   ═══════════════════════════════════════════ */
+
+.screen-only,
+.no-print,
+.hide-on-print,
+.el-button,
+.el-button-group,
+.toolbar,
+.toolbar-actions,
+.search-panel,
+.pagination,
+.pagination-wrapper,
+.el-pagination,
+.tab-bar,
+.sidebar,
+.sidebar-menu,
+.top-bar,
+.nav-bar,
+.breadcrumb,
+.table-panel-header > .right-actions,
+.table-panel > .el-button,
+.crud-dialog .el-dialog__footer,
+.column-settings,
+.dropdown-menu,
+.el-dropdown,
+.el-select,
+.el-input,
+.el-date-editor,
+.el-checkbox,
+.print-hide {
+  display: none !important;
+}
+
+/* ═══════════════════════════════════════════
+   打印文档容器
+   ═══════════════════════════════════════════ */
+
+.print-document {
+  width: 100%;
+  background: #fff;
+  padding: 0;
+  margin: 0;
+}
+
+/* ═══════════════════════════════════════════
+   打印头部
+   ═══════════════════════════════════════════ */
+
+.print-header {
+  text-align: center;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #333;
+}
+
+.print-header .company-name {
+  font-size: 18px;
+  font-weight: bold;
+  color: #000;
+  margin-bottom: 4px;
+  letter-spacing: 2px;
+}
+
+.print-header .document-title {
+  font-size: 20px;
+  font-weight: bold;
+  color: #000;
+  margin: 8px 0;
+  letter-spacing: 4px;
+}
+
+.print-header .doc-meta {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  font-size: 11px;
+  color: #555;
+  margin-top: 6px;
+}
+
+.print-header .doc-meta span {
+  white-space: nowrap;
+}
+
+/* 单据编号右对齐（套打时用） */
+.print-header .doc-meta-right {
+  position: absolute;
+  right: 0;
+  top: 0;
+  text-align: right;
+  font-size: 11px;
+}
+
+/* ═══════════════════════════════════════════
+   主表信息区
+   ═══════════════════════════════════════════ */
+
+.print-main-info {
+  margin: 12px 0;
+}
+
+.print-main-info .info-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  font-size: 11px;
+  line-height: 22px;
+  border-bottom: 1px solid #eee;
+}
+
+.print-main-info .info-row:last-child {
+  border-bottom: none;
+}
+
+.print-main-info .label {
+  display: inline-block;
+  min-width: 80px;
+  font-weight: bold;
+  color: #333;
+  background: #f5f5f5;
+  padding: 0 6px;
+  border-right: 1px solid #ddd;
+}
+
+.print-main-info .value {
+  display: inline-block;
+  padding: 0 8px;
+  color: #000;
+  min-width: 120px;
+}
+
+.print-main-info .value.wide {
+  flex: 1;
+  min-width: 300px;
+}
+
+/* ═══════════════════════════════════════════
+   打印表格
+   ═══════════════════════════════════════════ */
+
+.print-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+  margin: 12px 0;
+  table-layout: fixed;
+}
+
+.print-table thead {
+  display: table-header-group;  /* 关键：表头每页重复 */
+}
+
+.print-table th,
+.print-table td {
+  border: 1px solid #333;
+  padding: 5px 8px;
+  text-align: left;
+  vertical-align: middle;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.print-table th {
+  background: #f0f0f0 !important;
+  font-weight: bold;
+  text-align: center;
+  color: #000;
+  white-space: nowrap;
+}
+
+.print-table td {
+  text-align: center;
+}
+
+.print-table td:first-child,
+.print-table th:first-child {
+  text-align: center;
+}
+
+/* 明细表格列宽 */
+.print-table .col-no { width: 40px; }
+.print-table .col-name { width: auto; }
+.print-table .col-qty { width: 60px; }
+.print-table .col-price { width: 80px; }
+.print-table .col-amount { width: 90px; }
+.print-table .col-remark { width: 120px; }
+
+/* 斑马纹（可选） */
+.print-table.striped tbody tr:nth-child(even) td {
+  background: #fafafa;
+}
+
+/* 禁止在行内断页（重要） */
+.print-table tr {
+  page-break-inside: avoid;
+  page-break-after: auto;
+}
+
+/* 禁止在单元格内断字 */
+.print-table td {
+  page-break-inside: avoid;
+  -webkit-hyphens: manual;
+  hyphens: manual;
+}
+
+/* 表尾合计行 */
+.print-table tfoot td {
+  background: #f5f5f5 !important;
+  font-weight: bold;
+}
+
+/* ═══════════════════════════════════════════
+   汇总区
+   ═══════════════════════════════════════════ */
+
+.print-summary {
+  margin: 16px 0;
+  padding: 12px 0;
+  border-top: 2px solid #333;
+  border-bottom: 1px solid #333;
+}
+
+.print-summary .summary-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 24px;
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+
+.print-summary .summary-row:last-child {
+  margin-bottom: 0;
+}
+
+.print-summary .summary-row .label {
+  font-weight: bold;
+  color: #333;
+}
+
+.print-summary .summary-row .value {
+  min-width: 100px;
+  text-align: right;
+}
+
+.print-summary .summary-row .total {
+  color: #c00;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.print-summary .amount-cn {
+  text-align: right;
+  font-size: 13px;
+  font-weight: bold;
+  color: #000;
+  padding: 6px 0;
+  border-top: 1px solid #eee;
+  margin-top: 8px;
+}
+
+/* ═══════════════════════════════════════════
+   签名区
+   ═══════════════════════════════════════════ */
+
+.print-signature {
+  margin: 24px 0 16px;
+  page-break-inside: avoid;
+}
+
+.print-signature .signature-grid {
+  display: flex;
+  justify-content: space-around;
+  gap: 16px;
+}
+
+.print-signature .signature-item {
+  text-align: center;
+  min-width: 120px;
+}
+
+.print-signature .signature-item .sign-label {
+  font-size: 11px;
+  color: #555;
+  margin-bottom: 4px;
+}
+
+.print-signature .signature-item .sign-line {
+  display: block;
+  height: 28px;
+  border-bottom: 1px solid #333;
+  margin-bottom: 4px;
+}
+
+.print-signature .signature-item .sign-date {
+  font-size: 10px;
+  color: #555;
+}
+
+/* ═══════════════════════════════════════════
+   页脚
+   ═══════════════════════════════════════════ */
+
+.print-footer {
+  position: fixed;
+  bottom: 8mm;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: #888;
+  border-top: 1px solid #ddd;
+  padding-top: 4px;
+}
+
+.print-footer .page-info {
+  text-align: center;
+}
+
+.print-footer .company-info {
+  text-align: right;
+}
+
+/* ═══════════════════════════════════════════
+   条码区
+   ═══════════════════════════════════════════ */
+
+.print-barcode {
+  text-align: center;
+  margin: 16px 0;
+  page-break-inside: avoid;
+}
+
+.print-barcode svg,
+.print-barcode img {
+  max-width: 100%;
+}
+
+.print-qrcode {
+  text-align: center;
+  margin: 12px 0;
+  page-break-inside: avoid;
+}
+
+.print-qrcode svg,
+.print-qrcode img {
+  width: 60px;
+  height: 60px;
+}
+
+.print-qrcode .qr-label {
+  font-size: 9px;
+  color: #888;
+  margin-top: 2px;
+}
+
+/* ═══════════════════════════════════════════
+   水印
+   ═══════════════════════════════════════════ */
+
+.print-watermark {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 999;
+  overflow: hidden;
+}
+
+/* 斜向重复水印 */
+.print-watermark .watermark-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-45deg);
+  font-size: 48px;
+  font-weight: bold;
+  color: rgba(0, 0, 0, 0.03);
+  white-space: nowrap;
+  letter-spacing: 8px;
+  user-select: none;
+}
+
+/* ═══════════════════════════════════════════
+   三联单颜色区分
+   ═══════════════════════════════════════════ */
+
+.copy留存 { color: #000 !important; }
+.copy客户 { color: #c00 !important; }
+.copy财务 { color: #00a !important; }
+
+.copy留存 * { color: #000 !important; }
+.copy客户 * { color: #c00 !important; }
+.copy财务 * { color: #00a !important; }
+
+.copy留存 th { background: #f0f0f0 !important; }
+.copy客户 th { background: #fff5f5 !important; }
+.copy财务 th { background: #f0f7ff !important; }
+
+/* ═══════════════════════════════════════════
+   标签打印（小票热敏）
+   ═══════════════════════════════════════════ */
+
+.label-document {
+  font-family: 'Courier New', monospace;
+  font-size: 10px;
+  line-height: 1.3;
+  padding: 2mm;
+  width: 38mm;
+}
+
+.label-document .label-title {
+  font-size: 12px;
+  font-weight: bold;
+  text-align: center;
+  border-bottom: 1px solid #000;
+  padding-bottom: 2px;
+  margin-bottom: 4px;
+}
+
+.label-document .label-row {
+  display: flex;
+  justify-content: space-between;
+  white-space: nowrap;
+  overflow: hidden;
+  font-size: 9px;
+}
+
+.label-document .label-row .label-key {
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.label-document .label-row .label-val {
+  text-align: right;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.label-document .label-barcode {
+  text-align: center;
+  margin: 3px 0;
+}
+
+.label-document .label-barcode svg {
+  width: 100%;
+  height: 20mm;
+}
+
+/* ═══════════════════════════════════════════
+   凭证纸打印（横打）
+   ═══════════════════════════════════════════ */
+
+.voucher-document {
+  width: 100%;
+  height: 124mm; /* 140mm - 16mm(上下边距) */
+  display: flex;
+  flex-direction: column;
+  font-size: 11px;
+}
+
+.voucher-document .voucher-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #333;
+  padding-bottom: 4px;
+  margin-bottom: 6px;
+}
+
+.voucher-document .voucher-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.voucher-document .voucher-footer {
+  display: flex;
+  justify-content: space-between;
+  border-top: 1px solid #333;
+  padding-top: 4px;
+  margin-top: auto;
+}
+
+/* ═══════════════════════════════════════════
+   分页控制
+   ═══════════════════════════════════════════ */
+
+/* 绝对禁止在指定元素内断页 */
+.print-header,
+.print-summary,
+.print-signature,
+.print-footer {
+  page-break-inside: avoid;
+}
+
+/* 标题后断页（可选） */
+h1, h2, h3 {
+  page-break-after: avoid;
+}
+
+/* 图片禁止断页 */
+img, svg {
+  page-break-inside: avoid;
+}
+
+/* ═══════════════════════════════════════════
+   横向页面
+   ═══════════════════════════════════════════ */
+
+.landscape {
+  size: A4 landscape;
+}
+
+.landscape .print-table {
+  width: 180mm; /* A4横向可用宽度 */
+}
+
+/* ═══════════════════════════════════════════
+   异常标注
+   ═══════════════════════════════════════════ */
+
+.anomaly-row td {
+  background: #fff3cd !important;
+  color: #856404 !important;
+}
+
+.danger-row td {
+  background: #f8d7da !important;
+  color: #721c24 !important;
+}
+
+.success-row td {
+  background: #d4edda !important;
+  color: #155724 !important;
+}
+
+/* ═══════════════════════════════════════════
+   打印预览缩放
+   ═══════════════════════════════════════════ */
+
+.print-preview-container {
+  transform-origin: top center;
+}
+
+/* 缩放到A4比例 */
+.preview-scale-A4 {
+  transform: scale(0.7);
+}
+
+/* ═══════════════════════════════════════════
+   工单专用样式
+   ═══════════════════════════════════════════ */
+
+.work-order-document .service-items {
+  margin: 12px 0;
+}
+
+.work-order-document .service-items .item-row {
+  display: flex;
+  border-bottom: 1px solid #eee;
+  padding: 4px 0;
+  font-size: 11px;
+}
+
+.work-order-document .service-items .item-row .item-name {
+  flex: 1;
+}
+
+.work-order-document .service-items .item-row .item-qty {
+  width: 60px;
+  text-align: right;
+}
+
+.work-order-document .service-items .item-row .item-price {
+  width: 80px;
+  text-align: right;
+}
+
+.work-order-document .service-items .item-row .item-amount {
+  width: 90px;
+  text-align: right;
+  font-weight: bold;
+}
+
+/* ═══════════════════════════════════════════
+   送货单专用样式
+   ═══════════════════════════════════════════ */
+
+.delivery-document .delivery-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.delivery-document .delivery-header .delivery-info {
+  flex: 1;
+}
+
+.delivery-document .delivery-header .company-info {
+  text-align: right;
+  font-size: 10px;
+  color: #555;
+}
+
+.delivery-document .receiver-area {
+  margin-top: 16px;
+  padding: 12px;
+  border: 1px solid #333;
+  min-height: 60px;
+}
+
+/* ═══════════════════════════════════════════
+   工资条样式
+   ═══════════════════════════════════════════ */
+
+.salary-document {
+  font-size: 11px;
+}
+
+.salary-document .salary-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid #333;
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+}
+
+.salary-document .salary-title {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.salary-document .salary-items {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 24px;
+}
+
+.salary-document .salary-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+  border-bottom: 1px dotted #ddd;
+}
+
+.salary-document .salary-item .item-label {
+  color: #555;
+}
+
+.salary-document .salary-item .item-value {
+  font-weight: bold;
+}
+
+.salary-document .salary-item.net-pay {
+  grid-column: 1 / -1;
+  border-top: 2px solid #333;
+  border-bottom: 2px solid #333;
+  padding: 8px 0;
+  margin-top: 8px;
+  font-size: 16px;
+  color: #c00;
+}
+
+.salary-document .salary-item.net-pay .item-value {
+  font-size: 18px;
+}
+
+/* ═══════════════════════════════════════════
+   盘点表异常标注
+   ═══════════════════════════════════════════ */
+
+.inventory-document .diff-positive td {
+  color: #c00 !important;
+  font-weight: bold;
+}
+
+.inventory-document .diff-negative td {
+  color: #00a !important;
+  font-weight: bold;
+}

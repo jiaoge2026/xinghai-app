@@ -39,7 +39,7 @@
       <el-scrollbar height="320px" class="cs-scrollbar">
         <div
           v-for="(col, idx) in localColumns"
-          :key="col.prop"
+          :key="col.key"
           :class="['cs-item', { 'cs-item-dragging': draggingIdx === idx, 'cs-item-hidden': !col.visible }]"
           draggable="true"
           @dragstart="onDragStart(idx, $event)"
@@ -168,14 +168,14 @@ const loadFromServer = async () => {
       if (savedWidth) {
         try {
           const arr = JSON.parse(savedWidth)
-          arr.forEach(a => { widthMap[a.prop] = a._width })
+          arr.forEach(a => { widthMap[a.key] = a._width })
         } catch (e) { /* ignore */ }
       }
       localColumns.value = props.columns.map(c => ({
         ...c,
-        _width: widthMap[c.prop] || c.width || undefined,
-        visible: map[c.prop] ? map[c.prop].visible === 1 : c.visible !== false,
-        fixed: c.fixed || (map[c.prop] ? map[c.prop].fixed === 1 : false)
+        _width: widthMap[c.key] || c.width || undefined,
+        visible: map[c.key] ? map[c.key].visible === 1 : c.visible !== false,
+        fixed: c.fixed || (map[c.key] ? map[c.key].fixed === 1 : false)
       }))
       return
     }
@@ -187,11 +187,11 @@ const loadFromServer = async () => {
       const arr = JSON.parse(saved)
       if (Array.isArray(arr) && arr.length > 0) {
         const map = {}
-        arr.forEach(a => { map[a.prop] = a })
+        arr.forEach(a => { map[a.key] = a })
         localColumns.value = props.columns.map(c => ({
           ...c,
-          _width: map[c.prop] && map[c.prop]._width != null ? map[c.prop]._width : c.width || undefined,
-          visible: map[c.prop] ? map[c.prop].visible !== false : c.visible !== false
+          _width: map[c.key] && map[c.key]._width != null ? map[c.key]._width : c.width || undefined,
+          visible: map[c.key] ? map[c.key].visible !== false : c.visible !== false
         }))
         return
       }
@@ -228,7 +228,7 @@ const onPresetChange = async (name) => {
       localColumns.value = props.columns.map(c => ({
         ...c,
         _width: c.width || undefined,
-        visible: keys.includes(c.prop)
+        visible: keys.includes(c.key)
       }))
     }
   } catch (e) {
@@ -240,7 +240,7 @@ const onPresetChange = async (name) => {
 const savePreset = async () => {
   const name = newPresetName.value.trim()
   if (!name) return
-  const keys = localColumns.value.map(c => c.prop)
+  const keys = localColumns.value.map(c => c.key)
   try {
     const res = await fetch(props.presetUrl, {
       method: 'POST',
@@ -318,7 +318,7 @@ const resetToDefault = () => {
 // --- 导出 ---
 const exportConfig = () => {
   const data = localColumns.value.map(c => ({
-    prop: c.prop,
+    prop: c.key,
     label: c.label,
     visible: c.visible,
     width: c._width || null
@@ -340,11 +340,11 @@ const importConfig = () => {
     const data = JSON.parse(importJson.value)
     if (!Array.isArray(data)) throw new Error('格式错误')
     const map = {}
-    data.forEach(d => { if (d.prop && d.label) map[d.prop] = d })
+    data.forEach(d => { if (map[d.key] = d) map[d.key] = d })
     localColumns.value = props.columns.map(c => ({
       ...c,
-      _width: (map[c.prop] && map[c.prop].width != null) ? map[c.prop].width : c.width,
-      visible: map[c.prop] ? (map[c.prop].visible !== false) : true
+      _width: (map[c.key] && map[c.key].width != null) ? map[c.key].width : c.width,
+      visible: map[c.key] ? (map[c.key].visible !== false) : true
     }))
     showImportDialog.value = false
     importJson.value = ''
@@ -360,7 +360,7 @@ const applyAndClose = async () => {
   // 宽度存 localStorage（后端不支持宽度）
   const key = `cs_cols_${props.pagePath}`
   localStorage.setItem(key, JSON.stringify(localColumns.value.map(c => ({
-    prop: c.prop,
+    prop: c.key,
     _width: c._width || null
   }))))
   // 可见性/排序/固定用 saveColumnConfigs 存后端

@@ -1,6 +1,60 @@
 <template>
   <div class="work-order-list">
-    <PageHeader title="工单管理" :actions="headerActions" />
+    <!-- 搜索表单 -->
+    <div class="panel">
+      <SearchForm
+        :fields="searchFields"
+        v-model="queryParams"
+        layout="inline"
+        @search="handleSearch"
+        @reset="handleReset"
+      />
+    </div>
+
+    <!-- 表格 + 右上角操作按钮 -->
+    <div class="panel table-panel">
+      <div class="table-toolbar">
+        <el-button icon="Download" @click="openExport">导出</el-button>
+        <el-button icon="Printer" @click="handlePrint" :disabled="!selectedRows.length">打印</el-button>
+        <el-button type="primary" icon="Plus" @click="openAdd">新建工单</el-button>
+      </div>
+      <DataTable
+        ref="dataTableRef"
+        :data="tableData"
+        :columns="tableColumns"
+        :loading="loading"
+        :pagination="pagination"
+        :height="tableHeight"
+        row-key="hsicrmWorkorderid"
+        :show-index="false"
+        index-label="序号"
+        :index-width="80"
+        :show-pagination="true"
+        :page-sizes="[20, 50, 100, 200]"
+        :selectable="true"
+        @update:selected-rows="selectedRows = $event"
+        @page-change="handlePageChange"
+        @size-change="handleSizeChange"
+        @action="handleTableAction"
+        @row-click="openDetail"
+      >
+        <template #header___seq__>
+          <span>序号</span>
+          <ColumnSettings
+            :columns="tableColumns"
+            page-path="/fsm/work-orders"
+            @change="onColumnConfigChange"
+          >
+            <template #trigger>
+              <el-icon class="seq-settings-btn"><Setting /></el-icon>
+            </template>
+          </ColumnSettings>
+        </template>
+        <template #header_hsicrmWorkorderid>
+          <span>工单编号</span>
+        </template>
+      </DataTable>
+    </div>
 
     <!-- 导出弹窗 -->
     <el-dialog v-model="exportDialogVisible" title="导出工单" width="480px" destroy-on-close>
@@ -31,52 +85,6 @@
         <el-button type="primary" :loading="exporting" @click="confirmExport">确认导出</el-button>
       </template>
     </el-dialog>
-
-    <div class="panel">
-      <SearchForm
-        :fields="searchFields"
-        v-model="queryParams"
-        layout="inline"
-        @search="handleSearch"
-        @reset="handleReset"
-      />
-    </div>
-
-    <div class="panel">
-      <DataTable
-        ref="dataTableRef"
-        :data="tableData"
-        :columns="tableColumns"
-        :loading="loading"
-        :pagination="pagination"
-        :height="tableHeight"
-        row-key="hsicrmWorkorderid"
-        show-index
-        index-label="序号"
-        :index-width="80"
-        :show-pagination="true"
-        :page-sizes="[20, 50, 100, 200]"
-        @page-change="handlePageChange"
-        @size-change="handleSizeChange"
-        @action="handleTableAction"
-        @row-click="openDetail"
-      >
-        <template #header_hsicrmWorkorderid>
-          <div class="table-header-bar">
-            <span>工单编号</span>
-            <ColumnSettings
-              :columns="mergedColumns"
-              page-path="/fsm/work-orders"
-              @change="onColumnConfigChange"
-            >
-              <template #trigger>
-                <el-icon class="seq-settings-btn"><Setting /></el-icon>
-              </template>
-            </ColumnSettings>
-          </div>
-        </template>
-      </DataTable>
-    </div>
 
     <!-- 详情弹窗（保留原有的多Tab详情结构，内容太丰富不适合用CrudDialog） -->
     <el-dialog
@@ -211,8 +219,9 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Plus, Setting } from '@element-plus/icons-vue'
 import request from '@/utils/request'
-import { SearchForm, DataTable, PageHeader } from '@/components/page-components'
+import { SearchForm, DataTable } from '@/components/page-components'
 import ColumnSettings from '@/views/components/ColumnSettings.vue'
+import { printTemplates } from '@/components/print/registry'
 
 // ============ 搜索 ============
 const queryParams = reactive({
@@ -277,6 +286,8 @@ const pagination = reactive({ page: 1, pageSize: 20, total: 0 })
 const tableHeight = computed(() => 'calc(100vh - 300px)')
 const exportDialogVisible = ref(false)
 const exporting = ref(false)
+const selectedRows = ref([])
+const printToolbarRef = ref()
 
 const STATUS_OPTIONS = {
   '100000010': '已到商',
@@ -330,6 +341,7 @@ const HAIER_STATUS_MAP = {
 }
 
 const TABLE_COLUMNS = [
+  { key: '__seq__', label: '', width: 60, show: true, fixed: 'left', columnType: 'seq' },
   { key: 'hsicrmWorkorderid', label: '工单编号', width: 150, show: true, fixed: true },
   { key: 'hsicrmWorkorderstatusname', label: '状态', width: 110, show: true, fixed: true, columnType: 'status', statusMap: HAIER_STATUS_MAP },
   { key: 'hsicrmConsumername', label: '客户姓名', width: 100, show: true },
@@ -447,6 +459,28 @@ const loadColConfig = async () => {
   } catch (e) { /* ignore */ }
 }
 
+// 打印回调
+const onPrinted = (result) => {
+  ElMessage.success(`已记录打印日志：${result.templateType}`)
+}
+
+// 打印数据获取（供 PrintToolbar 调用）
+const printData = () => {
+  return tableData.value.map(row => ({
+    ...row,
+    _printLabel: row.hsicrmWorkorderid || row.woNo || '',
+    _printDate: formatCompleteTime(row.hsicrmServicestationcompletetime),
+    _printEngineer: row.hsicrmEmployeename || '',
+    _printCustomer: row.customerName || row.hsicrmCustomername || '',
+    _printPhone: row.hsicrmRealphone || row.hsicrmContactphone || '',
+    _printAddress: row.hsicrmServiceaddress || '',
+    _printServiceType: row.hsicrmServicetypename || '',
+    _printStatus: row.hsicrmWorkorderstatusname || '',
+    _printFee: row.hsicrmReceivedfee ?? 0,
+    _printRemark: row.hsicrmServicestationremark || '',
+  }))
+}
+
 // 列设置保存后
 const onColumnConfigChange = (columns) => {
   const map = {}
@@ -536,10 +570,89 @@ const openAdd = () => {
   ElMessage.info('新建工单功能开发中')
 }
 
-const headerActions = [
-  { key: 'export', label: '导出', icon: 'Download', onClick: openExport },
-  { key: 'add', label: '新建工单', type: 'primary', icon: 'Plus', onClick: openAdd }
-]
+// ============ 打印 ============
+const handlePrint = async () => {
+  if (!selectedRows.value.length) {
+    ElMessage.warning('请先选择要打印的工单')
+    return
+  }
+  const row = selectedRows.value[0]
+  // 调工单详情接口获取完整数据
+  try {
+    const res = await request.get(`/fsm/work-orders/${row.id}`)
+    const data = res.data || res
+    // 打开打印窗口
+    const printWindow = window.open('/print.html?id=' + row.id, '_blank', 'width=900,height=700')
+    if (!printWindow) {
+      ElMessage.error('请允许弹出窗口')
+      return
+    }
+    // 等页面加载完成后写入内容
+    printWindow.onload = () => {
+      printWindow.document.write(buildPrintHtml(data))
+      printWindow.document.close()
+    }
+  } catch (e) {
+    ElMessage.error('获取工单详情失败')
+  }
+}
+
+// 构建打印HTML内容
+function buildPrintHtml(data) {
+  const wo = data.workOrder || data
+  const parts = data.parts || []
+  const items = data.items || []
+  return `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>工单打印</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: '思源黑体', 'Microsoft YaHei', sans-serif; font-size: 14px; color: #333; padding: 20px; }
+  .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 12px; margin-bottom: 16px; }
+  .header h1 { font-size: 22px; margin-bottom: 4px; }
+  .header p { font-size: 12px; color: #666; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; margin-bottom: 16px; }
+  .info-item { display: flex; font-size: 13px; }
+  .info-label { color: #666; width: 80px; flex-shrink: 0; }
+  .info-value { font-weight: 500; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 12px; font-size: 13px; }
+  th, td { border: 1px solid #ddd; padding: 6px 8px; text-align: left; }
+  th { background: #f5f5f5; font-weight: 600; }
+  .sign-area { display: flex; justify-content: space-between; margin-top: 24px; }
+  .sign-box { width: 45%; }
+  .sign-box p { margin-top: 40px; font-size: 12px; color: #666; border-top: 1px solid #333; padding-top: 6px; }
+  @media print { body { padding: 0; } }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>家电服务工单</h1>
+  <p>全国服务热线：400-699-9999</p>
+</div>
+<div class="info-grid">
+  <div class="info-item"><span class="info-label">工单编号</span><span class="info-value">${wo.woNo || wo.hsicrmWorkorderno || ''}</span></div>
+  <div class="info-item"><span class="info-label">客户姓名</span><span class="info-value">${wo.customerName || wo.hsicrmCustomername || ''}</span></div>
+  <div class="info-item"><span class="info-label">联系电话</span><span class="info-value">${wo.customerPhone || wo.hsicrmPhone || ''}</span></div>
+  <div class="info-item"><span class="info-label">服务地址</span><span class="info-value">${wo.address || wo.hsicrmServiceaddress || ''}</span></div>
+  <div class="info-item"><span class="info-label">服务类型</span><span class="info-value">${wo.serviceTypeName || wo.hsicrmServicetypename || ''}</span></div>
+  <div class="info-item"><span class="info-label">预约时间</span><span class="info-value">${wo.requireTime || wo.hsicrmRequireservicetime || ''}</span></div>
+  <div class="info-item"><span class="info-label">工程师</span><span class="info-value">${wo.employeeName || wo.hsicrmEmployeename || ''}</span></div>
+  <div class="info-item"><span class="info-label">工单状态</span><span class="info-value">${wo.statusName || wo.hsicrmWorkorderstatusname || ''}</span></div>
+</div>
+${parts.length ? `
+<table>
+  <tr><th>序号</th><th>配件编码</th><th>配件名称</th><th>规格</th><th>数量</th><th>单位</th><th>费用</th></tr>
+  ${parts.map((p, i) => `<tr><td>${i+1}</td><td>${p.partCode || ''}</td><td>${p.partName || ''}</td><td>${p.spec || ''}</td><td>${p.quantity || ''}</td><td>${p.unit || ''}</td><td>${p.fee || '0.00'}</td></tr>`).join('')}
+</table>` : ''}
+<div class="sign-area">
+  <div class="sign-box"><p>客户签字：</p></div>
+  <div class="sign-box"><p>工程师签字：</p></div>
+</div>
+</body>
+</html>`
+}
 
 // ============ 加载数据 ============
 async function loadData() {
@@ -588,6 +701,20 @@ onMounted(() => {
   background: #fff;
   border-radius: 4px;
   padding: 12px 16px;
+}
+
+.table-panel {
+  position: relative;
+  padding-top: 48px;
+}
+
+.table-toolbar {
+  position: absolute;
+  top: 10px;
+  right: 16px;
+  display: flex;
+  gap: 8px;
+  z-index: 1;
 }
 
 .table-header-bar {

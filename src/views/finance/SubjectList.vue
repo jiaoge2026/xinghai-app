@@ -1,12 +1,6 @@
 <template>
   <div class="page">
     <el-card>
-      <template #header>
-        <div class="card-header">
-          <span>会计科目</span>
-          <el-button type="primary" :icon="Plus" @click="handleCreate">新增科目</el-button>
-        </div>
-      </template>
 
       <SearchForm
         v-model="queryParams"
@@ -22,14 +16,28 @@
         :columns="tableColumns"
         :loading="loading"
         :pagination="pagination"
-        :show-index="true"
+        :show-index="false"
         :index-width="60"
         row-key="id"
         @sort-change="handleSortChange"
         @page-change="handlePageChange"
         @size-change="handleSizeChange"
-        @action="handleTableAction"
-      />
+        @action="handleTableAction">
+
+        <template #header___seq__>
+          <span>序号</span>
+          <ColumnSettings
+            :columns="tableColumns"
+            page-path="/finance/subjects"
+            @change="onColumnConfigChange"
+          >
+            <template #trigger>
+              <el-icon class="seq-settings-btn"><Setting /></el-icon>
+            </template>
+          </ColumnSettings>
+        </template>
+      
+      </DataTable>
 
       <CrudDialog
         v-model="dialogVisible"
@@ -50,10 +58,11 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus } from '@element-plus/icons-vue'
+import { Plus, Setting } from '@element-plus/icons-vue'
 import request from '@/utils/request'
 import SearchForm from '@/components/page-components/SearchForm.vue'
 import DataTable from '@/components/page-components/DataTable.vue'
+import ColumnSettings from '@/views/components/ColumnSettings.vue'
 import CrudDialog from '@/components/page-components/CrudDialog.vue'
 
 // ============ 常量 ============
@@ -110,7 +119,14 @@ const searchFields = [
 ]
 
 // ============ 表格列定义 ============
+
+// Column settings
+// mergedColumns uses tableColumns directly (plain array)
+const onColumnConfigChange = (cols) => { Object.assign(tableColumns, cols) }
+
 const tableColumns = [
+  { key: '__seq__', label: '', width: 60, show: true, fixed: 'left', columnType: 'seq' },
+  
   { key: 'subjectCode', label: '科目编码', width: 120 },
   { key: 'subjectName', label: '科目名称', minWidth: 150 },
   {
@@ -311,4 +327,14 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
 }
+
+/* seq column toolbar */
+.table-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.seq-settings-btn { cursor: pointer; color: #909399; transition: color 0.2s; }
+.seq-settings-btn:hover { color: #409eff; }
+
 </style>

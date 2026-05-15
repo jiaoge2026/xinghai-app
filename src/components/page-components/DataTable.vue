@@ -32,11 +32,10 @@
     >
       <!-- 选择列 -->
       <el-table-column
-        v-if="selectable"
+        v-show="selectable"
         type="selection"
         :width="selectionWidth"
         :fixed="selectionFixed"
-        :selectable="selectable"
       />
 
       <!-- 序号列 -->
@@ -81,6 +80,10 @@
           <!-- 自定义插槽 -->
           <slot v-if="col.slot" :name="col.slot" :row="row" :column="col" :value="row[col.key]" />
 
+          <!-- 序号列 -->
+          <span v-else-if="col.columnType === 'seq'" class="xh-data-table__cell xh-data-table__cell--seq">
+            {{ data.indexOf(row) + 1 }}
+          </span>
           <!-- 状态列 -->
           <StatusTag
             v-else-if="col.columnType === 'status'"
