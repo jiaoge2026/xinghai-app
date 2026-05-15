@@ -26,7 +26,7 @@
           </el-select>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="fetchData">搜索</el-button>
+          <el-button type="primary" @click="fetchOrders">搜索</el-button>
           <el-button @click="resetQuery">重置</el-button>
         </el-form-item>
       </el-form>
@@ -36,13 +36,13 @@
         <el-table-column prop="storeName" label="门店" min-width="150" />
         <el-table-column prop="customerName" label="客户" min-width="100" />
         <el-table-column prop="totalAmount" label="订单金额" width="120" align="right">
-          <template #default="{ row }">{{ fmt(row.totalAmount) }}</template>
+          <template #default="{ row }">{{ fmtCurrency(row.totalAmount) }}</template>
         </el-table-column>
         <el-table-column prop="discountAmount" label="优惠" width="90" align="right">
-          <template #default="{ row }">-{{ fmt(row.discountAmount) }}</template>
+          <template #default="{ row }">-{{ fmtCurrency(row.discountAmount) }}</template>
         </el-table-column>
         <el-table-column prop="actualAmount" label="实收" width="120" align="right">
-          <template #default="{ row }"><b>{{ fmt(row.actualAmount) }}</b></template>
+          <template #default="{ row }"><b>{{ fmtCurrency(row.actualAmount) }}</b></template>
         </el-table-column>
         <el-table-column prop="status" label="状态" width="100" align="center">
           <template #default="{ row }">
@@ -62,36 +62,15 @@
           v-model:current-page="query.page"
           v-model:page-size="query.pageSize"
           :total="total"
-          :page-sizes="[10,20,50]"
+          :page-sizes="[10, 20, 50]"
           layout="total,sizes,prev,pager,next"
-          @change="fetchData"
+          @change="fetchOrders"
         />
       </div>
     </el-card>
 
     <!-- 详情弹窗 -->
-    <el-dialog v-model="viewVisible" title="订单详情" width="650px" destroy-on-close>
-      <el-descriptions :column="2" border>
-        <el-descriptions-item label="订单号" :span="2">{{ viewData.orderNo }}</el-descriptions-item>
-        <el-descriptions-item label="门店">{{ viewData.storeName }}</el-descriptions-item>
-        <el-descriptions-item label="客户">{{ viewData.customerName }}</el-descriptions-item>
-        <el-descriptions-item label="订单金额">{{ fmt(viewData.totalAmount) }}</el-descriptions-item>
-        <el-descriptions-item label="优惠">{{ fmt(viewData.discountAmount) }}</el-descriptions-item>
-        <el-descriptions-item label="实收金额"><b>{{ fmt(viewData.actualAmount) }}</b></el-descriptions-item>
-        <el-descriptions-item label="状态">
-          <el-tag :type="statusType[viewData.status]">{{ statusLabel[viewData.status] }}</el-tag>
-        </el-descriptions-item>
-        <el-descriptions-item label="下单时间">{{ viewData.createTime }}</el-descriptions-item>
-      </el-descriptions>
-      <el-divider>订单明细</el-divider>
-      <el-table :data="viewData.items || []" stripe size="small">
-        <el-table-column prop="productName" label="商品" min-width="150" />
-        <el-table-column prop="spec" label="规格" min-width="100" />
-        <el-table-column prop="price" label="单价" width="90" align="right">{{ fmt(viewData.price) }}</el-table-column>
-        <el-table-column prop="quantity" label="数量" width="80" align="center" />
-        <el-table-column prop="subtotal" label="小计" width="100" align="right"><template #default="{ row }">{{ fmt(row.subtotal) }}</template></el-table-column>
-      </el-table>
-    </el-dialog>
+    <SalesOrderDetail v-model="viewVisible" :order="viewData" />
 
     <!-- 新建订单弹窗 -->
     <el-dialog v-model="dialogVisible" title="新建订单" width="600px" destroy-on-close>
@@ -118,8 +97,8 @@
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="dialogVisible=false">取消</el-button>
-        <el-button type="primary" @click="dialogVisible=false; ElMessage.success('订单创建功能开发中')">确认创建</el-button>
+        <el-button @click="dialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="dialogVisible = false; ElMessage.success('订单创建功能开发中')">确认创建</el-button>
       </template>
     </el-dialog>
   </div>
@@ -129,10 +108,13 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
+import { formatCurrency } from '@/utils/format'
 import request from '@/utils/request'
+import SalesOrderDetail from './SalesOrderDetail.vue'
 
 const statusLabel = { 1: '待支付', 2: '已支付', 3: '已完成', 4: '已退款' }
 const statusType = { 1: 'warning', 2: 'primary', 3: 'success', 4: 'info' }
+
 const loading = ref(false)
 const tableData = ref([])
 const total = ref(0)
@@ -140,24 +122,65 @@ const storeOptions = ref([])
 const dialogVisible = ref(false)
 const viewVisible = ref(false)
 const viewData = ref({})
-const orderForm = reactive({ storeId: null, customerName: '', payMethod: 'WECHAT', remark: '' })
 
-const query = reactive({ page: 1, pageSize: 20, orderNo: '', storeId: null, status: null })
-const fmt = (v) => v != null ? `¥${Number(v).toFixed(2)}` : '¥0.00'
+const orderForm = reactive({
+  storeId: null,
+  customerName: '',
+  payMethod: 'WECHAT',
+  remark: '',
+})
 
-const fetchData = async () => {
+const query = reactive({
+  page: 1,
+  pageSize: 20,
+  orderNo: '',
+  storeId: null,
+  status: null,
+})
+
+const fmtCurrency = (v) => formatCurrency(v ?? 0)
+
+const fetchOrders = async () => {
   loading.value = true
-  try { const res = await request.get('/retail/orders/page', { params: query }); tableData.value = res.data?.list || []; total.value = res.data?.total || 0 }
-  catch { tableData.value = [] } finally { loading.value = false }
+  try {
+    const res = await request.get('/retail/orders', { params: query })
+    tableData.value = res.data?.list ?? []
+    total.value = res.data?.total ?? 0
+  } catch {
+    tableData.value = []
+    total.value = 0
+  } finally {
+    loading.value = false
+  }
 }
-const fetchStores = async () => {
-  try { const res = await request.get('/retail/stores'); storeOptions.value = res.data?.list || [] } catch { storeOptions.value = [] }
-}
-const resetQuery = () => { Object.assign(query, { orderNo: '', storeId: null, status: null, page: 1 }); fetchData() }
-const handleView = (row) => { viewData.value = { ...row }; viewVisible.value = true }
-const handleAdd = () => { dialogVisible.value = true }
 
-onMounted(() => { fetchData(); fetchStores() })
+const fetchStores = async () => {
+  try {
+    const res = await request.get('/retail/stores')
+    storeOptions.value = res.data?.list ?? []
+  } catch {
+    storeOptions.value = []
+  }
+}
+
+const resetQuery = () => {
+  Object.assign(query, { orderNo: '', storeId: null, status: null, page: 1 })
+  fetchOrders()
+}
+
+const handleView = (row) => {
+  viewData.value = { ...row }
+  viewVisible.value = true
+}
+
+const handleAdd = () => {
+  dialogVisible.value = true
+}
+
+onMounted(() => {
+  fetchOrders()
+  fetchStores()
+})
 </script>
 
 <style scoped>

@@ -8,51 +8,28 @@
         </div>
       </template>
 
-      <el-form :inline="true" class="search-form">
-        <el-form-item label="姓名">
-          <el-input v-model="query.name" placeholder="联系人姓名" clearable style="width:140px" />
-        </el-form-item>
-        <el-form-item label="客户">
-          <el-select v-model="query.customerId" placeholder="全部客户" clearable filterable style="width:180px">
-            <el-option v-for="c in customerOptions" :key="c.id" :value="c.id" :label="c.name" />
-          </el-select>
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="fetchData">搜索</el-button>
-          <el-button @click="resetQuery">重置</el-button>
-        </el-form-item>
-      </el-form>
+      <SearchForm
+        :fields="searchFields"
+        v-model="query"
+        @search="handleSearch"
+        @reset="handleReset"
+      />
 
-      <el-table :data="tableData" v-loading="loading" stripe>
-        <el-table-column prop="name" label="姓名" min-width="100" />
-        <el-table-column prop="customerName" label="所属客户" min-width="180" />
-        <el-table-column prop="position" label="职位" min-width="120" />
-        <el-table-column prop="phone" label="手机" width="130" />
-        <el-table-column prop="email" label="邮箱" min-width="180" show-overflow-tooltip />
-        <el-table-column prop="isPrimary" label="主联系人" width="100" align="center">
-          <template #default="{ row }">
-            <el-tag v-if="row.isPrimary === 1" type="warning" size="small">主联系</el-tag>
-            <span v-else>-</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" width="150" fixed="right">
-          <template #default="{ row }">
-            <el-button type="primary" link @click="handleEdit(row)">编辑</el-button>
-            <el-button type="danger" link @click="handleDelete(row)">删除</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-
-      <div class="pagination">
-        <el-pagination
-          v-model:current-page="query.page"
-          v-model:page-size="query.pageSize"
-          :total="total"
-          :page-sizes="[10,20,50]"
-          layout="total,sizes,prev,pager,next"
-          @change="fetchData"
-        />
-      </div>
+      <DataTable
+        :data="tableData"
+        :columns="tableColumns"
+        :loading="loading"
+        :pagination="pagination"
+        row-key="id"
+        @page-change="handlePageChange"
+        @size-change="handleSizeChange"
+        @action="handleTableAction"
+      >
+        <template #isPrimary="{ row }">
+          <el-tag v-if="row.isPrimary === 1" type="warning" size="small">主联系</el-tag>
+          <span v-else>-</span>
+        </template>
+      </DataTable>
     </el-card>
 
     <el-dialog v-model="dialogVisible" :title="dialogTitle" width="500px" destroy-on-close>
@@ -94,10 +71,10 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import request from '@/utils/request'
+import { SearchForm, DataTable } from '@/components/page-components'
 
 const loading = ref(false)
 const tableData = ref([])
-const total = ref(0)
 const customerOptions = ref([])
 const dialogVisible = ref(false)
 const submitting = ref(false)
@@ -105,10 +82,67 @@ const isEdit = ref(false)
 const formRef = ref()
 
 const query = reactive({ page: 1, pageSize: 20, name: '', customerId: null })
+const pagination = computed(() => ({ page: query.page, pageSize: query.pageSize, total: total.value }))
+const total = ref(0)
+
 const form = reactive({ id: null, name: '', customerId: null, position: '', phone: '', email: '', isPrimary: 0, remark: '' })
 const rules = { name: [{ required: true, message: '请输入姓名', trigger: 'blur' }], customerId: [{ required: true, message: '请选择客户', trigger: 'change' }], phone: [{ required: true, message: '请输入手机', trigger: 'blur' }] }
 const dialogTitle = computed(() => isEdit.value ? '编辑联系人' : '新增联系人')
 
+// ============ 搜索 ============
+const searchFields = [
+  { key: 'name', label: '姓名', type: 'input', placeholder: '联系人姓名' },
+  {
+    key: 'customerId',
+    label: '客户',
+    type: 'select',
+    placeholder: '全部客户',
+    options: [],
+  },
+]
+
+function handleSearch(params) {
+  Object.assign(query, params)
+  query.page = 1
+  fetchData()
+}
+
+function handleReset(params) {
+  Object.assign(query, params)
+  query.page = 1
+  fetchData()
+}
+
+// ============ 表格 ============
+const tableColumns = [
+  { key: 'name', label: '姓名', minWidth: 100 },
+  { key: 'customerName', label: '所属客户', minWidth: 180 },
+  { key: 'position', label: '职位', minWidth: 120 },
+  { key: 'phone', label: '手机', width: 130 },
+  { key: 'email', label: '邮箱', minWidth: 180, showOverflowTooltip: true },
+  { key: 'isPrimary', label: '主联系人', width: 100, align: 'center', slot: 'isPrimary' },
+  {
+    key: 'actions',
+    label: '操作',
+    width: 150,
+    fixed: 'right',
+    columnType: 'actions',
+    actions: [
+      { key: 'edit', label: '编辑', type: 'primary', size: 'small', link: true },
+      { key: 'delete', label: '删除', type: 'danger', size: 'small', link: true, danger: true },
+    ],
+  },
+]
+
+function handleTableAction(action, row) {
+  if (action === 'edit') handleEdit(row)
+  else if (action === 'delete') handleDelete(row)
+}
+
+function handlePageChange(page) { query.page = page; fetchData() }
+function handleSizeChange(size) { query.pageSize = size; query.page = 1; fetchData() }
+
+// ============ 数据请求 ============
 const fetchData = async () => {
   loading.value = true
   try { const res = await request.get('/crm/contacts', { params: query }); tableData.value = res.data?.list || []; total.value = res.data?.total || 0 }
@@ -117,7 +151,7 @@ const fetchData = async () => {
 const fetchCustomers = async () => {
   try { const res = await request.get('/crm/contacts'); customerOptions.value = res.data?.list || [] } catch { customerOptions.value = [] }
 }
-const resetQuery = () => { Object.assign(query, { name: '', customerId: null, page: 1 }); fetchData() }
+
 const handleAdd = () => { isEdit.value = false; Object.assign(form, { id: null, name: '', customerId: null, position: '', phone: '', email: '', isPrimary: 0, remark: '' }); dialogVisible.value = true }
 const handleEdit = (row) => { isEdit.value = true; Object.assign(form, { ...row }); dialogVisible.value = true }
 const handleSubmit = async () => {
@@ -135,11 +169,15 @@ const handleDelete = async (row) => {
   await request.delete(`/crm/contacts/${row.id}`); ElMessage.success('删除成功'); fetchData()
 }
 
-onMounted(() => { fetchData(); fetchCustomers() })
+// 加载客户选项到搜索表单
+onMounted(() => {
+  fetchData()
+  fetchCustomers().then(() => {
+    searchFields[1].options = customerOptions.value.map(c => ({ label: c.name, value: c.id }))
+  })
+})
 </script>
 
 <style scoped>
 .card-header { display:flex; justify-content:space-between; align-items:center; }
-.search-form { margin-bottom: 12px; }
-.pagination { margin-top: 16px; display:flex; justify-content:flex-end; }
 </style>

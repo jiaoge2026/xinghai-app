@@ -157,3 +157,18 @@ export function getStatusLabel(
   const found = map[String(status)] || map[status]
   return found?.label || String(status)
 }
+
+// ============================================================
+// QA 反馈状态
+// ============================================================
+export const QA_FEEDBACK_STATUS: Record<string | number, { label: string; type: 'success' | 'warning' | 'danger' | 'info' | 'primary' }> = {
+  1: { label: '待处理', type: 'warning' },
+  2: { label: '处理中', type: 'primary' },
+  3: { label: '已解决', type: 'success' },
+}
+
+export const QA_FEEDBACK_TYPE: Record<string | number, { label: string; type: 'success' | 'warning' | 'danger' | 'info' | 'primary' }> = {
+  1: { label: '投诉', type: 'danger' },
+  2: { label: '表扬', type: 'success' },
+  3: { label: '建议', type: 'info' },
+}

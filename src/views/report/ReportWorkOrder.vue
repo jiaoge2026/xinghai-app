@@ -30,21 +30,12 @@
     <el-form :inline="true" class="filter-form">
       <el-form-item label="状态">
         <el-select v-model="query.status" placeholder="全部" clearable style="width:140px" @change="handleSearch">
-          <el-option label="全部" value="" />
-          <el-option label="待派单" value="pending" />
-          <el-option label="已派单" value="dispatched" />
-          <el-option label="进行中" value="in_progress" />
-          <el-option label="已完成" value="completed" />
-          <el-option label="已取消" value="cancelled" />
+          <el-option v-for="item in filterOptions.statusList" :key="item.value" :label="item.label" :value="item.value" />
         </el-select>
       </el-form-item>
       <el-form-item label="工单类型">
         <el-select v-model="query.workType" placeholder="全部" clearable style="width:120px" @change="handleSearch">
-          <el-option label="全部" value="" />
-          <el-option label="安装" value="install" />
-          <el-option label="维修" value="repair" />
-          <el-option label="清洗" value="clean" />
-          <el-option label="保养" value="maintain" />
+          <el-option v-for="item in filterOptions.workTypeList" :key="item.value" :label="item.label" :value="item.value" />
         </el-select>
       </el-form-item>
       <el-form-item label="工程师">
@@ -94,16 +85,49 @@ import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import request from '@/utils/request'
 
+// 状态映射
+const WORK_TYPE_MAP = { install: '安装', repair: '维修', clean: '清洗', maintain: '保养' }
+const STATUS_MAP = { pending: '待派单', dispatched: '已派单', in_progress: '进行中', completed: '已完成', cancelled: '已取消' }
+const STATUS_TYPE_MAP = { pending: 'info', dispatched: 'warning', in_progress: '', completed: 'success', cancelled: 'danger' }
+
 const loading = ref(false)
 const tableData = ref([])
 const total = ref(0)
 const dateRange = ref([])
 const stats = reactive({ total: 0, completed: 0, inProgress: 0, totalRevenue: 0 })
-const query = reactive({ pageNum: 1, pageSize: 20, status: '', workType: '', engineerName: '', startDate: '', endDate: '' })
 
-const workTypeLabel = (t) => ({ install: '安装', repair: '维修', clean: '清洗', maintain: '保养' }[t] || t)
-const statusLabel = (s) => ({ pending: '待派单', dispatched: '已派单', in_progress: '进行中', completed: '已完成', cancelled: '已取消' }[s] || s)
-const statusType = (s) => ({ pending: 'info', dispatched: 'warning', in_progress: '', completed: 'success', cancelled: 'danger' }[s] || 'info')
+const query = reactive({
+  pageNum: 1,
+  pageSize: 20,
+  status: '',
+  workType: '',
+  engineerName: '',
+  startDate: '',
+  endDate: ''
+})
+
+// 动态筛选选项（从API获取）
+const filterOptions = reactive({
+  statusList: [],
+  workTypeList: []
+})
+
+const workTypeLabel = (t) => WORK_TYPE_MAP[t] || t
+const statusLabel = (s) => STATUS_MAP[s] || s
+const statusType = (s) => STATUS_TYPE_MAP[s] || 'info'
+
+// 加载筛选选项
+const loadFilters = async () => {
+  try {
+    const res = await request.get('/report/work-order/filters')
+    if (res.data) {
+      filterOptions.statusList = res.data.statusList || []
+      filterOptions.workTypeList = res.data.workTypeList || []
+    }
+  } catch (e) {
+    console.error('加载筛选选项失败', e)
+  }
+}
 
 const getSummaries = (param) => {
   const { columns, data } = param
@@ -125,33 +149,35 @@ const handleDateChange = () => {
   query.endDate = dateRange.value?.[1] || ''
 }
 
-const loadStats = async () => {
-  try {
-    const params = { type: 'month', date: query.startDate ? query.startDate.slice(0, 7) : '' }
-    const res = await request.get('/report/fsm/summary', params)
-    const d = res.data || {}
-    stats.total = d.totalCount || 0
-    stats.completed = d.completedCount || 0
-    stats.inProgress = (d.totalCount || 0) - (d.completedCount || 0)
-    stats.totalRevenue = d.totalFee || 0
-  } catch (e) { console.error(e) }
-}
+// 构建POST请求体
+const buildBody = () => ({
+  pageNum: query.pageNum,
+  pageSize: query.pageSize,
+  status: query.status || undefined,
+  workType: query.workType || undefined,
+  engineerName: query.engineerName || undefined,
+  startDate: query.startDate || undefined,
+  endDate: query.endDate || undefined
+})
 
 const loadData = async () => {
   loading.value = true
   try {
-    const params = { pageNum: query.pageNum, pageSize: query.pageSize }
-    if (query.status) params.status = query.status
-    if (query.workType) params.workType = query.workType
-    if (query.engineerName) params.engineerName = query.engineerName
-    if (query.startDate) params.startDate = query.startDate
-    if (query.endDate) params.endDate = query.endDate
-    const res = await request.get('/fsm/work-orders', params)
+    const res = await request.post('/report/work-order/query', buildBody())
     tableData.value = res.data?.list || res.data || []
     total.value = res.data?.total || 0
-    loadStats()
-  } catch (e) { console.error(e) }
-  finally { loading.value = false }
+
+    // 更新统计卡片
+    const d = res.data || {}
+    stats.total = d.totalCount || d.total || 0
+    stats.completed = d.completedCount || 0
+    stats.inProgress = stats.total - stats.completed
+    stats.totalRevenue = d.totalFee || d.totalRevenue || 0
+  } catch (e) {
+    console.error('加载工单报表数据失败', e)
+  } finally {
+    loading.value = false
+  }
 }
 
 const handleSearch = () => { query.pageNum = 1; loadData() }
@@ -162,7 +188,10 @@ const handlePageChange = (p) => { query.pageNum = p; loadData() }
 const handleExport = () => { ElMessage.info('导出功能开发中') }
 const handlePrint = () => { window.print() }
 
-onMounted(loadData)
+onMounted(async () => {
+  await loadFilters()
+  loadData()
+})
 </script>
 
 <style scoped>

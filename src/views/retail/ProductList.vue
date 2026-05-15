@@ -4,7 +4,7 @@
       <template #header>
         <div class="card-header">
           <span>商品管理</span>
-          <el-button type="primary" :icon="Plus" @click="handleAdd">新增商品</el-button>
+          <el-button type="primary" :icon="Plus" @click="openAddDialog">新增商品</el-button>
         </div>
       </template>
 
@@ -18,7 +18,7 @@
           </el-select>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="fetchData">搜索</el-button>
+          <el-button type="primary" @click="fetchProducts">搜索</el-button>
           <el-button @click="resetQuery">重置</el-button>
         </el-form-item>
       </el-form>
@@ -44,7 +44,7 @@
         </el-table-column>
         <el-table-column label="操作" width="150" fixed="right">
           <template #default="{ row }">
-            <el-button type="primary" link @click="handleEdit(row)">编辑</el-button>
+            <el-button type="primary" link @click="openEditDialog(row)">编辑</el-button>
             <el-button type="danger" link @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
@@ -57,7 +57,8 @@
           :total="total"
           :page-sizes="[10,20,50]"
           layout="total,sizes,prev,pager,next"
-          @change="fetchData"
+          @update:current-page="fetchProducts"
+          @update:page-size="fetchProducts"
         />
       </div>
     </el-card>
@@ -105,48 +106,133 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import request from '@/utils/request'
 
+// 状态
 const loading = ref(false)
-const tableData = ref([])
-const total = ref(0)
-const catOptions = ref([])
-const dialogVisible = ref(false)
 const submitting = ref(false)
+const dialogVisible = ref(false)
 const isEdit = ref(false)
 const formRef = ref()
 
-const query = reactive({ page: 1, pageSize: 20, name: '', categoryId: null })
-const form = reactive({ id: null, productCode: '', name: '', categoryId: null, spec: '', unit: '', price: 0, status: 1 })
-const rules = { productCode: [{ required: true, message: '请输入商品编码', trigger: 'blur' }], name: [{ required: true, message: '请输入商品名称', trigger: 'blur' }], price: [{ required: true, message: '请输入价格', trigger: 'blur' }] }
-const dialogTitle = computed(() => isEdit.value ? '编辑商品' : '新增商品')
-const fmt = (v) => v != null ? `¥${Number(v).toFixed(2)}` : ''
+// 数据
+const tableData = ref([])
+const total = ref(0)
+const catOptions = ref([])
 
-const fetchData = async () => {
+// 查询参数
+const query = reactive({
+  page: 1,
+  pageSize: 20,
+  name: '',
+  categoryId: null,
+})
+
+// 表单默认值
+const getDefaultForm = () => ({
+  id: null,
+  productCode: '',
+  name: '',
+  categoryId: null,
+  spec: '',
+  unit: '',
+  price: 0,
+  status: 1,
+})
+
+const form = reactive(getDefaultForm())
+
+// 校验规则
+const rules = {
+  productCode: [{ required: true, message: '请输入商品编码', trigger: 'blur' }],
+  name: [{ required: true, message: '请输入商品名称', trigger: 'blur' }],
+  price: [{ required: true, message: '请输入价格', trigger: 'blur' }],
+}
+
+// 计算属性
+const dialogTitle = computed(() => isEdit.value ? '编辑商品' : '新增商品')
+
+// 工具函数
+const fmt = (v) => v != null ? `¥${Number(v).toFixed(2)}` : '-'
+
+// API 请求
+const fetchProducts = async () => {
   loading.value = true
-  try { const res = await request.get('/retail/products', { params: query }); tableData.value = res.data?.list || []; total.value = res.data?.total || 0 }
-  catch { tableData.value = [] } finally { loading.value = false }
+  try {
+    const res = await request.get('/retail/products', { params: query })
+    tableData.value = res.data?.list ?? []
+    total.value = res.data?.total ?? 0
+  } catch {
+    tableData.value = []
+    total.value = 0
+  } finally {
+    loading.value = false
+  }
 }
-const fetchCats = async () => {
-  try { const res = await request.get('/retail/categories'); catOptions.value = res.data?.list || [] } catch { catOptions.value = [] }
+
+const fetchCategories = async () => {
+  try {
+    const res = await request.get('/retail/categories')
+    catOptions.value = res.data?.list ?? []
+  } catch {
+    catOptions.value = []
+  }
 }
-const resetQuery = () => { Object.assign(query, { name: '', categoryId: null, page: 1 }); fetchData() }
-const handleAdd = () => { isEdit.value = false; Object.assign(form, { id: null, productCode: '', name: '', categoryId: null, spec: '', unit: '', price: 0, status: 1 }); dialogVisible.value = true }
-const handleEdit = (row) => { isEdit.value = true; Object.assign(form, { ...row }); dialogVisible.value = true }
+
+// 操作
+const resetQuery = () => {
+  Object.assign(query, { name: '', categoryId: null, page: 1 })
+  fetchProducts()
+}
+
+const openAddDialog = () => {
+  isEdit.value = false
+  Object.assign(form, getDefaultForm())
+  dialogVisible.value = true
+}
+
+const openEditDialog = (row) => {
+  isEdit.value = true
+  Object.assign(form, { ...row })
+  dialogVisible.value = true
+}
+
 const handleSubmit = async () => {
-  const valid = await formRef.value.validate().catch(() => false)
+  const valid = await formRef.value?.validate().catch(() => false)
   if (!valid) return
+
   submitting.value = true
   try {
-    if (isEdit.value) { await request.put(`/retail/products/${form.id}`, form) }
-    else { await request.post('/retail/products', form) }
-    ElMessage.success(isEdit.value ? '编辑成功' : '新增成功'); dialogVisible.value = false; fetchData()
-  } finally { submitting.value = false }
-}
-const handleDelete = async (row) => {
-  await ElMessageBox.confirm(`确定删除商品「${row.name}」？`, '提示', { type: 'warning' })
-  await request.delete(`/retail/products/${row.id}`); ElMessage.success('删除成功'); fetchData()
+    if (isEdit.value) {
+      await request.put(`/retail/products/${form.id}`, form)
+      ElMessage.success('编辑成功')
+    } else {
+      await request.post('/retail/products', form)
+      ElMessage.success('新增成功')
+    }
+    dialogVisible.value = false
+    fetchProducts()
+  } catch (err) {
+    // 错误已由 request 拦截器处理
+  } finally {
+    submitting.value = false
+  }
 }
 
-onMounted(() => { fetchData(); fetchCats() })
+const handleDelete = async (row) => {
+  try {
+    await ElMessageBox.confirm(`确定删除商品「${row.name}」？`, '提示', { type: 'warning' })
+    await request.delete(`/retail/products/${row.id}`)
+    ElMessage.success('删除成功')
+    fetchProducts()
+  } catch {
+    // 用户取消或请求失败
+  }
+}
+
+// 初始化
+onMounted(() => {
+  fetchProducts()
+  fetchCategories()
+})
 </script>
 
 <style scoped>

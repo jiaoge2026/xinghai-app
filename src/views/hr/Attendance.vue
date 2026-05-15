@@ -19,10 +19,7 @@
         </el-form-item>
         <el-form-item label="状态">
           <el-select v-model="query.status" placeholder="全部" clearable style="width:120px">
-            <el-option :value="1" label="正常" />
-            <el-option :value="2" label="迟到" />
-            <el-option :value="3" label="早退" />
-            <el-option :value="4" label="缺勤" />
+            <el-option v-for="item in STATUS_OPTIONS" :key="item.value" :value="item.value" :label="item.label" />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -42,7 +39,7 @@
         </el-table-column>
         <el-table-column prop="status" label="状态" width="100" align="center">
           <template #default="{ row }">
-            <el-tag :type="statusType[row.status]" size="small">{{ statusLabel[row.status] }}</el-tag>
+            <el-tag :type="statusConfig[row.status]?.type" size="small">{{ statusConfig[row.status]?.label }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="remark" label="备注" min-width="150" show-overflow-tooltip />
@@ -84,10 +81,7 @@
         </el-form-item>
         <el-form-item label="状态" prop="status">
           <el-select v-model="form.status" placeholder="选择状态" style="width:100%">
-            <el-option :value="1" label="正常" />
-            <el-option :value="2" label="迟到" />
-            <el-option :value="3" label="早退" />
-            <el-option :value="4" label="缺勤" />
+            <el-option v-for="item in STATUS_OPTIONS" :key="item.value" :value="item.value" :label="item.label" />
           </el-select>
         </el-form-item>
         <el-form-item label="备注">
@@ -108,9 +102,44 @@ import { ElMessage } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import request from '@/utils/request'
 
-const statusLabel = { 1: '正常', 2: '迟到', 3: '早退', 4: '缺勤' }
-const statusType = { 1: 'success', 2: 'warning', 3: 'warning', 4: 'danger' }
+// ============ 常量定义 ============
+const API_PATH = '/hr/attendance'
 
+const STATUS_OPTIONS = [
+  { value: 1, label: '正常' },
+  { value: 2, label: '迟到' },
+  { value: 3, label: '早退' },
+  { value: 4, label: '缺勤' }
+]
+
+const STATUS_TYPE_MAP = {
+  1: 'success',
+  2: 'warning',
+  3: 'warning',
+  4: 'danger'
+}
+
+// ============ 状态配置计算属性 ============
+const statusConfig = computed(() => {
+  const config = {}
+  STATUS_OPTIONS.forEach(opt => {
+    config[opt.value] = { label: opt.label, type: STATUS_TYPE_MAP[opt.value] }
+  })
+  return config
+})
+
+// ============ 默认表单数据 ============
+const createEmptyForm = () => ({
+  id: null,
+  employeeId: null,
+  date: '',
+  checkInTime: '',
+  checkOutTime: '',
+  status: 1,
+  remark: ''
+})
+
+// ============ 响应式状态 ============
 const loading = ref(false)
 const tableData = ref([])
 const total = ref(0)
@@ -120,44 +149,110 @@ const submitting = ref(false)
 const isEdit = ref(false)
 const formRef = ref()
 
-const query = reactive({ page: 1, pageSize: 20, employeeId: null, date: '', status: null })
-const form = reactive({ id: null, employeeId: null, date: '', checkInTime: '', checkOutTime: '', status: 1, remark: '' })
+const query = reactive({
+  page: 1,
+  pageSize: 20,
+  employeeId: null,
+  date: '',
+  status: null
+})
+
+const form = reactive(createEmptyForm())
+
 const rules = {
   employeeId: [{ required: true, message: '请选择员工', trigger: 'change' }],
   date: [{ required: true, message: '请选择日期', trigger: 'change' }],
   status: [{ required: true, message: '请选择状态', trigger: 'change' }]
 }
+
+// ============ 计算属性 ============
 const dialogTitle = computed(() => isEdit.value ? '编辑考勤' : '新增打卡')
 
-const fetchData = async () => {
+// ============ API 请求 ============
+const fetchAttendanceList = async () => {
   loading.value = true
   try {
-    const res = await request.get('/hr/attendance', { params: query })
-    tableData.value = res.data?.list || []
-    total.value = res.data?.total || 0
-  } catch { tableData.value = [] } finally { loading.value = false }
+    const res = await request.get(API_PATH, { params: query })
+    tableData.value = res.data?.list ?? []
+    total.value = res.data?.total ?? 0
+  } catch (err) {
+    console.error('[Attendance] 获取考勤列表失败:', err)
+    tableData.value = []
+    ElMessage.error('获取考勤列表失败')
+  } finally {
+    loading.value = false
+  }
 }
-const fetchEmps = async () => {
-  try { const res = await request.get('/hr/employees'); empOptions.value = res.data?.list || [] } catch { empOptions.value = [] }
-}
-const resetQuery = () => { Object.assign(query, { employeeId: null, date: '', status: null, page: 1 }); fetchData() }
 
-const handleAdd = () => { isEdit.value = false; Object.assign(form, { id: null, employeeId: null, date: '', checkInTime: '', checkOutTime: '', status: 1, remark: '' }); dialogVisible.value = true }
-const handleEdit = (row) => { isEdit.value = true; Object.assign(form, { ...row }); dialogVisible.value = true }
+const fetchEmployeeOptions = async () => {
+  try {
+    const res = await request.get('/hr/employees')
+    empOptions.value = res.data?.list ?? []
+  } catch (err) {
+    console.error('[Attendance] 获取员工列表失败:', err)
+    empOptions.value = []
+  }
+}
+
+const submitAttendance = async (payload) => {
+  if (isEdit.value) {
+    await request.put(`${API_PATH}/${payload.id}`, payload)
+  } else {
+    await request.post(API_PATH, payload)
+  }
+}
+
+// ============ 事件处理 ============
+const fetchData = fetchAttendanceList
+
+const resetQuery = () => {
+  Object.assign(query, {
+    employeeId: null,
+    date: '',
+    status: null,
+    page: 1
+  })
+  fetchData()
+}
+
+const openAddDialog = () => {
+  isEdit.value = false
+  Object.assign(form, createEmptyForm())
+  dialogVisible.value = true
+}
+
+const openEditDialog = (row) => {
+  isEdit.value = true
+  Object.assign(form, { ...row })
+  dialogVisible.value = true
+}
+
+const handleAdd = openAddDialog
+const handleEdit = openEditDialog
 
 const handleSubmit = async () => {
   const valid = await formRef.value.validate().catch(() => false)
   if (!valid) return
+
   submitting.value = true
   try {
-    if (isEdit.value) { await request.put(`/hr/attendance/${form.id}`, form) }
-    else { await request.post('/hr/attendance', form) }
+    await submitAttendance({ ...form })
     ElMessage.success(isEdit.value ? '编辑成功' : '新增成功')
-    dialogVisible.value = false; fetchData()
-  } finally { submitting.value = false }
+    dialogVisible.value = false
+    fetchData()
+  } catch (err) {
+    console.error('[Attendance] 提交失败:', err)
+    ElMessage.error('提交失败')
+  } finally {
+    submitting.value = false
+  }
 }
 
-onMounted(() => { fetchData(); fetchEmps() })
+// ============ 生命周期 ============
+onMounted(() => {
+  fetchData()
+  fetchEmployeeOptions()
+})
 </script>
 
 <style scoped>

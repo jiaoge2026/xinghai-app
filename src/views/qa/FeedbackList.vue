@@ -172,162 +172,39 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
-import request from '@/utils/request'
+import { onMounted } from 'vue'
+import { useFeedbackList } from '@/composables/useFeedbackList'
 
-// 查询表单
-const queryForm = reactive({
-  customerName: '',
-  feedbackType: '',
-  status: ''
-})
-const dateRange = ref([])
+const {
+  // State
+  loading,
+  submitLoading,
+  tableData,
+  pagination,
+  queryForm,
+  dateRange,
+  detailVisible,
+  currentRow,
+  handleVisible,
+  handleFormRef,
+  handleForm,
+  handleRules,
+  employeeList,
 
-// 表格数据
-const loading = ref(false)
-const tableData = ref([])
-const pagination = reactive({
-  page: 1,
-  pageSize: 10,
-  total: 0
-})
-
-// 详情弹窗
-const detailVisible = ref(false)
-const currentRow = ref(null)
-
-// 处理弹窗
-const handleVisible = ref(false)
-const submitLoading = ref(false)
-const handleFormRef = ref(null)
-const handleForm = reactive({
-  status: '',
-  handlerId: '',
-  remark: ''
-})
-const handleRules = {
-  status: [{ required: true, message: '请选择处理状态', trigger: 'change' }],
-  handlerId: [{ required: true, message: '请选择处理人', trigger: 'change' }]
-}
-
-// 处理人列表
-const employeeList = ref([])
-
-// 状态映射
-const statusMap = { 1: 'warning', 2: 'primary', 3: 'success' }
-const statusTextMap = { 1: '待处理', 2: '处理中', 3: '已解决' }
-const feedbackTypeMap = { 1: 'danger', 2: 'success', 3: 'info' }
-const feedbackTypeTextMap = { 1: '投诉', 2: '表扬', 3: '建议' }
-
-const getStatusType = (status) => statusMap[status] || 'info'
-const getStatusText = (status) => statusTextMap[status] || '未知'
-const getFeedbackTypeTag = (type) => feedbackTypeMap[type] || 'info'
-const getFeedbackTypeText = (type) => feedbackTypeTextMap[type] || '未知'
-
-// 加载数据
-const loadData = async () => {
-  loading.value = true
-  try {
-    const params = {
-      page: pagination.page,
-      pageSize: pagination.pageSize,
-      customerName: queryForm.customerName,
-      feedbackType: queryForm.feedbackType,
-      status: queryForm.status,
-      startDate: dateRange.value?.[0] || '',
-      endDate: dateRange.value?.[1] || ''
-    }
-    const res = await request.get('/qa/feedback', { params })
-    tableData.value = res.data.list || []
-    pagination.total = res.data.total || 0
-  } catch (e) {
-    ElMessage.error('加载数据失败')
-  } finally {
-    loading.value = false
-  }
-}
-
-// 查询
-const handleSearch = () => {
-  pagination.page = 1
-  loadData()
-}
-
-// 重置
-const handleReset = () => {
-  queryForm.customerName = ''
-  queryForm.feedbackType = ''
-  queryForm.status = ''
-  dateRange.value = []
-  pagination.page = 1
-  loadData()
-}
-
-// 分页
-const handleSizeChange = () => {
-  pagination.page = 1
-  loadData()
-}
-
-const handleCurrentChange = () => {
-  loadData()
-}
-
-// 查看详情
-const openDetail = async (row) => {
-  currentRow.value = { ...row, records: [] }
-  detailVisible.value = true
-  try {
-    const res = await request.get(`/qa/feedback/${row.id}`)
-    if (res.data) {
-      currentRow.value = { ...currentRow.value, ...res.data }
-    }
-  } catch (e) {
-    // 使用本地数据
-  }
-}
-
-// 处理弹窗
-const openHandle = async (row) => {
-  currentRow.value = row
-  handleForm.status = String(row.status)
-  handleForm.handlerId = ''
-  handleForm.remark = ''
-  handleVisible.value = true
-
-  // 获取处理人列表
-  if (!employeeList.value.length) {
-    try {
-      const res = await request.get('/hr/employees')
-      employeeList.value = res.data?.list || res.data || []
-    } catch (e) {
-      employeeList.value = []
-    }
-  }
-}
-
-// 提交处理
-const submitHandle = async () => {
-  const valid = await handleFormRef.value.validate().catch(() => false)
-  if (!valid) return
-
-  submitLoading.value = true
-  try {
-    await request.put(`/qa/feedback/${currentRow.value.id}`, {
-      status: handleForm.status,
-      handlerId: handleForm.handlerId,
-      remark: handleForm.remark
-    })
-    ElMessage.success('处理成功')
-    handleVisible.value = false
-    loadData()
-  } catch (e) {
-    ElMessage.error('处理失败')
-  } finally {
-    submitLoading.value = false
-  }
-}
+  // Methods
+  getStatusType,
+  getStatusText,
+  getFeedbackTypeTag,
+  getFeedbackTypeText,
+  loadData,
+  handleSearch,
+  handleReset,
+  handleSizeChange,
+  handleCurrentChange,
+  openDetail,
+  openHandle,
+  submitHandle
+} = useFeedbackList()
 
 onMounted(() => {
   loadData()
