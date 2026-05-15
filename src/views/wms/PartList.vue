@@ -1,296 +1,307 @@
 <template>
   <div class="part-list">
-    <el-card>
-      <template #header>
-        <div class="card-header">
-          <span>配件管理</span>
-          <el-button type="primary" @click="openAdd">新增配件</el-button>
-        </div>
+    <PageHeader title="配件管理">
+      <template #actions>
+        <el-button type="primary" @click="openAdd">
+          <el-icon><Plus /></el-icon> 新增配件
+        </el-button>
       </template>
+    </PageHeader>
 
-      <!-- 搜索筛选区 -->
-      <el-form :inline="true" :model="searchForm" class="search-form">
-        <el-form-item label="配件编码">
-          <el-input v-model="searchForm.code" placeholder="请输入配件编码" clearable style="width: 150px" />
-        </el-form-item>
-        <el-form-item label="配件名称">
-          <el-input v-model="searchForm.name" placeholder="请输入配件名称" clearable style="width: 150px" />
-        </el-form-item>
-        <el-form-item label="仓库分类">
-          <el-select v-model="searchForm.warehouseId" placeholder="请选择仓库" clearable style="width: 160px">
-            <el-option
-              v-for="wh in warehouseList"
-              :key="wh.id"
-              :label="wh.name"
-              :value="wh.id"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="handleSearch">查询</el-button>
-          <el-button @click="handleReset">重置</el-button>
-        </el-form-item>
-      </el-form>
-
-      <!-- 表格区 -->
-      <el-table v-loading="loading" :data="tableData" stripe style="width: 100%">
-        <el-table-column prop="code" label="配件编码" width="120" />
-        <el-table-column prop="name" label="配件名称" min-width="150" show-overflow-tooltip />
-        <el-table-column prop="spec" label="规格型号" width="150" show-overflow-tooltip />
-        <el-table-column prop="unit" label="单位" width="80" align="center" />
-        <el-table-column prop="price" label="单价" width="100" align="right">
-          <template #default="{ row }">
-            ¥{{ row.price?.toFixed(2) }}
-          </template>
-        </el-table-column>
-        <el-table-column prop="stock" label="库存" width="100" align="center">
-          <template #default="{ row }">
-            <span :class="{ 'stock-low': row.stock < row.minStock }">{{ row.stock }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="minStock" label="最低库存" width="100" align="center" />
-        <el-table-column prop="warehouseName" label="所属仓库" width="120" show-overflow-tooltip />
-        <el-table-column label="操作" width="180" fixed="right">
-          <template #default="{ row }">
-            <el-button link type="primary" @click="openEdit(row)">编辑</el-button>
-            <el-button link type="danger" @click="openDelete(row)">删除</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-
-      <!-- 分页 -->
-      <el-pagination
-        v-model:current-page="pagination.page"
-        v-model:page-size="pagination.pageSize"
-        :total="pagination.total"
-        :page-sizes="[10, 20, 50, 100]"
-        layout="total, sizes, prev, pager, next, jumper"
-        style="margin-top: 16px; justify-content: flex-end;"
-        @size-change="fetchData"
-        @current-change="fetchData"
+    <div class="panel">
+      <SearchForm
+        :fields="searchFields"
+        v-model="queryParams"
+        @search="handleSearch"
+        @reset="handleReset"
       />
+    </div>
 
-      <!-- 新增/编辑弹窗 -->
-      <el-dialog
-        v-model="formDialogVisible"
-        :title="formMode === 'add' ? '新增配件' : '编辑配件'"
-        width="550px"
-        :close-on-click-modal="false"
-      >
-        <el-form ref="formRef" :model="form" :rules="formRules" label-width="100px">
-          <el-form-item label="配件编码" prop="code">
-            <el-input v-model="form.code" placeholder="请输入配件编码" maxlength="30" :disabled="formMode === 'edit'" />
-          </el-form-item>
-          <el-form-item label="配件名称" prop="name">
-            <el-input v-model="form.name" placeholder="请输入配件名称" maxlength="100" />
-          </el-form-item>
-          <el-form-item label="规格型号" prop="spec">
-            <el-input v-model="form.spec" placeholder="请输入规格型号" maxlength="100" />
-          </el-form-item>
-          <el-form-item label="单位" prop="unit">
-            <el-input v-model="form.unit" placeholder="如：台、个、罐" maxlength="20" style="width: 120px" />
-          </el-form-item>
-          <el-form-item label="单价" prop="price">
-            <el-input-number v-model="form.price" :min="0" :precision="2" :controls="false" placeholder="0.00" style="width: 150px" />
-          </el-form-item>
-          <el-form-item label="库存" prop="stock">
-            <el-input-number v-model="form.stock" :min="0" :precision="0" :controls="false" placeholder="0" style="width: 150px" />
-          </el-form-item>
-          <el-form-item label="最低库存" prop="minStock">
-            <el-input-number v-model="form.minStock" :min="0" :precision="0" :controls="false" placeholder="0" style="width: 150px" />
-          </el-form-item>
-          <el-form-item label="所属仓库" prop="warehouseId">
-            <el-select v-model="form.warehouseId" placeholder="请选择仓库" style="width: 100%">
-              <el-option
-                v-for="wh in warehouseList"
-                :key="wh.id"
-                :label="wh.name"
-                :value="wh.id"
-              />
-            </el-select>
-          </el-form-item>
-          <el-form-item label="备注" prop="remark">
-            <el-input v-model="form.remark" placeholder="请输入备注" type="textarea" :rows="2" maxlength="200" show-word-limit />
-          </el-form-item>
-        </el-form>
-        <template #footer>
-          <el-button @click="formDialogVisible = false">取消</el-button>
-          <el-button type="primary" :loading="submitLoading" @click="handleSubmit">确定</el-button>
-        </template>
-      </el-dialog>
+    <div class="panel">
+      <DataTable
+        ref="tableRef"
+        :data="tableData"
+        :columns="tableColumns"
+        :loading="loading"
+        :pagination="pagination"
+        row-key="id"
+        @page-change="handlePageChange"
+        @size-change="handleSizeChange"
+        @action="handleTableAction"
+      />
+    </div>
 
-      <!-- 删除确认弹窗 -->
-      <el-dialog v-model="deleteDialogVisible" title="删除确认" width="400px">
-        <p style="font-size: 16px">确认删除配件 <strong>{{ deleteData.name }}</strong> (编码: {{ deleteData.code }}) 吗？此操作不可恢复。</p>
-        <template #footer>
-          <el-button @click="deleteDialogVisible = false">取消</el-button>
-          <el-button type="danger" :loading="deleteLoading" @click="handleDelete">删除</el-button>
-        </template>
-      </el-dialog>
-    </el-card>
+    <!-- 新增/编辑弹窗 -->
+    <CrudDialog
+      v-model="dialogVisible"
+      :mode="dialogMode"
+      :fields="dialogFields"
+      :model-value="formData"
+      :saving="submitting"
+      @save="handleSave"
+      @cancel="dialogVisible = false"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
-import request from '@/utils/request'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Plus } from '@element-plus/icons-vue'
+import request from '@/utils/request'
+import { SearchForm, DataTable, CrudDialog, PageHeader } from '@/components/page-components'
 
-// ---------- 仓库列表 ----------
-const warehouseList = ref([])
-
-// ---------- 表格数据 ----------
+// ============ 数据 ============
 const loading = ref(false)
 const tableData = ref([])
-const pagination = reactive({ page: 1, pageSize: 10, total: 0 })
+const pagination = reactive({ page: 1, pageSize: 20, total: 0 })
+const queryParams = reactive({ partNo: '', partName: '', warehouseId: null })
 
-// ---------- 搜索表单 ----------
-const searchForm = reactive({
-  code: '',
-  name: '',
-  warehouseId: null
-})
+// ============ 仓库列表 ============
+const warehouseList = ref([])
 
-// ---------- 新增/编辑表单 ----------
-const formDialogVisible = ref(false)
-const formMode = ref('add')
-const submitLoading = ref(false)
-const formRef = ref(null)
+// ============ 搜索 ============
+const searchFields = [
+  { key: 'partNo', label: '配件编码', type: 'input', placeholder: '配件编码' },
+  { key: 'partName', label: '配件名称', type: 'input', placeholder: '配件名称' },
+  {
+    key: 'warehouseId',
+    label: '所属仓库',
+    type: 'select',
+    placeholder: '请选择仓库',
+    options: [],
+  },
+]
 
-const defaultForm = () => ({
-  code: '',
-  name: '',
-  spec: '',
-  unit: '',
-  price: 0,
-  stock: 0,
-  minStock: 0,
-  warehouseId: null,
-  remark: ''
-})
-
-const form = reactive(defaultForm())
-
-const formRules = {
-  code: [{ required: true, message: '请输入配件编码', trigger: 'blur' }],
-  name: [{ required: true, message: '请输入配件名称', trigger: 'blur' }],
-  warehouseId: [{ required: true, message: '请选择所属仓库', trigger: 'change' }]
+function handleSearch(params) {
+  Object.assign(queryParams, params)
+  pagination.page = 1
+  loadData()
 }
 
-// ---------- 删除 ----------
-const deleteDialogVisible = ref(false)
-const deleteLoading = ref(false)
-const deleteData = ref({})
+function handleReset(params) {
+  Object.assign(queryParams, params)
+  pagination.page = 1
+  loadData()
+}
 
-// ---------- 生命周期 ----------
-onMounted(() => {
-  fetchWarehouseList()
-  fetchData()
+// ============ 表格 ============
+const tableRef = ref()
+
+const tableColumns = [
+  { key: 'partNo', label: '配件编码', width: 130 },
+  { key: 'partName', label: '配件名称', minWidth: 150 },
+  { key: 'spec', label: '规格型号', minWidth: 120, showOverflowTooltip: true },
+  { key: 'category', label: '分类', width: 100 },
+  { key: 'unit', label: '单位', width: 70, align: 'center' },
+  {
+    key: 'unitPrice',
+    label: '单价',
+    width: 100,
+    align: 'right',
+    columnType: 'currency',
+    prefix: '¥',
+    precision: 2,
+  },
+  {
+    key: 'safetyStock',
+    label: '库存',
+    width: 90,
+    align: 'center',
+    slot: 'stock',
+  },
+  { key: 'warehouseName', label: '所属仓库', width: 120, showOverflowTooltip: true },
+  {
+    key: 'actions',
+    label: '操作',
+    width: 120,
+    fixed: 'right',
+    columnType: 'actions',
+    actions: [
+      { key: 'edit', label: '编辑', type: 'primary', size: 'small', link: true },
+      { key: 'delete', label: '删除', type: 'danger', size: 'small', link: true, danger: true },
+    ],
+  },
+]
+
+// 库存低于安全库存高亮
+function stockCellClass({ row }) {
+  return row.safetyStock !== undefined && row.safetyStock > 0 && row.stock < row.safetyStock
+    ? 'stock-low'
+    : ''
+}
+
+function handleTableAction(action, row) {
+  if (action === 'edit') openEdit(row)
+  else if (action === 'delete') openDelete(row)
+}
+
+function handlePageChange(page) {
+  pagination.page = page
+  loadData()
+}
+
+function handleSizeChange(size) {
+  pagination.pageSize = size
+  pagination.page = 1
+  loadData()
+}
+
+// ============ 弹窗表单 ============
+const dialogVisible = ref(false)
+const dialogMode = ref('create')
+const submitting = ref(false)
+const editingId = ref(null)
+
+const defaultForm = () => ({
+  partNo: '',
+  partName: '',
+  spec: '',
+  category: '',
+  unit: '',
+  unitCost: 0,
+  unitPrice: 0,
+  safetyStock: 0,
+  stock: 0,
+  warehouseId: null,
+  remark: '',
 })
 
-// ---------- 方法 ----------
-const fetchWarehouseList = async () => {
+const formData = reactive(defaultForm())
+
+const dialogFields = [
+  { key: 'partNo', label: '配件编码', type: 'input', required: true, placeholder: '请输入配件编码', maxlength: 30, disabled: () => dialogMode.value === 'edit' },
+  { key: 'partName', label: '配件名称', type: 'input', required: true, placeholder: '请输入配件名称', maxlength: 100 },
+  { key: 'spec', label: '规格型号', type: 'input', placeholder: '规格型号', maxlength: 100 },
+  { key: 'category', label: '分类', type: 'input', placeholder: '配件分类' },
+  { key: 'unit', label: '单位', type: 'input', placeholder: '如：台、个、罐', maxlength: 20 },
+  { key: 'unitPrice', label: '单价', type: 'number', min: 0, precision: 2, placeholder: '0.00' },
+  { key: 'safetyStock', label: '安全库存', type: 'number', min: 0, precision: 0 },
+  {
+    key: 'warehouseId',
+    label: '所属仓库',
+    type: 'select',
+    required: true,
+    placeholder: '请选择仓库',
+    options: [],
+  },
+  { key: 'remark', label: '备注', type: 'textarea', placeholder: '备注信息', maxlength: 200 },
+]
+
+function openAdd() {
+  dialogMode.value = 'create'
+  editingId.value = null
+  Object.keys(defaultForm()).forEach(k => { formData[k] = defaultForm()[k] })
+  dialogVisible.value = true
+}
+
+function openEdit(row) {
+  dialogMode.value = 'edit'
+  editingId.value = row.id
+  Object.assign(formData, {
+    partNo: row.partNo,
+    partName: row.partName,
+    spec: row.spec || '',
+    category: row.category || '',
+    unit: row.unit || '',
+    unitCost: row.unitCost || 0,
+    unitPrice: row.unitPrice || 0,
+    safetyStock: row.safetyStock || 0,
+    stock: row.stock || 0,
+    warehouseId: row.warehouseId,
+    remark: row.remark || '',
+  })
+  dialogVisible.value = true
+}
+
+async function openDelete(row) {
   try {
-    const res = await request.get('/wms/warehouses', { params: { page: 1, pageSize: 100 } })
-    warehouseList.value = res.data?.list || []
+    await ElMessageBox.confirm(
+      `确定删除配件「${row.partName}」(编码: ${row.partNo})？此操作不可恢复。`,
+      '确认删除',
+      { type: 'warning' }
+    )
+    await request.delete(`/wms/parts/${row.id}`)
+    ElMessage.success('已删除')
+    loadData()
   } catch (e) {
-    console.error('获取仓库列表失败', e)
-    warehouseList.value = []
+    if (e !== 'cancel') ElMessage.error('删除失败')
   }
 }
 
-const fetchData = async () => {
+async function handleSave(data) {
+  submitting.value = true
+  try {
+    if (dialogMode.value === 'edit') {
+      await request.put(`/wms/parts/${editingId.value}`, data)
+      ElMessage.success('编辑成功')
+    } else {
+      await request.post('/wms/parts', data)
+      ElMessage.success('新增成功')
+    }
+    dialogVisible.value = false
+    loadData()
+  } catch (e) {
+    ElMessage.error(dialogMode.value === 'edit' ? '编辑失败' : '新增失败')
+  } finally {
+    submitting.value = false
+  }
+}
+
+// ============ 加载数据 ============
+async function loadData() {
   loading.value = true
   try {
     const params = {
       page: pagination.page,
       pageSize: pagination.pageSize,
-      ...searchForm
+      ...queryParams,
     }
     const res = await request.get('/wms/parts', { params })
     tableData.value = res.data?.list || []
     pagination.total = res.data?.total || 0
-  } catch (e) {
-    console.error('获取配件列表失败', e)
+  } catch {
+    tableData.value = []
   } finally {
     loading.value = false
   }
 }
 
-const handleSearch = () => {
-  pagination.page = 1
-  fetchData()
-}
-
-const handleReset = () => {
-  searchForm.code = ''
-  searchForm.name = ''
-  searchForm.warehouseId = null
-  pagination.page = 1
-  fetchData()
-}
-
-const openAdd = () => {
-  formMode.value = 'add'
-  Object.assign(form, defaultForm())
-  formDialogVisible.value = true
-}
-
-const openEdit = (row) => {
-  formMode.value = 'edit'
-  Object.assign(form, {
-    id: row.id,
-    code: row.code,
-    name: row.name,
-    spec: row.spec || '',
-    unit: row.unit || '',
-    price: row.price || 0,
-    stock: row.stock || 0,
-    minStock: row.minStock || 0,
-    warehouseId: row.warehouseId,
-    remark: row.remark || ''
-  })
-  formDialogVisible.value = true
-}
-
-const handleSubmit = async () => {
+async function loadWarehouses() {
   try {
-    await formRef.value.validate()
-    submitLoading.value = true
-    const url = formMode.value === 'add' ? '/wms/parts' : '/wms/parts/' + form.value.id
-    await request.post(url, form)
-    ElMessage.success(formMode.value === 'add' ? '新增成功' : '更新成功')
-    formDialogVisible.value = false
-    fetchData()
-  } catch (e) {
-    console.error('提交失败', e)
-  } finally {
-    submitLoading.value = false
+    const res = await request.get('/wms/warehouses', { params: { page: 1, pageSize: 100 } })
+    warehouseList.value = res.data?.list || []
+    // 更新搜索和表单的仓库选项
+    const whOptions = warehouseList.value.map(w => ({ label: w.name, value: w.id }))
+    searchFields[2].options = whOptions
+    dialogFields.find(f => f.key === 'warehouseId').options = whOptions
+  } catch {
+    warehouseList.value = []
   }
 }
 
-const openDelete = (row) => {
-  deleteData.value = { id: row.id, code: row.code, name: row.name }
-  deleteDialogVisible.value = true
-}
-
-const handleDelete = async () => {
-  try {
-    deleteLoading.value = true
-    await request.delete(`/wms/parts/${deleteData.value.id}`)
-    ElMessage.success('删除成功')
-    deleteDialogVisible.value = false
-    fetchData()
-  } catch (e) {
-    console.error('删除失败', e)
-  } finally {
-    deleteLoading.value = false
-  }
-}
+onMounted(() => {
+  loadWarehouses()
+  loadData()
+})
 </script>
 
 <style scoped>
-.card-header { display: flex; justify-content: space-between; align-items: center; }
-.search-form { margin-bottom: 16px; }
-.stock-low { color: #f56c6c; font-weight: bold; }
+.part-list {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.panel {
+  background: #fff;
+  border-radius: 4px;
+  padding: 12px 16px;
+}
+
+:deep(.stock-low) {
+  color: #f56c6c;
+  font-weight: bold;
+}
 </style>

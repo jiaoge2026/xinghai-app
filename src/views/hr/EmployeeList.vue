@@ -1,218 +1,280 @@
 <template>
   <div class="employee-list">
-    <el-card>
-      <template #header>
-        <div class="card-header">
-          <span>员工管理</span>
-          <el-button type="primary" :icon="Plus" @click="handleAdd">新增员工</el-button>
-        </div>
+    <PageHeader title="员工管理">
+      <template #actions>
+        <el-button type="primary" @click="openAdd">
+          <el-icon><Plus /></el-icon> 新增员工
+        </el-button>
       </template>
+    </PageHeader>
 
-      <!-- 搜索区 -->
-      <el-form :inline="true" class="search-form">
-        <el-form-item label="姓名">
-          <el-input v-model="query.name" placeholder="姓名" clearable style="width:140px" />
-        </el-form-item>
-        <el-form-item label="部门">
-          <el-select v-model="query.departmentId" placeholder="全部" clearable style="width:150px">
-            <el-option v-for="d in deptOptions" :key="d.id" :value="d.id" :label="d.name" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="状态">
-          <el-select v-model="query.status" placeholder="全部" clearable style="width:120px">
-            <el-option :value="1" label="在职" />
-            <el-option :value="2" label="离职" />
-          </el-select>
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="fetchData">搜索</el-button>
-          <el-button @click="resetQuery">重置</el-button>
-        </el-form-item>
-      </el-form>
+    <div class="panel">
+      <SearchForm
+        :fields="searchFields"
+        v-model="queryParams"
+        @search="handleSearch"
+        @reset="handleReset"
+      />
+    </div>
 
-      <!-- 表格 -->
-      <el-table :data="tableData" v-loading="loading" stripe>
-        <el-table-column prop="employeeNo" label="工号" width="100" />
-        <el-table-column prop="name" label="姓名" min-width="100" />
-        <el-table-column prop="gender" label="性别" width="70" align="center">
-          <template #default="{ row }">{{ row.gender === 1 ? '男' : '女' }}</template>
-        </el-table-column>
-        <el-table-column prop="phone" label="手机号" width="130" />
-        <el-table-column prop="departmentName" label="部门" min-width="120" />
-        <el-table-column prop="position" label="岗位" min-width="120" />
-        <el-table-column prop="status" label="状态" width="90" align="center">
-          <template #default="{ row }">
-            <el-tag :type="row.status === 1 ? 'success' : 'info'" size="small">
-              {{ row.status === 1 ? '在职' : '离职' }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="hireDate" label="入职日期" width="120" />
-        <el-table-column label="操作" width="150" fixed="right">
-          <template #default="{ row }">
-            <el-button type="primary" link @click="handleEdit(row)">编辑</el-button>
-            <el-button type="danger" link @click="handleDelete(row)">删除</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
+    <div class="panel">
+      <DataTable
+        :data="tableData"
+        :columns="tableColumns"
+        :loading="loading"
+        :pagination="pagination"
+        row-key="id"
+        @page-change="handlePageChange"
+        @size-change="handleSizeChange"
+        @action="handleTableAction"
+      />
+    </div>
 
-      <div class="pagination">
-        <el-pagination
-          v-model:current-page="query.page"
-          v-model:page-size="query.pageSize"
-          :total="total"
-          :page-sizes="[10,20,50]"
-          layout="total,sizes,prev,pager,next"
-          @change="fetchData"
-        />
-      </div>
-    </el-card>
-
-    <!-- 新增/编辑弹窗 -->
-    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="550px" destroy-on-close>
-      <el-form ref="formRef" :model="form" :rules="rules" label-width="90px">
-        <el-form-item label="工号" prop="employeeNo">
-          <el-input v-model="form.employeeNo" placeholder="如：EMP001" :disabled="isEdit" />
-        </el-form-item>
-        <el-form-item label="姓名" prop="name">
-          <el-input v-model="form.name" placeholder="员工姓名" />
-        </el-form-item>
-        <el-form-item label="性别" prop="gender">
-          <el-radio-group v-model="form.gender">
-            <el-radio :value="1">男</el-radio>
-            <el-radio :value="2">女</el-radio>
-          </el-radio-group>
-        </el-form-item>
-        <el-form-item label="手机号" prop="phone">
-          <el-input v-model="form.phone" placeholder="11位手机号" />
-        </el-form-item>
-        <el-form-item label="部门" prop="departmentId">
-          <el-select v-model="form.departmentId" placeholder="选择部门" style="width:100%">
-            <el-option v-for="d in deptOptions" :key="d.id" :value="d.id" :label="d.name" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="岗位">
-          <el-input v-model="form.position" placeholder="职位/岗位" />
-        </el-form-item>
-        <el-form-item label="邮箱">
-          <el-input v-model="form.email" placeholder="可选" />
-        </el-form-item>
-        <el-form-item label="入职日期">
-          <el-date-picker v-model="form.hireDate" type="date" value-format="YYYY-MM-DD" style="width:100%" />
-        </el-form-item>
-        <el-form-item label="状态" prop="status">
-          <el-radio-group v-model="form.status">
-            <el-radio :value="1">在职</el-radio>
-            <el-radio :value="2">离职</el-radio>
-          </el-radio-group>
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="dialogVisible=false">取消</el-button>
-        <el-button type="primary" :loading="submitting" @click="handleSubmit">确定</el-button>
-      </template>
-    </el-dialog>
+    <CrudDialog
+      v-model="dialogVisible"
+      :mode="dialogMode"
+      :fields="dialogFields"
+      :model-value="formData"
+      :saving="submitting"
+      @save="handleSave"
+      @cancel="dialogVisible = false"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import request from '@/utils/request'
+import { SearchForm, DataTable, CrudDialog, PageHeader } from '@/components/page-components'
 
+// ============ 数据 ============
 const loading = ref(false)
 const tableData = ref([])
-const total = ref(0)
+const pagination = reactive({ page: 1, pageSize: 20, total: 0 })
+const queryParams = reactive({ name: '', departmentId: null, status: null })
 const deptOptions = ref([])
+
+// ============ 搜索 ============
+const searchFields = [
+  { key: 'name', label: '姓名', type: 'input', placeholder: '员工姓名' },
+  {
+    key: 'departmentId',
+    label: '部门',
+    type: 'select',
+    placeholder: '全部',
+    clearable: true,
+    options: [],
+  },
+  {
+    key: 'status',
+    label: '状态',
+    type: 'select',
+    placeholder: '全部',
+    clearable: true,
+    options: [
+      { label: '在职', value: 'ON_JOB' },
+      { label: '离职', value: 'OFF_JOB' },
+    ],
+  },
+]
+
+function handleSearch(params) {
+  Object.assign(queryParams, params)
+  pagination.page = 1
+  loadData()
+}
+
+function handleReset(params) {
+  Object.assign(queryParams, params)
+  pagination.page = 1
+  loadData()
+}
+
+// ============ 表格 ============
+const tableColumns = [
+  { key: 'employeeNo', label: '工号', width: 110 },
+  { key: 'name', label: '姓名', minWidth: 100 },
+  {
+    key: 'gender',
+    label: '性别',
+    width: 70,
+    align: 'center',
+    columnType: 'map',
+    maps: { 1: '男', 2: '女' },
+  },
+  { key: 'phone', label: '手机号', width: 130 },
+  { key: 'deptName', label: '部门', minWidth: 120 },
+  { key: 'positionName', label: '岗位', minWidth: 120 },
+  {
+    key: 'status',
+    label: '状态',
+    width: 90,
+    align: 'center',
+    columnType: 'map',
+    maps: { ON_JOB: { label: '在职', type: 'success' }, OFF_JOB: { label: '离职', type: 'info' } },
+  },
+  { key: 'entryDate', label: '入职日期', width: 120 },
+  {
+    key: 'actions',
+    label: '操作',
+    width: 120,
+    fixed: 'right',
+    columnType: 'actions',
+    actions: [
+      { key: 'edit', label: '编辑', type: 'primary', size: 'small', link: true },
+      { key: 'delete', label: '删除', type: 'danger', size: 'small', link: true, danger: true },
+    ],
+  },
+]
+
+function handleTableAction(action, row) {
+  if (action === 'edit') openEdit(row)
+  else if (action === 'delete') openDelete(row)
+}
+
+function handlePageChange(page) { pagination.page = page; loadData() }
+function handleSizeChange(size) { pagination.pageSize = size; pagination.page = 1; loadData() }
+
+// ============ 弹窗表单 ============
 const dialogVisible = ref(false)
+const dialogMode = ref('create')
 const submitting = ref(false)
-const isEdit = ref(false)
-const formRef = ref()
+const editingId = ref(null)
 
-const query = reactive({ page: 1, pageSize: 20, name: '', departmentId: null, status: null })
-
-const form = reactive({
-  id: null, employeeNo: '', name: '', gender: 1, phone: '',
-  departmentId: null, departmentName: '', position: '', email: '',
-  hireDate: '', status: 1
+const defaultForm = () => ({
+  employeeNo: '',
+  name: '',
+  gender: 1,
+  phone: '',
+  departmentId: null,
+  position: '',
+  email: '',
+  entryDate: '',
+  status: 'ON_JOB',
 })
 
-const rules = {
-  employeeNo: [{ required: true, message: '请输入工号', trigger: 'blur' }],
-  name: [{ required: true, message: '请输入姓名', trigger: 'blur' }],
-  phone: [
-    { required: true, message: '请输入手机号', trigger: 'blur' },
-    { pattern: /^1[3-9]\d{9}$/, message: '手机号格式不正确', trigger: 'blur' }
-  ],
-  departmentId: [{ required: true, message: '请选择部门', trigger: 'change' }]
+const formData = reactive(defaultForm())
+
+const dialogFields = [
+  { key: 'employeeNo', label: '工号', type: 'input', required: true, placeholder: '如：EMP001', disabled: () => dialogMode.value === 'edit' },
+  { key: 'name', label: '姓名', type: 'input', required: true, placeholder: '员工姓名' },
+  {
+    key: 'gender',
+    label: '性别',
+    type: 'radio',
+    options: [{ label: '男', value: 1 }, { label: '女', value: 2 }],
+  },
+  { key: 'phone', label: '手机号', type: 'input', required: true, placeholder: '11位手机号' },
+  { key: 'departmentId', label: '部门', type: 'select', required: true, placeholder: '选择部门', options: [] },
+  { key: 'position', label: '岗位', type: 'input', placeholder: '职位/岗位' },
+  { key: 'email', label: '邮箱', type: 'input', placeholder: '可选' },
+  { key: 'entryDate', label: '入职日期', type: 'date', valueFormat: 'YYYY-MM-DD' },
+  {
+    key: 'status',
+    label: '状态',
+    type: 'radio',
+    options: [{ label: '在职', value: 'ON_JOB' }, { label: '离职', value: 'OFF_JOB' }],
+  },
+]
+
+function openAdd() {
+  dialogMode.value = 'create'
+  editingId.value = null
+  Object.keys(defaultForm()).forEach(k => { formData[k] = defaultForm()[k] })
+  dialogVisible.value = true
 }
 
-const dialogTitle = computed(() => isEdit.value ? '编辑员工' : '新增员工')
+function openEdit(row) {
+  dialogMode.value = 'edit'
+  editingId.value = row.id
+  Object.assign(formData, {
+    employeeNo: row.employeeNo,
+    name: row.name,
+    gender: row.gender || 1,
+    phone: row.phone,
+    departmentId: row.departmentId,
+    position: row.position || '',
+    email: row.email || '',
+    entryDate: row.entryDate || '',
+    status: row.status || 'ON_JOB',
+  })
+  dialogVisible.value = true
+}
 
-const fetchData = async () => {
+async function openDelete(row) {
+  try {
+    await ElMessageBox.confirm(`确定删除员工「${row.name}」？`, '提示', { type: 'warning' })
+    await request.delete(`/hr/employees/${row.id}`)
+    ElMessage.success('已删除')
+    loadData()
+  } catch (e) {
+    if (e !== 'cancel') ElMessage.error('删除失败')
+  }
+}
+
+async function handleSave(data) {
+  submitting.value = true
+  try {
+    if (dialogMode.value === 'edit') {
+      await request.put(`/hr/employees/${editingId.value}`, data)
+      ElMessage.success('编辑成功')
+    } else {
+      await request.post('/hr/employees', data)
+      ElMessage.success('新增成功')
+    }
+    dialogVisible.value = false
+    loadData()
+  } catch {
+    ElMessage.error(dialogMode.value === 'edit' ? '编辑失败' : '新增失败')
+  } finally {
+    submitting.value = false
+  }
+}
+
+// ============ 加载 ============
+async function loadData() {
   loading.value = true
   try {
-    const res = await request.get('/hr/employees', { params: query })
+    const params = { pageNum: pagination.page, pageSize: pagination.pageSize, ...queryParams }
+    // 去掉null值
+    Object.keys(params).forEach(k => { if (params[k] === null || params[k] === '') delete params[k] })
+    const res = await request.get('/hr/employees', { params })
     tableData.value = res.data?.list || []
-    total.value = res.data?.total || 0
-  } catch { tableData.value = [] } finally { loading.value = false }
+    pagination.total = res.data?.total || 0
+  } catch {
+    tableData.value = []
+  } finally {
+    loading.value = false
+  }
 }
 
-const fetchDepts = async () => {
+async function loadDepts() {
   try {
     const res = await request.get('/hr/departments')
     deptOptions.value = Array.isArray(res.data) ? res.data : (res.data?.list || [])
-  } catch { deptOptions.value = [] }
+    const deptMap = deptOptions.value.map(d => ({ label: d.name, value: d.id }))
+    searchFields[1].options = deptMap
+    dialogFields.find(f => f.key === 'departmentId').options = deptMap
+  } catch {
+    deptOptions.value = []
+  }
 }
 
-const resetQuery = () => {
-  query.name = ''; query.departmentId = null; query.status = null; query.page = 1
-  fetchData()
-}
-
-const handleAdd = () => {
-  isEdit.value = false
-  Object.assign(form, { id: null, employeeNo: '', name: '', gender: 1, phone: '',
-    departmentId: null, departmentName: '', position: '', email: '',
-    hireDate: '', status: 1 })
-  dialogVisible.value = true
-}
-
-const handleEdit = (row) => {
-  isEdit.value = true
-  Object.assign(form, { ...row })
-  dialogVisible.value = true
-}
-
-const handleSubmit = async () => {
-  const valid = await formRef.value.validate().catch(() => false)
-  if (!valid) return
-  submitting.value = true
-  try {
-    if (isEdit.value) {
-      await request.put(`/hr/employees/${form.id}`, form)
-    } else {
-      await request.post('/hr/employees', form)
-    }
-    ElMessage.success(isEdit.value ? '编辑成功' : '新增成功')
-    dialogVisible.value = false
-    fetchData()
-  } finally { submitting.value = false }
-}
-
-const handleDelete = async (row) => {
-  await ElMessageBox.confirm(`确定删除员工「${row.name}」？`, '提示', { type: 'warning' })
-  await request.delete(`/hr/employees/${row.id}`)
-  ElMessage.success('删除成功')
-  fetchData()
-}
-
-onMounted(() => { fetchData(); fetchDepts() })
+onMounted(() => { loadDepts(); loadData() })
 </script>
 
 <style scoped>
-.card-header { display:flex; justify-content:space-between; align-items:center; }
-.search-form { margin-bottom: 12px; }
-.pagination { margin-top: 16px; display:flex; justify-content:flex-end; }
+.employee-list {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.panel {
+  background: #fff;
+  border-radius: 4px;
+  padding: 12px 16px;
+}
 </style>
