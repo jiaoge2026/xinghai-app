@@ -4,7 +4,7 @@ import request from '@/utils/request'
 import { QA_FEEDBACK_STATUS, QA_FEEDBACK_TYPE } from '@/constants/maps'
 
 // API base path for QA feedback
-const API_BASE = '/qa/feedbacks'
+const API_BASE = '/qa/feedback'
 
 export function useFeedbackList() {
   // Loading state
