@@ -1,181 +1,255 @@
 <template>
-  <div class="page-container">
-    <el-form :inline="true" :model="query" class="search-form">
-      <el-form-item><el-input v-model="query.keyword" placeholder="报价单号/客户名称" clearable style="width:200px" @keyup.enter="handleSearch" /></el-form-item>
-      <el-form-item>
-        <el-select v-model="query.status" placeholder="状态" clearable style="width:130px">
-          <el-option label="草稿" value="draft" />
-          <el-option label="已发送" value="sent" />
-          <el-option label="已确认" value="confirmed" />
-          <el-option label="已作废" value="cancelled" />
-        </el-select>
-      </el-form-item>
-      <el-form-item>
-        <el-date-picker v-model="dateRange" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" value-format="YYYY-MM-DD" style="width:240px" @change="onDateChange" />
-      </el-form-item>
-      <el-form-item><el-button type="primary" @click="handleSearch">搜索</el-button><el-button @click="handleReset">重置</el-button></el-form-item>
-    </el-form>
+  <div class="quotes-page">
+    <PageHeader title="报价管理">
+      <template #actions>
+        <el-button type="primary" @click="openAdd">
+          <el-icon><Plus /></el-icon> 新建报价单
+        </el-button>
+      </template>
+    </PageHeader>
 
-    <div class="toolbar">
-      <el-button type="primary" @click="handleAdd">+ 新建报价单</el-button>
-    </div>
-
-    <el-table :data="tableData" stripe v-loading="loading">
-      <el-table-column prop="quoteNo" label="报价单号" width="150" />
-      <el-table-column prop="customerName" label="客户名称" min-width="150" />
-      <el-table-column prop="contact" label="联系人" width="100" />
-      <el-table-column prop="phone" label="电话" width="120" />
-      <el-table-column prop="totalAmount" label="报价总额" width="120" align="right">
-        <template #default="{row}">¥{{ (row.totalAmount || 0).toLocaleString() }}</template>
-      </el-table-column>
-      <el-table-column prop="status" label="状态" width="100" align="center">
-        <template #default="{row}">
-          <el-tag :type="statusType(row.status)">{{ statusLabel(row.status) }}</el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column prop="validDate" label="有效期至" width="120">
-        <template #default="{row}">{{ row.validDate ? new Date(row.validDate).toLocaleDateString() : '-' }}</template>
-      </el-table-column>
-      <el-table-column prop="createdAt" label="创建时间" width="160">
-        <template #default="{row}">{{ row.createdAt ? new Date(row.createdAt).toLocaleString() : '-' }}</template>
-      </el-table-column>
-      <el-table-column label="操作" width="140" fixed="right">
-        <template #default="{row}">
-          <el-button link type="primary" @click="handleEdit(row)">编辑</el-button>
-          <el-button link type="danger" @click="handleDelete(row.id)">删除</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
-
-    <div class="pagination-wrap">
-      <el-pagination
-        background
-        layout="total, sizes, prev, pager, next"
-        :total="total"
-        :page-size="query.pageSize"
-        :current-page="query.pageNum"
-        @size-change="handleSizeChange"
-        @current-change="handlePageChange"
+    <div class="panel">
+      <SearchForm
+        :fields="searchFields"
+        v-model="queryParams"
+        @search="handleSearch"
+        @reset="handleReset"
       />
     </div>
 
-    <el-dialog v-model="dialogVisible" :title="isEdit ? '编辑报价单' : '新建报价单'" width="600px" destroy-on-close>
-      <el-form :model="form" :rules="rules" ref="formRef" label-width="100px">
-        <el-form-item label="客户名称" prop="customerName"><el-input v-model="form.customerName" /></el-form-item>
-        <el-form-item label="联系人" prop="contact"><el-input v-model="form.contact" /></el-form-item>
-        <el-form-item label="联系电话" prop="phone"><el-input v-model="form.phone" /></el-form-item>
-        <el-form-item label="报价总额" prop="totalAmount"><el-input-number v-model="form.totalAmount" :min="0" :precision="2" style="width:100%" /></el-form-item>
-        <el-form-item label="状态" prop="status">
-          <el-select v-model="form.status" style="width:100%">
-            <el-option label="草稿" value="draft" />
-            <el-option label="已发送" value="sent" />
-            <el-option label="已确认" value="confirmed" />
-            <el-option label="已作废" value="cancelled" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="有效期至" prop="validDate"><el-date-picker v-model="form.validDate" type="date" value-format="YYYY-MM-DD" style="width:100%" /></el-form-item>
-        <el-form-item label="备注"><el-input v-model="form.remark" type="textarea" :rows="3" /></el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="dialogVisible=false">取消</el-button>
-        <el-button type="primary" @click="handleSave">保存</el-button>
-      </template>
-    </el-dialog>
+    <div class="panel">
+      <DataTable
+        :data="tableData"
+        :columns="tableColumns"
+        :loading="loading"
+        :pagination="pagination"
+        row-key="id"
+        @page-change="handlePageChange"
+        @size-change="handleSizeChange"
+        @action="handleTableAction"
+      />
+    </div>
+
+    <!-- 新增/编辑弹窗 -->
+    <CrudDialog
+      v-model="dialogVisible"
+      :mode="dialogMode"
+      :fields="dialogFields"
+      :model-value="formData"
+      :saving="submitting"
+      @save="handleSave"
+      @cancel="dialogVisible = false"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Plus } from '@element-plus/icons-vue'
 import request from '@/utils/request'
+import { SearchForm, DataTable, CrudDialog, PageHeader } from '@/components/page-components'
 
+// ============ 数据 ============
 const loading = ref(false)
 const tableData = ref([])
-const total = ref(0)
-const query = reactive({ pageNum: 1, pageSize: 20, keyword: '', status: '' })
-const dateRange = ref([])
-const dialogVisible = ref(false)
-const isEdit = ref(false)
-const formRef = ref()
+const pagination = reactive({ page: 1, pageSize: 20, total: 0 })
+const queryParams = reactive({ keyword: '', status: null })
 
-const form = reactive({
-  id: null, customerName: '', contact: '', phone: '',
-  totalAmount: 0, status: 'draft', validDate: '', remark: '',
+// ============ 搜索 ============
+// Backend status values unknown - using placeholder, verify from actual data
+const searchFields = [
+  { key: 'keyword', label: '关键词', type: 'input', placeholder: '报价单号' },
+  {
+    key: 'status',
+    label: '状态',
+    type: 'select',
+    placeholder: '全部',
+    clearable: true,
+    options: [
+      { label: '草稿', value: 'draft' },
+      { label: '已发送', value: 'sent' },
+      { label: '已确认', value: 'confirmed' },
+      { label: '已作废', value: 'cancelled' },
+    ],
+  },
+]
+
+function handleSearch(params) {
+  Object.assign(queryParams, params)
+  pagination.page = 1
+  loadData()
+}
+
+function handleReset(params) {
+  Object.assign(queryParams, params)
+  pagination.page = 1
+  loadData()
+}
+
+// ============ 表格 ============
+const tableColumns = [
+  { key: 'quoteNo', label: '报价单号', width: 150 },
+  { key: 'customerId', label: '客户ID', width: 100 },
+  {
+    key: 'totalAmount',
+    label: '报价总额',
+    width: 120,
+    align: 'right',
+    columnType: 'currency',
+    prefix: '¥',
+    precision: 2,
+  },
+  {
+    key: 'status',
+    label: '状态',
+    width: 100,
+    align: 'center',
+    columnType: 'map',
+    maps: {
+      draft: { label: '草稿', type: 'info' },
+      sent: { label: '已发送', type: 'warning' },
+      confirmed: { label: '已确认', type: 'success' },
+      cancelled: { label: '已作废', type: 'danger' },
+    },
+  },
+  { key: 'validUntil', label: '有效期至', width: 120, columnType: 'date' },
+  { key: 'createTime', label: '创建时间', width: 160, columnType: 'datetime' },
+  {
+    key: 'actions',
+    label: '操作',
+    width: 140,
+    fixed: 'right',
+    columnType: 'actions',
+    actions: [
+      { key: 'edit', label: '编辑', type: 'primary', size: 'small', link: true },
+      { key: 'delete', label: '删除', type: 'danger', size: 'small', link: true, danger: true },
+    ],
+  },
+]
+
+function handleTableAction(action, row) {
+  if (action === 'edit') openEdit(row)
+  else if (action === 'delete') openDelete(row)
+}
+
+function handlePageChange(page) { pagination.page = page; loadData() }
+function handleSizeChange(size) { pagination.pageSize = size; pagination.page = 1; loadData() }
+
+// ============ 弹窗表单 ============
+// Backend entity: SalesQuote { id, quoteNo, customerId, opportunityId, accountId,
+//   requireFsm, subtotal, discountAmount, taxAmount, totalAmount, status,
+//   validUntil, sentDate, confirmedDate, remark, createTime }
+const dialogVisible = ref(false)
+const dialogMode = ref('create')
+const submitting = ref(false)
+const editingId = ref(null)
+
+const defaultForm = () => ({
+  customerId: null,
+  opportunityId: null,
+  requireFsm: 0,
+  subtotal: 0,
+  discountAmount: 0,
+  taxAmount: 0,
+  totalAmount: 0,
+  status: 'draft',
+  validUntil: '',
+  remark: '',
 })
 
-const rules = {
-  customerName: [{ required: true, message: '请输入客户名称', trigger: 'blur' }],
-  totalAmount: [{ required: true, message: '请输入报价总额', trigger: 'blur' }],
+const formData = reactive(defaultForm())
+
+const dialogFields = [
+  { key: 'customerId', label: '客户', type: 'input', required: true, placeholder: '客户ID' },
+  { key: 'totalAmount', label: '报价总额', type: 'number', required: true, min: 0, precision: 2 },
+  {
+    key: 'status',
+    label: '状态',
+    type: 'select',
+    options: [
+      { label: '草稿', value: 'draft' },
+      { label: '已发送', value: 'sent' },
+      { label: '已确认', value: 'confirmed' },
+      { label: '已作废', value: 'cancelled' },
+    ],
+  },
+  { key: 'validUntil', label: '有效期至', type: 'date', valueFormat: 'YYYY-MM-DD' },
+  { key: 'remark', label: '备注', type: 'textarea', placeholder: '备注信息' },
+]
+
+function openAdd() {
+  dialogMode.value = 'create'
+  editingId.value = null
+  Object.keys(defaultForm()).forEach(k => { formData[k] = defaultForm()[k] })
+  dialogVisible.value = true
 }
 
-const statusLabel = (s) => ({ draft: '草稿', sent: '已发送', confirmed: '已确认', cancelled: '已作废' }[s] || s)
-const statusType = (s) => ({ draft: 'info', sent: 'warning', confirmed: 'success', cancelled: 'danger' }[s] || 'info')
-
-const onDateChange = () => {
-  query.startDate = dateRange.value?.[0] || ''
-  query.endDate = dateRange.value?.[1] || ''
+function openEdit(row) {
+  dialogMode.value = 'edit'
+  editingId.value = row.id
+  Object.assign(formData, {
+    customerId: row.customerId,
+    opportunityId: row.opportunityId,
+    requireFsm: row.requireFsm || 0,
+    subtotal: row.subtotal || 0,
+    discountAmount: row.discountAmount || 0,
+    taxAmount: row.taxAmount || 0,
+    totalAmount: row.totalAmount || 0,
+    status: row.status || 'draft',
+    validUntil: row.validUntil || '',
+    remark: row.remark || '',
+  })
+  dialogVisible.value = true
 }
 
-const loadData = async () => {
-  loading.value = true
+async function openDelete(row) {
   try {
-    const params = { pageNum: query.pageNum, pageSize: query.pageSize }
-    if (query.keyword) params.keyword = query.keyword
-    if (query.status) params.status = query.status
-    if (query.startDate) params.startDate = query.startDate
-    if (query.endDate) params.endDate = query.endDate
-    const res = await request.get('/sales/quote/page', params)
-    tableData.value = res.data?.records || res.data || []
-    total.value = res.data?.total || 0
+    await ElMessageBox.confirm(`确定删除报价单「${row.quoteNo}」？`, '确认删除', { type: 'warning' })
+    await request.delete(`/sales/quote/${row.id}`)
+    ElMessage.success('已删除')
+    loadData()
   } catch (e) {
-    console.error(e)
-  } finally {
-    loading.value = false
+    if (e !== 'cancel') ElMessage.error('删除失败')
   }
 }
 
-const handleSearch = () => { query.pageNum = 1; loadData() }
-const handleReset = () => { query.keyword = ''; query.status = ''; dateRange.value = []; query.startDate = ''; query.endDate = ''; handleSearch() }
-const handleSizeChange = (s) => { query.pageSize = s; loadData() }
-const handlePageChange = (p) => { query.pageNum = p; loadData() }
-
-const handleAdd = () => {
-  isEdit.value = false
-  Object.assign(form, { id: null, customerName: '', contact: '', phone: '', totalAmount: 0, status: 'draft', validDate: '', remark: '' })
-  dialogVisible.value = true
-}
-
-const handleEdit = (row) => {
-  isEdit.value = true
-  Object.assign(form, { ...row })
-  dialogVisible.value = true
-}
-
-const handleSave = async () => {
-  const valid = await formRef.value.validate().catch(() => false)
-  if (!valid) return
+async function handleSave(data) {
+  submitting.value = true
   try {
-    if (isEdit.value) {
-      await request.put(`/sales/quote/${form.id}`, form)
+    if (dialogMode.value === 'edit') {
+      await request.put(`/sales/quote/${editingId.value}`, data)
+      ElMessage.success('编辑成功')
     } else {
-      await request.post('/sales/quote', form)
+      await request.post('/sales/quote', data)
+      ElMessage.success('新建成功')
     }
-    ElMessage.success('保存成功')
     dialogVisible.value = false
     loadData()
-  } catch (e) {
-    ElMessage.error('保存失败')
+  } catch {
+    ElMessage.error(dialogMode.value === 'edit' ? '编辑失败' : '新建失败')
+  } finally {
+    submitting.value = false
   }
 }
 
-const handleDelete = async (id) => {
-  await ElMessageBox.confirm('确认删除此报价单？', '警告', { type: 'warning' })
+// ============ 加载 ============
+async function loadData() {
+  loading.value = true
   try {
-    await request.delete(`/sales/quote/${id}`)
-    ElMessage.success('删除成功')
-    loadData()
-  } catch (e) {
-    ElMessage.error('删除失败')
+    const params = {
+      pageNum: pagination.page,
+      pageSize: pagination.pageSize,
+      ...queryParams,
+    }
+    Object.keys(params).forEach(k => { if (params[k] === null || params[k] === '') delete params[k] })
+    const res = await request.get('/sales/quote/page', { params })
+    tableData.value = res.data?.records || res.data?.list || []
+    pagination.total = res.data?.total || 0
+  } catch {
+    tableData.value = []
+  } finally {
+    loading.value = false
   }
 }
 
@@ -183,8 +257,15 @@ onMounted(loadData)
 </script>
 
 <style scoped>
-.page-container { padding: 16px; }
-.search-form { margin-bottom: 12px; }
-.toolbar { margin-bottom: 12px; }
-.pagination-wrap { margin-top: 16px; display: flex; justify-content: flex-end; }
+.quotes-page {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.panel {
+  background: #fff;
+  border-radius: 4px;
+  padding: 12px 16px;
+}
 </style>
