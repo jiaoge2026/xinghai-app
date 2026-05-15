@@ -8,6 +8,18 @@ const router = useRouter()
 const tabStore = useTabStore()
 const scrollRef = ref(null)
 
+// 关闭标签：如果关闭的是激活标签，切换到下一个
+const onCloseTab = (tabId) => {
+  const wasActive = tabStore.activeTabId === tabId
+  tabStore.closeTab(tabId)
+  if (wasActive) {
+    const next = tabStore.tabs.find(t => t.id === tabStore.activeTabId)
+    if (next) {
+      router.push(next.path)
+    }
+  }
+}
+
 // 右键菜单
 const contextMenu = ref({ visible: false, x: 0, y: 0, tabId: null })
 
@@ -39,7 +51,12 @@ const onCommand = (command) => {
   if (!activeId) return
 
   if (command === 'closeCurrent') {
+    const wasActive = tabStore.activeTabId === activeId
     tabStore.closeTab(activeId)
+    if (wasActive) {
+      const next = tabStore.tabs.find(t => t.id === tabStore.activeTabId)
+      if (next) router.push(next.path)
+    }
   } else if (command === 'closeOthers') {
     tabStore.tabs.splice(0, tabStore.tabs.length, ...tabStore.tabs.filter(t => t.id === activeId))
     tabStore.activeTabId = activeId
@@ -55,8 +72,10 @@ const onCommand = (command) => {
     }
   } else if (command === 'closeAll') {
     const keep = tabStore.tabs.find(t => t.id === activeId) || tabStore.tabs[0]
+    const wasActive = tabStore.activeTabId !== keep?.id
     tabStore.tabs.splice(0, tabStore.tabs.length, keep)
     tabStore.activeTabId = keep?.id || null
+    if (keep && wasActive) router.push(keep.path)
   } else if (command === 'refresh') {
     const idx = tabStore.tabs.findIndex(t => t.id === activeId)
     if (idx !== -1) {
@@ -91,7 +110,7 @@ watch(() => tabStore.activeTabId, () => {
             <el-icon
               v-if="tab.name !== 'Dashboard'"
               class="tab-close"
-              @click.stop="tabStore.closeTab(tab.id)"
+              @click.stop="onCloseTab(tab.id)"
             >
               <Close />
             </el-icon>
