@@ -53,14 +53,14 @@ import { SearchForm, DataTable, CrudDialog, PageHeader } from '@/components/page
 const loading = ref(false)
 const tableData = ref([])
 const pagination = reactive({ page: 1, pageSize: 20, total: 0 })
-const queryParams = reactive({ name: '', departmentId: null, status: null })
+const queryParams = reactive({ name: '', deptId: null, status: null })
 const deptOptions = ref([])
 
 // ============ 搜索 ============
 const searchFields = [
   { key: 'name', label: '姓名', type: 'input', placeholder: '员工姓名' },
   {
-    key: 'departmentId',
+    key: 'deptId',
     label: '部门',
     type: 'select',
     placeholder: '全部',
@@ -148,7 +148,7 @@ const defaultForm = () => ({
   name: '',
   gender: 1,
   phone: '',
-  departmentId: null,
+  deptId: null,
   position: '',
   email: '',
   entryDate: '',
@@ -167,7 +167,7 @@ const dialogFields = [
     options: [{ label: '男', value: 1 }, { label: '女', value: 2 }],
   },
   { key: 'phone', label: '手机号', type: 'input', required: true, placeholder: '11位手机号' },
-  { key: 'departmentId', label: '部门', type: 'select', required: true, placeholder: '选择部门', options: [] },
+  { key: 'deptId', label: '部门', type: 'select', required: true, placeholder: '选择部门', options: [] },
   { key: 'position', label: '岗位', type: 'input', placeholder: '职位/岗位' },
   { key: 'email', label: '邮箱', type: 'input', placeholder: '可选' },
   { key: 'entryDate', label: '入职日期', type: 'date', valueFormat: 'YYYY-MM-DD' },
@@ -194,7 +194,7 @@ function openEdit(row) {
     name: row.name,
     gender: row.gender || 1,
     phone: row.phone,
-    departmentId: row.departmentId,
+    deptId: row.deptId,
     position: row.position || '',
     email: row.email || '',
     entryDate: row.entryDate || '',
