@@ -60,140 +60,36 @@
       <!-- 表格区 -->
       <div class="table-wrapper">
         <el-table v-loading="loading" :data="tableData" stripe height="calc(100vh - 300px)">
-          <!-- 序号（列设置也在这里） -->
+          <!-- 序号列（含列设置按钮） -->
           <el-table-column label="序号" width="80" fixed>
             <template #header>
-              <span class="seq-col-header">
-                序号
+              <div class="table-header-bar">
+                <span>序号</span>
                 <ColumnSettings
-                  :columns="localColumns"
+                  :columns="mergedColumns"
                   page-path="/fsm/work-orders"
-                  @update:columns="localColumns = $event"
-                  @change="localColumns = $event"
+                  @change="onColumnConfigChange"
                 >
                   <template #trigger>
                     <el-icon class="seq-settings-btn"><Setting /></el-icon>
                   </template>
                 </ColumnSettings>
-              </span>
+              </div>
             </template>
-            <template #default="{ row, $index }">
+            <template #default="{ $index }">
               {{ (pagination.page - 1) * pagination.pageSize + $index + 1 }}
             </template>
           </el-table-column>
-          <el-table-column v-if="isColVisible('hsicrmWorkorderid')" prop="hsicrmWorkorderid" label="工单编号" :width="getColWidth('hsicrmWorkorderid') || 150" fixed show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmWorkorderstatusname')" prop="hsicrmWorkorderstatusname" label="状态" :width="getColWidth('hsicrmWorkorderstatusname') || 110" fixed show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmConsumername')" prop="hsicrmConsumername" label="客户姓名" :width="getColWidth('hsicrmConsumername') || 100" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmOtherphone')" prop="hsicrmOtherphone" label="电话" :width="getColWidth('hsicrmOtherphone') || 130" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmRealphone')" prop="hsicrmRealphone" label="真实电话" :width="getColWidth('hsicrmRealphone') || 120" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmConsumeraddr')" prop="hsicrmConsumeraddr" label="地址" :min-width="getColWidth('hsicrmConsumeraddr') || 200" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmDistrictname')" prop="hsicrmDistrictname" label="区县" :width="getColWidth('hsicrmDistrictname') || 90" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmTownname')" prop="hsicrmTownname" label="乡镇" :width="getColWidth('hsicrmTownname') || 90" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmRegionname')" prop="hsicrmRegionname" label="省份" :width="getColWidth('hsicrmRegionname') || 80" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmTopregionname')" prop="hsicrmTopregionname" label="大区" :width="getColWidth('hsicrmTopregionname') || 80" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmRequireservicetypename')" prop="hsicrmRequireservicetypename" label="服务类型" :width="getColWidth('hsicrmRequireservicetypename') || 80" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmActualservicetypename')" prop="hsicrmActualservicetypename" label="实际服务类型" :width="getColWidth('hsicrmActualservicetypename') || 100" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmBrandname')" prop="hsicrmBrandname" label="品牌" :width="getColWidth('hsicrmBrandname') || 80" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmProductmodel')" prop="hsicrmProductmodel" label="产品型号" :width="getColWidth('hsicrmProductmodel') || 130" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmProductmodelname')" prop="hsicrmProductmodelname" label="产品型号名" :width="getColWidth('hsicrmProductmodelname') || 130" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmSerialnumber')" prop="hsicrmSerialnumber" label="序列号" :width="getColWidth('hsicrmSerialnumber') || 140" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmEmployeename')" prop="hsicrmEmployeename" label="工程师" :width="getColWidth('hsicrmEmployeename') || 90" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmEmployeenumber')" prop="hsicrmEmployeenumber" label="工程师工号" :width="getColWidth('hsicrmEmployeenumber') || 100" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmServicestationname')" prop="hsicrmServicestationname" label="服务站" :min-width="getColWidth('hsicrmServicestationname') || 150" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmServicestationcode')" prop="hsicrmServicestationcode" label="服务站编码" :width="getColWidth('hsicrmServicestationcode') || 120" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmReceivedfee')" prop="hsicrmReceivedfee" label="收费(元)" :width="getColWidth('hsicrmReceivedfee') || 90" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmPaytypename')" prop="hsicrmPaytypename" label="支付方式" :width="getColWidth('hsicrmPaytypename') || 90" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmPaystatus')" prop="hsicrmPaystatus" label="支付状态" :width="getColWidth('hsicrmPaystatus') || 80" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmRegistrationtime')" prop="hsicrmRegistrationtime" label="创建时间" :width="getColWidth('hsicrmRegistrationtime') || 160" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmDispatchtime')" prop="hsicrmDispatchtime" label="派工时间" :width="getColWidth('hsicrmDispatchtime') || 160" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmServicestationcompletetime')" prop="hsicrmServicestationcompletetime" label="完工时间" :width="getColWidth('hsicrmServicestationcompletetime') || 160" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmHaiercompletetime')" prop="hsicrmHaiercompletetime" label="海尔完工时间" :width="getColWidth('hsicrmHaiercompletetime') || 160" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmSignintime')" prop="hsicrmSignintime" label="签到时间" :width="getColWidth('hsicrmSignintime') || 160" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmSourcename')" prop="hsicrmSourcename" label="来源" :width="getColWidth('hsicrmSourcename') || 80" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmSourcecode')" prop="hsicrmSourcecode" label="来源编码" :width="getColWidth('hsicrmSourcecode') || 90" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmIsfromnetwork')" prop="hsicrmIsfromnetwork" label="网单" :width="getColWidth('hsicrmIsfromnetwork') || 60" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmDispatchmode')" prop="hsicrmDispatchmode" label="派工方式" :width="getColWidth('hsicrmDispatchmode') || 80" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmRequireservicemodename')" prop="hsicrmRequireservicemodename" label="预约服务模式" :width="getColWidth('hsicrmRequireservicemodename') || 110" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmRequireservicetime')" prop="hsicrmRequireservicetime" label="预约服务时间" :width="getColWidth('hsicrmRequireservicetime') || 160" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmConsumersex')" prop="hsicrmConsumersex" label="性别" :width="getColWidth('hsicrmConsumersex') || 60" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmConsumerno')" prop="hsicrmConsumerno" label="客户编号" :width="getColWidth('hsicrmConsumerno') || 120" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmIndustryname')" prop="hsicrmIndustryname" label="行业" :width="getColWidth('hsicrmIndustryname') || 80" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmWarrantytype')" prop="hsicrmWarrantytype" label="保修类型" :width="getColWidth('hsicrmWarrantytype') || 90" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmTimeduration')" prop="hsicrmTimeduration" label="工时(分钟)" :width="getColWidth('hsicrmTimeduration') || 90" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmSalesdate')" prop="hsicrmSalesdate" label="销售日期" :width="getColWidth('hsicrmSalesdate') || 100" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmInvoiceno')" prop="hsicrmInvoiceno" label="发票号" :width="getColWidth('hsicrmInvoiceno') || 140" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmComplaintsnumber')" prop="hsicrmComplaintsnumber" label="投诉编号" :width="getColWidth('hsicrmComplaintsnumber') || 80" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmWorkorderstatuscode')" prop="hsicrmWorkorderstatuscode" label="状态编码" :width="getColWidth('hsicrmWorkorderstatuscode') || 90" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmPoiregion')" prop="hsicrmPoiregion" label="POI区域" :width="getColWidth('hsicrmPoiregion') || 100" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmLatitude')" prop="hsicrmLatitude" label="纬度" :width="getColWidth('hsicrmLatitude') || 100" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmLongitude')" prop="hsicrmLongitude" label="经度" :width="getColWidth('hsicrmLongitude') || 100" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmBequeathreason')" prop="hsicrmBequeathreason" label="转交原因" :min-width="getColWidth('hsicrmBequeathreason') || 150" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmConsumerdesc')" prop="hsicrmConsumerdesc" label="客户描述" :min-width="getColWidth('hsicrmConsumerdesc') || 150" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmGenerationphone')" prop="hsicrmGenerationphone" label="生成电话" :width="getColWidth('hsicrmGenerationphone') || 120" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmContactnumber')" prop="hsicrmContactnumber" label="联系电话" :width="getColWidth('hsicrmContactnumber') || 120" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmTaxbmobilephone')" prop="hsicrmTaxbmobilephone" label="师傅回电电话" :width="getColWidth('hsicrmTaxbmobilephone') || 120" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmMobilenumber')" prop="hsicrmMobilenumber" label="手机号" :width="getColWidth('hsicrmMobilenumber') || 120" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmMobilephoneservicestationname')" prop="hsicrmMobilephoneservicestationname" label="手机服务站名" :width="getColWidth('hsicrmMobilephoneservicestationname') || 150" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmCustomerphone')" prop="hsicrmCustomerphone" label="客户电话" :width="getColWidth('hsicrmCustomerphone') || 120" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmBrandcode')" prop="hsicrmBrandcode" label="品牌编码" :width="getColWidth('hsicrmBrandcode') || 80" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmProductcategoryname')" prop="hsicrmProductcategoryname" label="产品类别" :width="getColWidth('hsicrmProductcategoryname') || 100" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmProductcategorycode')" prop="hsicrmProductcategorycode" label="产品类别编码" :width="getColWidth('hsicrmProductcategorycode') || 100" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmIndustrycode')" prop="hsicrmIndustrycode" label="行业编码" :width="getColWidth('hsicrmIndustrycode') || 80" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmRegioncode')" prop="hsicrmRegioncode" label="省份编码" :width="getColWidth('hsicrmRegioncode') || 80" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmTopregioncode')" prop="hsicrmTopregioncode" label="大区编码" :width="getColWidth('hsicrmTopregioncode') || 80" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmPaytypecode')" prop="hsicrmPaytypecode" label="支付类型编码" :width="getColWidth('hsicrmPaytypecode') || 90" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmRequireservicetypecode')" prop="hsicrmRequireservicetypecode" label="服务类型编码" :width="getColWidth('hsicrmRequireservicetypecode') || 100" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmActualservicetypecode')" prop="hsicrmActualservicetypecode" label="实际服务类型编码" :width="getColWidth('hsicrmActualservicetypecode') || 110" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmActualservicemodename')" prop="hsicrmActualservicemodename" label="实际服务模式" :width="getColWidth('hsicrmActualservicemodename') || 110" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmActualservicemodecode')" prop="hsicrmActualservicemodecode" label="实际服务模式编码" :width="getColWidth('hsicrmActualservicemodecode') || 110" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmDispatchresultsdesc')" prop="hsicrmDispatchresultsdesc" label="派工结果描述" :min-width="getColWidth('hsicrmDispatchresultsdesc') || 150" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmReturnnetid')" prop="hsicrmReturnnetid" label="退回网点ID" :width="getColWidth('hsicrmReturnnetid') || 100" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmReturnnetname')" prop="hsicrmReturnnetname" label="退回网点名称" :width="getColWidth('hsicrmReturnnetname') || 100" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmActualwarrantytypoename')" prop="hsicrmActualwarrantytypoename" label="实际保修类型" :width="getColWidth('hsicrmActualwarrantytypoename') || 100" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmTrippingtypename')" prop="hsicrmTrippingtypename" label="差旅类型" :width="getColWidth('hsicrmTrippingtypename') || 80" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmTrippingtypecode')" prop="hsicrmTrippingtypecode" label="差旅类型编码" :width="getColWidth('hsicrmTrippingtypecode') || 90" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmSecondleveltrippingtypename')" prop="hsicrmSecondleveltrippingtypename" label="二级差旅类型" :width="getColWidth('hsicrmSecondleveltrippingtypename') || 100" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmSecondleveltrippingtypecode')" prop="hsicrmSecondleveltrippingtypecode" label="二级差旅类型编码" :width="getColWidth('hsicrmSecondleveltrippingtypecode') || 110" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmUrgencydegreename')" prop="hsicrmUrgencydegreename" label="紧急程度" :width="getColWidth('hsicrmUrgencydegreename') || 80" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmImportancename')" prop="hsicrmImportancename" label="重要程度" :width="getColWidth('hsicrmImportancename') || 80" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmImportancecode')" prop="hsicrmImportancecode" label="重要程度编码" :width="getColWidth('hsicrmImportancecode') || 90" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmEvaluationresult')" prop="hsicrmEvaluationresult" label="评价结果" :width="getColWidth('hsicrmEvaluationresult') || 80" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmEvaluatechannel')" prop="hsicrmEvaluatechannel" label="评价渠道" :width="getColWidth('hsicrmEvaluatechannel') || 80" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmEvaluationcompletiontime')" prop="hsicrmEvaluationcompletiontime" label="评价完成时间" :width="getColWidth('hsicrmEvaluationcompletiontime') || 160" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmShortmessagesendedtime')" prop="hsicrmShortmessagesendedtime" label="短信发送时间" :width="getColWidth('hsicrmShortmessagesendedtime') || 160" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmServicetime')" prop="hsicrmServicetime" label="服务时间" :width="getColWidth('hsicrmServicetime') || 160" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmServiceprocess')" prop="hsicrmServiceprocess" label="服务流程" :width="getColWidth('hsicrmServiceprocess') || 100" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmDocumentarytype')" prop="hsicrmDocumentarytype" label="跟单类型" :width="getColWidth('hsicrmDocumentarytype') || 80" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmDeadlinedate')" prop="hsicrmDeadlinedate" label="截止日期" :width="getColWidth('hsicrmDeadlinedate') || 100" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmEntercallcenter')" prop="hsicrmEntercallcenter" label="进入呼叫中心" :width="getColWidth('hsicrmEntercallcenter') || 80" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmBelongtocallcenter')" prop="hsicrmBelongtocallcenter" label="所属呼叫中心" :width="getColWidth('hsicrmBelongtocallcenter') || 120" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmLinkedworkorderid')" prop="hsicrmLinkedworkorderid" label="关联工单ID" :width="getColWidth('hsicrmLinkedworkorderid') || 150" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmLastcomplainttime')" prop="hsicrmLastcomplainttime" label="最后投诉时间" :width="getColWidth('hsicrmLastcomplainttime') || 160" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmInformationsource')" prop="hsicrmInformationsource" label="信息来源" :width="getColWidth('hsicrmInformationsource') || 100" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmReflectproblemclassification')" prop="hsicrmReflectproblemclassification" label="问题分类" :width="getColWidth('hsicrmReflectproblemclassification') || 120" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmRawwatertds')" prop="hsicrmRawwatertds" label="原水TDS" :width="getColWidth('hsicrmRawwatertds') || 90" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmProductprice')" prop="hsicrmProductprice" label="产品价格" :width="getColWidth('hsicrmProductprice') || 100" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmImeicode')" prop="hsicrmImeicode" label="IMEI码" :width="getColWidth('hsicrmImeicode') || 140" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmWorkordersuitno')" prop="hsicrmWorkordersuitno" label="工单套装号" :width="getColWidth('hsicrmWorkordersuitno') || 120" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmWoWorkorderid')" prop="hsicrmWoWorkorderid" label="工单外部ID" :width="getColWidth('hsicrmWoWorkorderid') || 150" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmStoragelocation')" prop="hsicrmStoragelocation" label="存储位置" :width="getColWidth('hsicrmStoragelocation') || 100" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmBizorgcode')" prop="hsicrmBizorgcode" label="业务组织编码" :width="getColWidth('hsicrmBizorgcode') || 100" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmSalesmarketcode')" prop="hsicrmSalesmarketcode" label="销售渠道编码" :width="getColWidth('hsicrmSalesmarketcode') || 100" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmOfficialwebsiteid')" prop="hsicrmOfficialwebsiteid" label="官网ID" :width="getColWidth('hsicrmOfficialwebsiteid') || 80" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmOnestopcheck')" prop="hsicrmOnestopcheck" label="一键检测" :width="getColWidth('hsicrmOnestopcheck') || 80" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmIsbound')" prop="hsicrmIsbound" label="是否绑定" :width="getColWidth('hsicrmIsbound') || 70" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmIsprint')" prop="hsicrmIsprint" label="是否打印" :width="getColWidth('hsicrmIsprint') || 70" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmIfepass')" prop="hsicrmIfepass" label="是否放行" :width="getColWidth('hsicrmIfepass') || 70" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmMembershipcategorycode')" prop="hsicrmMembershipcategorycode" label="会员类别编码" :width="getColWidth('hsicrmMembershipcategorycode') || 110" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmDeletedby')" prop="hsicrmDeletedby" label="删除人" :width="getColWidth('hsicrmDeletedby') || 80" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmBequeathreasonupdatetime')" prop="hsicrmBequeathreasonupdatetime" label="转交原因更新时间" :width="getColWidth('hsicrmBequeathreasonupdatetime') || 160" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmAttribute2')" prop="hsicrmAttribute2" label="扩展字段2" :width="getColWidth('hsicrmAttribute2') || 80" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmAttribute4')" prop="hsicrmAttribute4" label="扩展字段4" :width="getColWidth('hsicrmAttribute4') || 80" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmAttribute5')" prop="hsicrmAttribute5" label="扩展字段5" :width="getColWidth('hsicrmAttribute5') || 80" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmAttribute6')" prop="hsicrmAttribute6" label="扩展字段6" :width="getColWidth('hsicrmAttribute6') || 80" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmAttribute7')" prop="hsicrmAttribute7" label="扩展字段7" :width="getColWidth('hsicrmAttribute7') || 80" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmAttribute9')" prop="hsicrmAttribute9" label="扩展字段9" :width="getColWidth('hsicrmAttribute9') || 80" show-overflow-tooltip />
-          <el-table-column v-if="isColVisible('hsicrmContactconsumertime')" prop="hsicrmContactconsumertime" label="联系客户时间" :width="getColWidth('hsicrmContactconsumertime') || 160" show-overflow-tooltip />
+          <!-- 动态列：v-for 可见列，Vue 只渲染当前需要显示的列 -->
+          <el-table-column
+            v-for="col in visibleColumns"
+            :key="col.prop"
+            :prop="col.prop"
+            :label="col.label"
+            :width="col.width || undefined"
+            :fixed="col.prop === 'hsicrmWorkorderid' || col.prop === 'hsicrmWorkorderstatusname' ? 'left' : undefined"
+            show-overflow-tooltip
+          />
         </el-table>
       </div>
 
@@ -340,20 +236,21 @@ import ColumnSettings from '@/views/components/ColumnSettings.vue'
 import { Setting } from '@element-plus/icons-vue'
 
 // ---------- 列定义 ----------
+// visible: true = 默认显示，false = 默认隐藏，用户可通过列设置调整
 const TABLE_COLUMNS = [
   { prop: 'hsicrmWorkorderid', label: '工单编号', visible: true, fixed: true, width: 150},
   { prop: 'hsicrmWorkorderstatusname', label: '状态', visible: true, fixed: true, width: 110},
   { prop: 'hsicrmConsumername', label: '客户姓名', visible: true, width: 100},
   { prop: 'hsicrmOtherphone', label: '电话', visible: true, width: 130},
-  { prop: 'hsicrmRealphone', label: '真实电话', visible: false, width: 120},
+  { prop: 'hsicrmRealphone', label: '真实电话', visible: true, width: 120},
   { prop: 'hsicrmConsumeraddr', label: '地址', visible: true, width: 200},
   { prop: 'hsicrmDistrictname', label: '区县', visible: false, width: 90},
   { prop: 'hsicrmTownname', label: '乡镇', visible: false, width: 90},
   { prop: 'hsicrmRegionname', label: '省份', visible: false, width: 80},
   { prop: 'hsicrmTopregionname', label: '大区', visible: false, width: 80},
   { prop: 'hsicrmRequireservicetypename', label: '服务类型', visible: true, width: 80},
-  { prop: 'hsicrmActualservicetypename', label: '实际服务类型', visible: false, width: 100},
-  { prop: 'hsicrmBrandname', label: '品牌', visible: false, width: 80},
+  { prop: 'hsicrmActualservicetypename', label: '实际服务类型', visible: true, width: 100},
+  { prop: 'hsicrmBrandname', label: '品牌', visible: true, width: 80},
   { prop: 'hsicrmProductmodel', label: '产品型号', visible: false, width: 130},
   { prop: 'hsicrmProductmodelname', label: '产品型号名', visible: false, width: 130},
   { prop: 'hsicrmSerialnumber', label: '序列号', visible: false, width: 140},
@@ -362,14 +259,14 @@ const TABLE_COLUMNS = [
   { prop: 'hsicrmServicestationname', label: '服务站', visible: false, width: 150},
   { prop: 'hsicrmServicestationcode', label: '服务站编码', visible: false, width: 120},
   { prop: 'hsicrmReceivedfee', label: '收费(元)', visible: true, width: 90},
-  { prop: 'hsicrmPaytypename', label: '支付方式', visible: false, width: 90},
+  { prop: 'hsicrmPaytypename', label: '支付方式', visible: true, width: 90},
   { prop: 'hsicrmPaystatus', label: '支付状态', visible: false, width: 80},
   { prop: 'hsicrmRegistrationtime', label: '创建时间', visible: true, width: 160},
-  { prop: 'hsicrmDispatchtime', label: '派工时间', visible: false, width: 160},
+  { prop: 'hsicrmDispatchtime', label: '派工时间', visible: true, width: 160},
   { prop: 'hsicrmServicestationcompletetime', label: '完工时间', visible: false, width: 160},
-  { prop: 'hsicrmHaiercompletetime', label: '海尔完工时间', visible: false, width: 160},
-  { prop: 'hsicrmSignintime', label: '签到时间', visible: false, width: 160},
-  { prop: 'hsicrmSourcename', label: '来源', visible: false, width: 80},
+  { prop: 'hsicrmHaiercompletetime', label: '海尔完工时间', visible: true, width: 160},
+  { prop: 'hsicrmSignintime', label: '签到时间', visible: true, width: 160},
+  { prop: 'hsicrmSourcename', label: '来源', visible: true, width: 80},
   { prop: 'hsicrmSourcecode', label: '来源编码', visible: false, width: 90},
   { prop: 'hsicrmIsfromnetwork', label: '网单', visible: false, width: 60},
   { prop: 'hsicrmDispatchmode', label: '派工方式', visible: false, width: 80},
@@ -456,14 +353,81 @@ const TABLE_COLUMNS = [
   { prop: 'hsicrmContactconsumertime', label: '联系客户时间', visible: false, width: 160},
 ]
 
-const localColumns = ref([...TABLE_COLUMNS])
-const isColVisible = (prop) => {
-  const col = localColumns.value.find(c => c.prop === prop)
-  return col ? col.visible : false
+// ---------- 列配置框架（与表格渲染完全解耦） ----------
+// colConfig: { [prop]: { visible, width, fixed, sortOrder } }
+// TABLE_COLUMNS 是静态 const，Vue 不追踪其内部变化，只有 colConfig 是响应式
+const colConfig = ref({})
+const PAGE_PATH = '/fsm/work-orders'
+
+// 可见列：computed，基于 TABLE_COLUMNS 静态定义 + colConfig 动态配置
+const visibleColumns = computed(() => {
+  const cfg = colConfig.value
+  const widthKey = `cs_width_${PAGE_PATH}`
+  const savedWidth = JSON.parse(localStorage.getItem(widthKey) || '{}')
+  return TABLE_COLUMNS
+    .map(col => {
+      const c = cfg[col.prop] || {}
+      return {
+        ...col,
+        visible: c.visible !== undefined ? c.visible : col.visible,
+        width: savedWidth[col.prop] || c.width || col.width,
+        fixed: c.fixed !== undefined ? c.fixed : col.fixed,
+        sortOrder: c.sortOrder !== undefined ? c.sortOrder : -1
+      }
+    })
+    .filter(col => col.visible)
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+})
+
+// 表格上方工具栏里 ColumnSettings 需要的完整列数据（含隐藏列）
+const mergedColumns = computed(() => {
+  const cfg = colConfig.value
+  const widthKey = `cs_width_${PAGE_PATH}`
+  const savedWidth = JSON.parse(localStorage.getItem(widthKey) || '{}')
+  return TABLE_COLUMNS.map(col => {
+    const c = cfg[col.prop] || {}
+    return {
+      ...col,
+      visible: c.visible !== undefined ? c.visible : col.visible,
+      width: savedWidth[col.prop] || c.width || col.width,
+      fixed: c.fixed !== undefined ? c.fixed : col.fixed
+    }
+  })
+})
+
+// 从服务器加载列配置
+const loadColConfig = async () => {
+  try {
+    const res = await fetch(`/api/v1/system/column-configs?pagePath=${encodeURIComponent(PAGE_PATH)}`)
+    const json = await res.json()
+    if (json.code === 0 && json.data && json.data.length > 0) {
+      const map = {}
+      json.data.forEach(s => {
+        map[s.columnKey] = {
+          visible: s.visible === 1,
+          fixed: s.fixed === 1,
+          width: s.width || undefined,
+          sortOrder: s.sortOrder || -1
+        }
+      })
+      colConfig.value = map
+    }
+  } catch (e) { /* ignore */ }
 }
-const getColWidth = (prop) => {
-  const col = localColumns.value.find(c => c.prop === prop)
-  return col?._width || col?.width || undefined
+
+// 列设置保存后：从 ColumnSettings 返回的完整列数组中提取配置，更新 colConfig
+// 宽度已由 ColumnSettings 存入 localStorage，此处只需更新 colConfig（触发 visibleColumns 重算）
+const onColumnConfigChange = (columns) => {
+  const map = {}
+  columns.forEach((col, idx) => {
+    map[col.prop] = {
+      visible: col.visible,
+      fixed: col.fixed || false,
+      width: col.width || col._width || undefined,
+      sortOrder: idx
+    }
+  })
+  colConfig.value = map
 }
 
 // ---------- 海尔状态映射 ----------
@@ -494,7 +458,7 @@ const formatCompleteTime = (val) => {
 // ---------- 表格数据 ----------
 const loading = ref(false)
 const tableData = ref([])
-const pagination = reactive({ page: 1, pageSize: 50, total: 0 })
+const pagination = reactive({ page: 1, pageSize: 20, total: 0 })
 
 const searchForm = reactive({
   woNo: '',
@@ -589,6 +553,7 @@ const decryptPhone = async (row) => {
 
 // ---------- 初始化 ----------
 onMounted(() => {
+  loadColConfig()  // 加载用户列配置（不阻塞表格渲染）
   fetchData()
 })
 </script>
@@ -613,7 +578,8 @@ onMounted(() => {
   gap: 8px;
   align-items: center;
 }
-.seq-col-header {
+.seq-col-header,
+.table-header-bar {
   display: flex;
   align-items: center;
   gap: 6px;

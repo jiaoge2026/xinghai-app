@@ -106,14 +106,15 @@ const fetchTasks = async () => {
       headers: { 'Authorization': 'Bearer ' + token }
     })
     if (res.ok) {
-      tasks.value = await res.json()
+      const json = await res.json()
+      tasks.value = json.data || []
     }
   } catch (e) { console.error(e) }
 }
 
 const download = (row) => {
   const token = localStorage.getItem('token')
-  window.open(`${API_BASE}/v1/system/export-tasks/${row.id}/download`, '_blank')
+  window.open(`${API_BASE}/v1/system/export-tasks/${row.id}/download?token=${encodeURIComponent(token)}`, '_blank')
 }
 
 const remove = async (row) => {

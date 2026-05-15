@@ -116,6 +116,7 @@
 import { ref, watch, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Rank, View, Hide, Setting } from '@element-plus/icons-vue'
+import { saveColumnConfigs } from '@/utils/useColumnConfig'
 
 const props = defineProps({
   // 列定义 [{prop, label, visible, fixed, width}]
@@ -161,16 +162,25 @@ const loadFromServer = async () => {
       const saved = json.data
       const map = {}
       saved.forEach(s => { map[s.columnKey] = s })
+      // 从 localStorage 取宽度（后端不存宽度）
+      const widthMap = {}
+      const savedWidth = localStorage.getItem(key)
+      if (savedWidth) {
+        try {
+          const arr = JSON.parse(savedWidth)
+          arr.forEach(a => { widthMap[a.prop] = a._width })
+        } catch (e) { /* ignore */ }
+      }
       localColumns.value = props.columns.map(c => ({
         ...c,
-        _width: (map[c.prop] && map[c.prop].width != null) ? map[c.prop].width : c.width || undefined,
+        _width: widthMap[c.prop] || c.width || undefined,
         visible: map[c.prop] ? map[c.prop].visible === 1 : c.visible !== false,
         fixed: c.fixed || (map[c.prop] ? map[c.prop].fixed === 1 : false)
       }))
       return
     }
   } catch (e) { /* ignore */ }
-  // 回退到 props 或 localStorage
+  // 回退到 localStorage
   const saved = localStorage.getItem(key)
   if (saved) {
     try {
@@ -180,8 +190,8 @@ const loadFromServer = async () => {
         arr.forEach(a => { map[a.prop] = a })
         localColumns.value = props.columns.map(c => ({
           ...c,
-          _width: map[c.prop] && map[c.prop].width ? map[c.prop].width : c.width || undefined,
-          visible: map[c.prop] ? map[c.prop].visible : true
+          _width: map[c.prop] && map[c.prop]._width != null ? map[c.prop]._width : c.width || undefined,
+          visible: map[c.prop] ? map[c.prop].visible !== false : c.visible !== false
         }))
         return
       }
@@ -347,29 +357,19 @@ const importConfig = () => {
 
 // --- 应用并关闭 ---
 const applyAndClose = async () => {
-  // 收集当前列状态（含宽度）
-  const colData = localColumns.value.map((c, i) => ({
-    prop: c.prop,
-    visible: c.visible,
-    width: c._width || null
-  }))
-  // 保存到服务器（不含宽度，暂用 localStorage 存宽度）
-  const data = localColumns.value.map((c, i) => ({
-    columnKey: c.prop,
-    visible: c.visible ? 1 : 0,
-    sortOrder: i,
-    fixed: c.fixed ? 1 : 0
-  }))
-  try {
-    await fetch(props.saveUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pagePath: props.pagePath, configs: data }),
-    })
-  } catch (e) { /* 忽略 */ }
-  // 同时存 localStorage（含宽度）
+  // 宽度存 localStorage（后端不支持宽度）
   const key = `cs_cols_${props.pagePath}`
-  localStorage.setItem(key, JSON.stringify(colData))
+  localStorage.setItem(key, JSON.stringify(localColumns.value.map(c => ({
+    prop: c.prop,
+    _width: c._width || null
+  }))))
+  // 可见性/排序/固定用 saveColumnConfigs 存后端
+  try {
+    await saveColumnConfigs(props.pagePath, localColumns.value)
+    ElMessage.success('列设置已保存')
+  } catch (e) {
+    ElMessage.error('保存失败')
+  }
   emit('update:columns', localColumns.value)
   emit('change', localColumns.value)
   visible.value = false
