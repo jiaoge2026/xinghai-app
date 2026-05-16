@@ -334,7 +334,7 @@ const fetchData = async () => {
   loading.value = true
   try {
     const params = {
-      pageNum: pagination.page,
+      page: pagination.page,
       pageSize: pagination.pageSize,
       paymentNo: queryParams.paymentNo || undefined,
       supplierName: queryParams.supplierName || undefined,
@@ -363,7 +363,7 @@ const fetchData = async () => {
 // 加载供应商列表
 async function loadSuppliers() {
   try {
-    const res = await request.get('/finance/suppliers', { params: { pageNum: 1, pageSize: 1000 } })
+    const res = await request.get('/finance/suppliers', { params: { page: 1, pageSize: 1000 } })
     supplierOptions.value = (res.data?.list || []).map((s) => ({
       value: s.id,
       label: s.supplierName || s.name,
@@ -376,7 +376,7 @@ async function loadSuppliers() {
 // 加载银行账户列表
 async function loadBankAccounts() {
   try {
-    const res = await request.get('/finance/bank-accounts', { params: { pageNum: 1, pageSize: 1000 } })
+    const res = await request.get('/finance/bank-accounts', { params: { page: 1, pageSize: 1000 } })
     bankAccountOptions.value = (res.data?.list || []).map((a) => ({
       value: a.id,
       label: a.accountName || a.bankAccountName,

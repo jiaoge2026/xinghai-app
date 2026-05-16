@@ -168,7 +168,7 @@ async function loadData() {
       endDate: searchForm.dateRange?.[1] || undefined,
     }
 
-    const res = await request.get('/v1/print/history', { params })
+    const res = await request.get('/print/history', { params })
     const page = res.data
 
     tableData.value = page.records || []
@@ -217,7 +217,7 @@ async function deleteRow(row) {
       type: 'warning',
     })
 
-    await request.delete(`/v1/print/history/${row.id}`)
+    await request.delete(`/print/history/${row.id}`)
     ElMessage.success('删除成功')
     loadData()
   } catch (e) {

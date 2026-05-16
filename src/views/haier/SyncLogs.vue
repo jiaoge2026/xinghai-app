@@ -155,7 +155,7 @@ const loadAccounts = async () => {
 const loadData = async () => {
   loading.value = true
   try {
-    const params = { pageNum: pagination.page, pageSize: pagination.pageSize }
+    const params = { page: pagination.page, pageSize: pagination.pageSize }
     if (queryParams.accountId) params.accountId = queryParams.accountId
     if (queryParams.status) params.status = queryParams.status
     if (queryParams.dateRange && queryParams.dateRange[0]) params.startDate = queryParams.dateRange[0]

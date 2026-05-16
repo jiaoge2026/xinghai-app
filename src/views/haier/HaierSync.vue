@@ -79,7 +79,7 @@ let stats = reactive({ totalAccounts: 0, todaySync: 0, todayNew: 0, lastSyncTime
 const loadData = async () => {
   loading.value = true
   try {
-    const res = await request.get('/haier-sync/accounts', { pageNum: pageNum.value, pageSize: 20 })
+    const res = await request.get('/haier-sync/accounts', { page: pageNum.value, pageSize: 20 })
     tableData.value = res.data?.list || res.data || []
     total.value = res.data?.total || 0
   } catch (e) {

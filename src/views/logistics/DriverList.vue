@@ -230,7 +230,7 @@ async function handleSave(data) {
 async function loadData() {
   loading.value = true
   try {
-    const params = { pageNum: pagination.page, pageSize: pagination.pageSize, ...queryParams }
+    const params = { page: pagination.page, pageSize: pagination.pageSize, ...queryParams }
     Object.keys(params).forEach(k => { if (params[k] === null || params[k] === '') delete params[k] })
     const res = await request.get('/logistics/drivers', { params })
     tableData.value = res.data?.list || []

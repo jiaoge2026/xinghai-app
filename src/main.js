@@ -8,6 +8,8 @@ import router from './router'
 import App from './App.vue'
 import { authDirective } from '@/composables/usePermission'
 
+// ── 全局错误处理器：所有未捕获 JS 错误同时打印到控制台（调试用）────
+
 const app = createApp(App)
 
 // Register all Element Plus icons
@@ -48,6 +50,8 @@ window.addEventListener('error', (event) => {
       userId: localStorage.getItem('userId') || null
     })
   }).catch(() => {})
+  // 调试：同时打印到控制台，暴露被吞掉的错误
+  console.error(`[GlobalError] ${msg}`, stack)
 }, false)
 
 app.mount('#app')

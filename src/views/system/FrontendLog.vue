@@ -134,7 +134,7 @@ let pagination = reactive({
 
 const loadStats = async () => {
   try {
-    const res = await request.get('/v1/frontend-logs/stats')
+    const res = await request.get('/frontend-logs/stats')
     if (res.data) stats.value = res.data
   } catch (e) {
     console.error('loadStats error:', e)
@@ -152,7 +152,7 @@ const loadData = async () => {
       startDate: searchForm.dateRange?.[0] || undefined,
       endDate: searchForm.dateRange?.[1] || undefined
     }
-    const res = await request.get('/v1/frontend-logs/page', { params })
+    const res = await request.get('/frontend-logs/page', { params })
     tableData.value = res.data || []
     pagination.total = res.total || 0
   } catch (e) {
@@ -178,7 +178,7 @@ const showDetail = (row) => {
 const clearLogs = async () => {
   try {
     await ElMessageBox.confirm('确定清空全部前端日志？此操作不可恢复。', '清空确认', { type: 'warning' })
-    await request.delete('/v1/frontend-logs')
+    await request.delete('/frontend-logs')
     ElMessage.success('已清空')
     loadStats()
     loadData()

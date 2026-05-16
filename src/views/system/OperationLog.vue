@@ -115,7 +115,7 @@ const currentLog = ref(null)
 async function loadData() {
   loading.value = true
   try {
-    const params = { pageNum: pagination.page, pageSize: pagination.pageSize, ...queryParams }
+    const params = { page: pagination.page, pageSize: pagination.pageSize, ...queryParams }
     Object.keys(params).forEach(k => { if (params[k] === null || params[k] === '') delete params[k] })
     const res = await request.get('/system/operation-logs/page', { params })
     tableData.value = res.data?.records || []

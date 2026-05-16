@@ -276,7 +276,7 @@ async function loadData() {
   try {
     const res = await request.get('/finance/receipts', {
       params: {
-        pageNum: pagination.page,
+        page: pagination.page,
         pageSize: pagination.pageSize,
         receiptNo: queryParams.receiptNo || undefined,
         customerId: queryParams.customerId || undefined,

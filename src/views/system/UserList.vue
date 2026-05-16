@@ -296,9 +296,9 @@ async function handleRoleSubmit() {
 async function loadData() {
   loading.value = true
   try {
-    const params = { pageNum: pagination.page, pageSize: pagination.pageSize, ...queryParams }
+    const params = { page: pagination.page, pageSize: pagination.pageSize, ...queryParams }
     Object.keys(params).forEach(k => { if (params[k] === null || params[k] === '') delete params[k] })
-    const res = await request.get('/system/users', { params })
+    const res = await request.get('/system/users/page', { params })
     tableData.value = res.data?.list || []
     pagination.total = res.data?.total || 0
   } catch {

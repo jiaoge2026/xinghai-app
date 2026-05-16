@@ -134,7 +134,7 @@ let searchForm = reactive({
 
 // 分页
 let pagination = reactive({
-  pageNum: 1,
+  page: 1,
   pageSize: 10,
   total: 0
 })
@@ -186,7 +186,7 @@ const fetchData = async () => {
   loading.value = true
   try {
     const params = {
-      pageNum: pagination.pageNum,
+      page: pagination.pageNum,
       pageSize: pagination.pageSize,
       ...searchForm
     }

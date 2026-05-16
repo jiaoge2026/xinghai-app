@@ -219,7 +219,7 @@ async function handleSave(data) {
 async function loadData() {
   loading.value = true
   try {
-    const params = { pageNum: pagination.page, pageSize: pagination.pageSize, ...queryParams }
+    const params = { page: pagination.page, pageSize: pagination.pageSize, ...queryParams }
     // 去掉null值
     Object.keys(params).forEach(k => { if (params[k] === null || params[k] === '') delete params[k] })
     const res = await request.get('/hr/departments', { params })
@@ -247,7 +247,7 @@ async function loadDeptOptions() {
 
 async function loadManagerOptions() {
   try {
-    const res = await request.get('/hr/employees', { params: { pageNum: 1, pageSize: 1000 } })
+    const res = await request.get('/hr/employees', { params: { page: 1, pageSize: 1000 } })
     const list = res.data?.list || []
     const empMap = list.map(e => ({ label: e.name, value: e.id }))
     const managerField = dialogFields.find(f => f.key === 'managerId')

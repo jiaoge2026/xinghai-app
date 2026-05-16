@@ -97,7 +97,7 @@ const dateRange = ref([])
 let stats = reactive({ total: 0, completed: 0, inProgress: 0, totalRevenue: 0 })
 
 let query = reactive({
-  pageNum: 1,
+  page: 1,
   pageSize: 20,
   status: '',
   workType: '',
@@ -151,7 +151,7 @@ const handleDateChange = () => {
 
 // 构建POST请求体
 const buildBody = () => ({
-  pageNum: query.pageNum,
+  page: query.pageNum,
   pageSize: query.pageSize,
   status: query.status || undefined,
   workType: query.workType || undefined,

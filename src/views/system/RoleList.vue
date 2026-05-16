@@ -80,32 +80,33 @@
           </div>
 
           <div class="menu-tree-wrap" v-loading="permLoading">
-          <el-tree
-            ref="treeRef"
-            :data="menuTree"
-            node-key="id"
-            show-checkbox
-            check-strictly
-            :expand-on-click-node="false"
-            default-expand-all
-            class="perm-tree"
-            :props="{ label: 'name' }"
-            @node-click="handleMenuClick"
-            @check="handleCheckChange"
-          >
-            <template #default="{ data }">
-              <span class="tree-node-row">
-                <span class="node-icon-wrap">
-                  <el-icon><Menu /></el-icon>
+            <!-- 简单扁平渲染：flat list + 缩进 -->
+            <div class="custom-menu-tree">
+              <div
+                v-for="item in flattenedMenu"
+                :key="item.id"
+                class="menu-item"
+                :class="{ 'is-disabled': !item.visible }"
+                :style="{ paddingLeft: (item.depth * 16 + 8) + 'px' }"
+              >
+                <span class="tree-toggle" @click="toggleExpand(item)">
+                  <el-icon v-if="item.hasChildren" size="12" class="arrow-icon">
+                    <svg viewBox="0 0 1024 1024" width="12" height="12">
+                      <path d="M381.2 243.8l286.6 286.7-286.6 286.6 42.5 42.5 329.1-329.1-329.1-329z" transform="rotate(90 512 512)"/>
+                    </svg>
+                  </el-icon>
                 </span>
-                <span class="node-name">{{ data.name }}</span>
-              </span>
-            </template>
-          </el-tree>
-
-            <div v-if="filteredGroupedTree.length === 0 && menuSearch" class="search-empty">
-              <el-icon size="32" color="#c0c4cc"><Search /></el-icon>
-              <p>未找到「{{ menuSearch }}」相关模块</p>
+                <el-checkbox
+                  :model-value="isMenuChecked(item.id)"
+                  :disabled="!item.visible"
+                  @change="() => handleTreeCheck(item.id, !isMenuChecked(item.id))"
+                />
+                <el-icon class="node-icon" size="14"><Menu /></el-icon>
+                <span class="node-name" @click="selectMenu(item)">{{ item.name }}</span>
+              </div>
+              <div v-if="flattenedMenu.length === 0 && !permLoading" class="tree-empty">
+                暂无菜单数据
+              </div>
             </div>
           </div>
         </div>
@@ -268,7 +269,7 @@
 import { SearchForm, DataTable} from '@/components/page-components'
 import ColumnSettings from '@/views/components/ColumnSettings.vue'
 // 用 shallowRef 避免深层响应式开销 + watch 强制触发 el-tree 更新
-import { ref, reactive, watch, onMounted, computed, nextTick, triggerRef } from 'vue'
+import { ref, reactive, watch, onMounted, computed, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Setting, UserFilled, Key, Operation, CircleCheck, InfoFilled, Search, Menu, Select, Close } from '@element-plus/icons-vue'
 
@@ -421,7 +422,7 @@ const permVisible = ref(false)
 const permLoading = ref(false)
 const permData = ref({})
 const menuTree = ref([])
-const treeRef = ref(null)
+// const treeRef = ref(null)
 const menuSearch = ref('')
 const selectedMenuNode = ref(null)
 
@@ -478,15 +479,7 @@ function colorizeTree(nodes, colorFn) {
   })
 }
 
-// 监听搜索
-watch(menuTree, async (val) => {
-  triggerRef(menuTree)
-  await nextTick()
-}, { deep: true })
-
-watch(menuSearch, val => {
-  treeRef.value?.filter(val)
-})
+// menuTree 已是 deep reactive，computed 自动追踪，无需 deep watcher
 
 function filterMenu(value, data) {
   if (!menuSearch.value) return true
@@ -494,72 +487,99 @@ function filterMenu(value, data) {
 }
 
 // 后端返回数据已带 children，直接使用；只需补充缺失字段
-const groupedMenuTree = computed(() => {
-  return menuTree.value
-})
+// 扁平菜单渲染：用 computed 生成 flat list（避免递归组件兼容性）
+const expandedIds = computed(() => permData.value.expandedIds || [])
 
-const filteredGroupedTree = computed(() => {
-  if (!menuSearch.value) return groupedMenuTree.value
+function getVisible(nodeIds, nodes, result = new Set()) {
+  nodeIds.forEach(id => {
+    const n = nodes.find(x => x.id === id)
+    if (n) { result.add(id); if (n.children?.length) getVisible(n.children.map(c => c.id), nodes, result) }
+  })
+  return result
+}
+
+const flattenedMenu = computed(() => {
   const result = []
+  const expanded = new Set(expandedIds.value)
   const search = menuSearch.value.toLowerCase()
-  function searchIn(nodes) {
-    nodes.forEach(node => {
-      const nameMatch = (node.name || '').toLowerCase().includes(search)
-      const pathMatch = (node.path || '').toLowerCase().includes(search)
-      if (nameMatch || pathMatch) {
-        result.push(node)
-        // 匹配时继续搜子节点（但不重复加入父节点）
-        if (node.children?.length) searchIn(node.children)
-      } else if (node.children?.length) {
-        // 父不匹配但有子可能匹配，递归搜
-        searchIn(node.children)
+  const checkedSet = new Set(permData.value.checkedKeys || [])
+
+  function walk(nodes, depth) {
+    for (const node of nodes) {
+      const visible = !search || (node.name || '').toLowerCase().includes(search) || (node.path || '').toLowerCase().includes(search)
+      const hasChildren = node.children?.length > 0
+      const isExpanded = expanded.has(node.id) || (depth === 0 && !expanded.size)
+      // 如果父节点不可见但搜索时不隐藏子节点（简化：只过滤当前节点）
+      result.push({ ...node, depth, hasChildren, visible: visible || hasChildren })
+      if (hasChildren && (isExpanded || !search)) {
+        walk(node.children, depth + 1)
       }
-    })
+    }
   }
-  searchIn(groupedMenuTree.value)
+  walk(menuTree.value, 0)
   return result
 })
 
+function isMenuChecked(id) {
+  return (permData.value.checkedKeys || []).includes(id)
+}
+
+function selectMenu(item) {
+  selectedMenuNode.value = item
+}
+
+function toggleExpand(item) {
+  if (!item.hasChildren) return
+  const ids = [...permData.value.expandedIds]
+  const idx = ids.indexOf(item.id)
+  if (idx > -1) ids.splice(idx, 1)
+  else ids.push(item.id)
+  permData.value.expandedIds = ids
+}
+
 const permSummary = computed(() => {
-  if (!treeRef.value) return { checked: 0, total: menuTree.value.length }
-  const checked = (treeRef.value.getCheckedKeys() || [])
-  return { checked: checked.length, total: menuTree.value.length }
+  const checked = permData.value.checkedKeys || []
+  return { checked: checked.length, total: countAllNodes(menuTree.value) }
 })
 
-function isMenuChecked(menuId) {
-  if (!treeRef.value) return false
-  return (treeRef.value.getCheckedKeys() || []).includes(menuId)
+function countAllNodes(nodes) {
+  let count = 0
+  for (const n of nodes) {
+    count++
+    if (n.children?.length) count += countAllNodes(n.children)
+  }
+  return count
 }
 
-function checkMenu(menuId) {
-  treeRef.value?.setChecked(menuId, true, false)
-}
+// function isMenuChecked(menuId) {
+//   if (!treeRef.value) return false
+//   return (treeRef.value.getCheckedKeys() || []).includes(menuId)
+// }
 
-function uncheckMenu(menuId) {
-  treeRef.value?.setChecked(menuId, false, false)
-}
+// function checkMenu(menuId) {
+//   treeRef.value?.setChecked(menuId, true, false)
+// }
 
-function checkMenuWithChildren(node) {
-  treeRef.value?.setChecked(node.id, true, false)
-  node.children?.forEach(child => {
-    treeRef.value?.setChecked(child.id, true, false)
-  })
-}
+// function uncheckMenu(menuId) {
+//   treeRef.value?.setChecked(menuId, false, false)
+// }
+
+// function checkMenuWithChildren(node) {
+//   treeRef.value?.setChecked(node.id, true, false)
+//   node.children?.forEach(child => {
+//     treeRef.value?.setChecked(child.id, true, false)
+//   })
+// }
 
 // 节点点击选中并显示详情
 function onTreeNodeClick(data) {
   selectedMenuNode.value = data
 }
 
-// el-tree check 事件：选中变化时也更新选中节点
-function onTreeCheck(data, { checkedKeys }) {
-  if (checkedKeys.includes(data.id)) {
-    selectedMenuNode.value = data
-  }
-}
+// el-tree check 事件已废弃（使用自定义树）
 
 async function openPerm(row) {
-  permData.value = { id: row.id, roleName: row.roleName, roleCode: row.roleCode, checkedKeys: [] }
+  permData.value = { id: row.id, roleName: row.roleName, roleCode: row.roleCode, checkedKeys: [], expandedIds: [] }
   menuTree.value = []
   selectedMenuNode.value = null
   menuSearch.value = ''
@@ -570,20 +590,12 @@ async function openPerm(row) {
       request.get('/system/menus'),
       request.get('/system/roles/' + row.id + '/menus'),
     ])
-  const rawMenu = menuRes.data || []
-  window.__menuData = rawMenu
-  // 去掉嵌套children，只保留根节点，测试el-tree是否能显示简单数组
-  const flatData = rawMenu.map(item => ({ id: item.id, name: item.name }))
-  menuTree.value = flatData
-  console.log('[DEBUG] menuTree.value.length=', menuTree.value.length, JSON.stringify(menuTree.value[0]))
+    // 直接使用原始嵌套结构，不再拍平
+    const rawMenu = menuRes.data || []
+    menuTree.value = rawMenu
+    // 初始化时展开所有节点（depth=0 时 TreeNode 自动展开）
+    permData.value.expandedIds = []
     permData.value.checkedKeys = (permRes.data || []).map(m => m.menuId || m.id)
-    await nextTick()
-    // 等待 el-tree 渲染完成后再设置选中状态
-    setTimeout(() => {
-      if (permData.value.checkedKeys.length > 0) {
-        permData.value.checkedKeys.forEach(id => treeRef.value?.setChecked(id, true, false))
-      }
-    }, 150)
   } catch {
     menuTree.value = []
     permData.value.checkedKeys = []
@@ -592,10 +604,46 @@ async function openPerm(row) {
   }
 }
 
+// 自定义树：处理勾选
+function handleTreeCheck(menuId, checked) {
+  const keys = [...permData.value.checkedKeys]
+  if (checked) {
+    if (!keys.includes(menuId)) keys.push(menuId)
+  } else {
+    const idx = keys.indexOf(menuId)
+    if (idx > -1) keys.splice(idx, 1)
+  }
+  permData.value.checkedKeys = keys
+}
+
+function checkMenu(menuId) {
+  const keys = new Set(permData.value.checkedKeys || [])
+  keys.add(menuId)
+  permData.value.checkedKeys = [...keys]
+}
+
+function uncheckMenu(menuId) {
+  const keys = [...(permData.value.checkedKeys || [])]
+  const idx = keys.indexOf(menuId)
+  if (idx > -1) keys.splice(idx, 1)
+  permData.value.checkedKeys = keys
+}
+
+function checkMenuWithChildren(node) {
+  const keys = new Set(permData.value.checkedKeys || [])
+  function addNode(n) {
+    keys.add(n.id)
+    n.children?.forEach(c => addNode(c))
+  }
+  addNode(node)
+  permData.value.checkedKeys = [...keys]
+}
+
 async function handleSavePerm() {
   permLoading.value = true
   try {
-    const checked = treeRef.value?.getCheckedKeys() || []
+    // 使用自定义树维护的 checkedKeys
+    const checked = permData.value.checkedKeys || []
     await request.post('/system/roles/' + permData.value.id + '/menus', { menuIds: checked })
     ElMessage.success('权限配置已保存')
     permVisible.value = false
@@ -606,9 +654,9 @@ async function handleSavePerm() {
 async function loadData() {
   loading.value = true
   try {
-    const res = await request.get('/system/roles', {
+    const res = await request.get('/system/roles/page', {
       params: {
-        pageNum: pagination.page,
+        page: pagination.page,
         pageSize: pagination.pageSize,
         roleName: queryParams.roleName || undefined,
         roleCode: queryParams.roleCode || undefined,
@@ -899,4 +947,35 @@ onMounted(loadData)
 :deep(.el-dialog__header) { padding: 14px 20px 0; border-bottom: none; }
 :deep(.el-dialog__footer) { padding: 10px 20px 14px; border-top: 1px solid #f0f0f0; }
 
+/* 自定义菜单树样式 */
+.custom-menu-tree { padding: 4px 0; max-height: 420px; overflow-y: auto; }
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 8px;
+  cursor: pointer;
+  border-radius: 4px;
+  min-height: 32px;
+}
+.menu-item:hover { background: #f5f7fa; }
+.menu-item.is-disabled { opacity: 0.5; cursor: not-allowed; }
+.tree-root-node { }
+.tree-node-wrap { }
+.tree-children { }
+.tree-toggle {
+  width: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.tree-toggle .arrow-icon { transition: transform 0.2s; display: inline-block; }
+.tree-toggle .arrow-icon.expanded { transform: rotate(90deg); }
+.tree-toggle-placeholder { width: 16px; flex-shrink: 0; }
+.node-icon { color: #409eff; flex-shrink: 0; }
+.node-name { font-size: 13px; color: #303133; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
+.node-name:hover { color: #409eff; }
+.tree-empty { text-align: center; padding: 40px 0; color: #909399; font-size: 14px; }
 </style>

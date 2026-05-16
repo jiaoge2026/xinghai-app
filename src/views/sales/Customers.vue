@@ -249,7 +249,7 @@ async function loadData() {
   loading.value = true
   try {
     const params = {
-      pageNum: pagination.page,
+      page: pagination.page,
       pageSize: pagination.pageSize,
       ...queryParams,
     }

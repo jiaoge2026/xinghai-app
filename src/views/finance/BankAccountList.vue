@@ -235,7 +235,7 @@ async function loadData() {
   try {
     const res = await request.get('/finance/accounts', {
       params: {
-        pageNum: pagination.page,
+        page: pagination.page,
         pageSize: pagination.pageSize,
         accountName: queryParams.accountName || undefined,
         bankName: queryParams.bankName || undefined,

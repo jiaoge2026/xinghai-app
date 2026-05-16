@@ -280,7 +280,7 @@ async function loadData() {
   try {
     const res = await request.get('/sales/project-order/page', {
       params: {
-        pageNum: pagination.page,
+        page: pagination.page,
         pageSize: pagination.pageSize,
         keyword: queryParams.keyword || undefined,
         startDate: queryParams.startDate || undefined,

@@ -13,7 +13,7 @@
     "axios": "^1.6.7",
     "dayjs": "^1.11.10",
     "echarts": "^5.5.0",
-    "element-plus": "^2.14.0",
+    "element-plus": "^2.7.2",
     "html2canvas": "^1.4.1",
     "jsbarcode": "^3.12.3",
     "jspdf": "^4.2.1",

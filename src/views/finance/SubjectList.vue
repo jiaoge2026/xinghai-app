@@ -215,7 +215,7 @@ const fetchData = async () => {
   try {
     const params = {
       ...queryParams,
-      pageNum: pagination.page,
+      page: pagination.page,
       pageSize: pagination.pageSize,
     }
     // 删除空值
