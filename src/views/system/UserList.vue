@@ -64,6 +64,21 @@
         <el-button type="primary" :loading="submitting" @click="handleRoleSubmit">确定分配</el-button>
       </template>
     </el-dialog>
+    <!-- 重置密码弹窗 -->
+    <el-dialog v-model="resetPwdVisible" title="重置密码" width="400px" destroy-on-close>
+      <el-form :model="resetPwdForm" label-width="80px">
+        <el-form-item label="用户">
+          <el-input :model-value="resetPwdTarget ? resetPwdTarget.username : ''" disabled />
+        </el-form-item>
+        <el-form-item label="新密码" required>
+          <el-input v-model="resetPwdForm.newPassword" type="password" show-password placeholder="请输入新密码" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="resetPwdVisible=false">取消</el-button>
+        <el-button type="primary" :loading="submitting" @click="handleResetPwd">确认重置</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -132,13 +147,23 @@ const tableColumns = [
     statusMap: { 1: { label: '启用', type: 'success' }, 0: { label: '禁用', type: 'info' } },
   },
   {
+    key: 'isLocked',
+    label: '锁定',
+    width: 80,
+    align: 'center',
+    columnType: 'status',
+    statusMap: { true: { label: '锁定', type: 'danger' }, false: { label: '正常', type: 'success' } },
+  },
+  {
     key: 'actions',
     label: '操作',
-    width: 200,
+    width: 280,
     fixed: 'right',
     columnType: 'actions',
     actions: [
       { key: 'assignRole', label: '分配角色', type: 'primary', size: 'small', link: true },
+      { key: 'resetPwd', label: '重置密码', type: 'warning', size: 'small', link: true },
+      { key: 'toggleLock', label: '锁定/解锁', type: 'danger', size: 'small', link: true },
       { key: 'edit', label: '编辑', type: 'primary', size: 'small', link: true },
       { key: 'delete', label: '删除', type: 'danger', size: 'small', link: true, danger: true },
     ],
@@ -149,6 +174,8 @@ function handleTableAction(action, row) {
   if (action === 'edit') openEdit(row)
   else if (action === 'delete') openDelete(row)
   else if (action === 'assignRole') openAssignRole(row)
+  else if (action === 'resetPwd') openResetPwd(row)
+  else if (action === 'toggleLock') toggleLock(row)
 }
 
 function handlePageChange(page) { pagination.page = page; loadData() }
@@ -164,8 +191,11 @@ const defaultForm = () => ({
   id: null,
   username: '',
   name: '',
+  employeeNo: '',
   phone: '',
   email: '',
+  avatar: '',
+  thirdId: '',
   password: '',
   status: 1,
 })
@@ -175,8 +205,11 @@ const formData = reactive(defaultForm())
 const dialogFields = computed(() => [
   { key: 'username', label: '用户名', type: 'input', required: true, placeholder: '登录用户名', disabled: dialogMode.value === 'edit' },
   { key: 'name', label: '姓名', type: 'input', required: true, placeholder: '真实姓名' },
+  { key: 'employeeNo', label: '工号', type: 'input', placeholder: '员工工号' },
   { key: 'phone', label: '手机号', type: 'input', placeholder: '11位手机号' },
   { key: 'email', label: '邮箱', type: 'input', placeholder: '邮箱地址' },
+  { key: 'avatar', label: '头像URL', type: 'input', placeholder: '头像图片URL地址' },
+  { key: 'thirdId', label: '第三方ID', type: 'input', placeholder: '企微/飞书用户ID' },
   { key: 'password', label: '初始密码', type: 'input', required: dialogMode.value === 'create', placeholder: '设置初始密码', if: dialogMode.value === 'create' },
   {
     key: 'status',
@@ -199,9 +232,12 @@ function openEdit(row) {
   Object.assign(formData, {
     id: row.id,
     username: row.username,
-    name: row.name,
+    name: row.name || '',
+    employeeNo: row.employeeNo || '',
     phone: row.phone || '',
     email: row.email || '',
+    avatar: row.avatar || '',
+    thirdId: row.thirdId || '',
     password: '',
     status: row.status ?? 1,
   })
@@ -281,6 +317,52 @@ async function loadRoles() {
     if (roleField) roleField.options = roleMap
   } catch {
     roleOptions.value = []
+  }
+}
+
+// ============ 重置密码 ============
+const resetPwdVisible = ref(false)
+const resetPwdTarget = ref(null)
+const resetPwdForm = reactive({ newPassword: '' })
+
+function openResetPwd(row) {
+  resetPwdTarget.value = row
+  resetPwdForm.newPassword = ''
+  resetPwdVisible.value = true
+}
+
+async function handleResetPwd() {
+  if (!resetPwdForm.newPassword || resetPwdForm.newPassword.length < 6) {
+    ElMessage.warning('密码长度不能少于6位')
+    return
+  }
+  submitting.value = true
+  try {
+    await request.post(`/system/users/${resetPwdTarget.value.id}/reset-password`, { newPassword: resetPwdForm.newPassword })
+    ElMessage.success('密码重置成功')
+    resetPwdVisible.value = false
+  } catch {
+    ElMessage.error('密码重置失败')
+  } finally {
+    submitting.value = false
+  }
+}
+
+// ============ 锁定/解锁 ============
+async function toggleLock(row) {
+  const action = row.isLocked ? '解锁' : '锁定'
+  try {
+    await ElMessageBox.confirm(`确定${action}用户「${row.username}」？`, `确认${action}`, { type: 'warning' })
+    if (row.isLocked) {
+      await request.post(`/system/users/${row.id}/unlock`)
+      ElMessage.success('解锁成功')
+    } else {
+      await request.post(`/system/users/${row.id}/lock`)
+      ElMessage.success('锁定成功')
+    }
+    loadData()
+  } catch (e) {
+    if (e !== 'cancel') ElMessage.error(`${action}失败`)
   }
 }
 
