@@ -110,7 +110,7 @@ const routes = [
       { path: 'report/fsm', name: 'ReportFSM', component: () => import('@/views/report/ReportWorkOrder.vue'), meta: { title: 'FSM报表' } },
       { path: 'report/finance', name: 'ReportFinance', component: () => import('@/views/finance/FinanceReport.vue'), meta: { title: '财务报表' } },
       // System
-      { path: 'system/organization', name: 'Organization', component: () => import('@/views/system/RoleList.vue'), meta: { title: '组织架构' } },
+      { path: 'system/organization', name: 'Organization', component: () => import('@/views/system/RoleConfig.vue'), meta: { title: '组织架构' } },
       { path: 'system/dicts', name: 'Dicts', component: () => import('@/views/system/Dictionary.vue'), meta: { title: '数据字典' } },
       { path: 'system/operation-logs', name: 'OperationLogs', component: () => import('@/views/system/OperationLog.vue'), meta: { title: '操作日志' } },
       { path: 'system/frontend-logs', name: 'FrontendLogs', component: () => import('@/views/system/FrontendLog.vue'), meta: { title: '前端日志' } },

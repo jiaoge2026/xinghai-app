@@ -116,7 +116,7 @@ onMounted(async () => {
 })
 
 async function loadRoles() {
-  const res = await request.get('/system/roles?page=1&pageSize=100')
+  const res = await request.get('/system/roles/page?page=1&pageSize=100')
   if (res.code === 0) roleList.value = res.data.list
 }
 
