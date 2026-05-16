@@ -595,7 +595,7 @@ async function openPerm(row) {
     menuTree.value = rawMenu
     // 初始化时展开所有节点（depth=0 时 TreeNode 自动展开）
     permData.value.expandedIds = []
-    permData.value.checkedKeys = (permRes.data || []).map(m => m.menuId || m.id)
+    permData.value.checkedKeys = (permRes.data || []).filter(m => m != null).map(m => m.menuId || m.id || m)
   } catch {
     menuTree.value = []
     permData.value.checkedKeys = []
