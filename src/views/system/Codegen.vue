@@ -158,7 +158,7 @@ import { ElMessage } from 'element-plus'
 import { Search, Refresh, Upload, Download, Document } from '@element-plus/icons-vue'
 import request from '@/utils/request'
 
-const API_BASE = '/api/system/codegen'
+const API_BASE = '/system/codegen'
 
 // 左侧表列表
 const tableLoading = ref(false)

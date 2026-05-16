@@ -113,6 +113,7 @@ const routes = [
       { path: 'system/organization', name: 'Organization', component: () => import('@/views/system/RoleList.vue'), meta: { title: '组织架构' } },
       { path: 'system/dicts', name: 'Dicts', component: () => import('@/views/system/Dictionary.vue'), meta: { title: '数据字典' } },
       { path: 'system/operation-logs', name: 'OperationLogs', component: () => import('@/views/system/OperationLog.vue'), meta: { title: '操作日志' } },
+      { path: 'system/frontend-logs', name: 'FrontendLogs', component: () => import('@/views/system/FrontendLog.vue'), meta: { title: '前端日志' } },
       { path: 'system/codegen', name: 'Codegen', component: () => import('@/views/system/Codegen.vue'), meta: { title: '代码生成' } },
       // WeCom（后端未实现，先占位）
       { path: 'wecom/messages', name: 'WecomMessages', component: () => import('@/views/system/ConfigList.vue'), meta: { title: '消息推送' } },
@@ -145,6 +146,25 @@ router.afterEach((to) => {
     title: to.meta.title || to.name,
     closable: true
   })
+})
+
+// ── Router error handler: component load failure, nav rejection, etc. ──
+router.onError(error => {
+  const msg = error?.message || String(error)
+  // Ignore NavigationDuplicated (用户双击/重复跳转)
+  if (msg.includes('NavigationDuplicated') || msg.includes('Avoided redundant navigation')) return
+  fetch('/api/v1/frontend-logs', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      level: 'error',
+      message: `[RouterError] ${msg}`,
+      stack: error?.stack?.slice(0, 500) || '',
+      url: window.location.href,
+      ua: navigator.userAgent,
+      userId: localStorage.getItem('userId') || null
+    })
+  }).catch(() => {})
 })
 
 export default router
