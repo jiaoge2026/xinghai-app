@@ -197,7 +197,7 @@ const loadOrderStatus = async () => {
 const loadStockAlert = async () => {
   stockLoading.value = true
   try {
-    const res = await request.get('/wms/alerts')
+    const res = await request.get('/wms/alerts/unprocessed')
     lowStockItems.value = res.data || []
   } catch (e) {
     console.error('loadStockAlert error:', e)
@@ -211,7 +211,7 @@ const loadStockAlert = async () => {
 const loadPending = async () => {
   pendingLoading.value = true
   try {
-    const res = await request.get('/workflow/pending')
+    const res = await request.get('/workflow/tasks/pending')
     pendingList.value = (res.data || []).slice(0, 5)
     pendingApprovals.value = pendingList.value.length
   } catch (e) {
