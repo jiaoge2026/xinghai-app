@@ -111,7 +111,7 @@ const routes = [
       { path: 'report/finance', name: 'ReportFinance', component: () => import('@/views/finance/FinanceReport.vue'), meta: { title: '财务报表' } },
       // System
       { path: 'system/organization', name: 'Organization', component: () => import('@/views/system/RoleList.vue'), meta: { title: '组织架构' } },
-      { path: 'system/dicts', name: 'Dicts', component: () => import('@/views/system/ConfigList.vue'), meta: { title: '数据字典' } },
+      { path: 'system/dicts', name: 'Dicts', component: () => import('@/views/system/Dictionary.vue'), meta: { title: '数据字典' } },
       // WeCom（后端未实现，先占位）
       { path: 'wecom/messages', name: 'WecomMessages', component: () => import('@/views/system/ConfigList.vue'), meta: { title: '消息推送' } },
       { path: 'wecom/callback', name: 'WeComCallback', component: () => import('@/views/system/ConfigList.vue'), meta: { title: '回调配置' } },
