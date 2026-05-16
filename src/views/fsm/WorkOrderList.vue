@@ -601,7 +601,7 @@ const handlePrint = async () => {
 function buildPrintHtml(data) {
   const wo = data.workOrder || data
   const parts = data.parts || []
-  const items = data.items || []
+  const get = (a, b, c) => wo[a] || wo[b] || wo[c] || ''
   return `<!DOCTYPE html>
 <html>
 <head>
@@ -609,20 +609,20 @@ function buildPrintHtml(data) {
 <title>工单打印</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: '思源黑体', 'Microsoft YaHei', sans-serif; font-size: 14px; color: #333; padding: 20px; }
+  body { font-family: 'Microsoft YaHei', 'SimHei', sans-serif; font-size: 14px; color: #333; padding: 20px; }
   .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 12px; margin-bottom: 16px; }
   .header h1 { font-size: 22px; margin-bottom: 4px; }
   .header p { font-size: 12px; color: #666; }
   .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; margin-bottom: 16px; }
-  .info-item { display: flex; font-size: 13px; }
+  .info-item { display: flex; font-size: 13px; line-height: 1.6; }
   .info-label { color: #666; width: 80px; flex-shrink: 0; }
-  .info-value { font-weight: 500; }
+  .info-value { font-weight: 500; word-break: break-all; }
   table { width: 100%; border-collapse: collapse; margin-bottom: 12px; font-size: 13px; }
   th, td { border: 1px solid #ddd; padding: 6px 8px; text-align: left; }
   th { background: #f5f5f5; font-weight: 600; }
-  .sign-area { display: flex; justify-content: space-between; margin-top: 24px; }
+  .sign-area { display: flex; justify-content: space-between; margin-top: 32px; }
   .sign-box { width: 45%; }
-  .sign-box p { margin-top: 40px; font-size: 12px; color: #666; border-top: 1px solid #333; padding-top: 6px; }
+  .sign-box p { margin-top: 48px; font-size: 12px; color: #666; border-top: 1px solid #333; padding-top: 6px; }
   @media print { body { padding: 0; } }
 </style>
 </head>
@@ -632,14 +632,18 @@ function buildPrintHtml(data) {
   <p>全国服务热线：400-699-9999</p>
 </div>
 <div class="info-grid">
-  <div class="info-item"><span class="info-label">工单编号</span><span class="info-value">${wo.woNo || wo.hsicrmWorkorderno || ''}</span></div>
-  <div class="info-item"><span class="info-label">客户姓名</span><span class="info-value">${wo.customerName || wo.hsicrmCustomername || ''}</span></div>
-  <div class="info-item"><span class="info-label">联系电话</span><span class="info-value">${wo.customerPhone || wo.hsicrmPhone || ''}</span></div>
-  <div class="info-item"><span class="info-label">服务地址</span><span class="info-value">${wo.address || wo.hsicrmServiceaddress || ''}</span></div>
-  <div class="info-item"><span class="info-label">服务类型</span><span class="info-value">${wo.serviceTypeName || wo.hsicrmServicetypename || ''}</span></div>
-  <div class="info-item"><span class="info-label">预约时间</span><span class="info-value">${wo.requireTime || wo.hsicrmRequireservicetime || ''}</span></div>
-  <div class="info-item"><span class="info-label">工程师</span><span class="info-value">${wo.employeeName || wo.hsicrmEmployeename || ''}</span></div>
-  <div class="info-item"><span class="info-label">工单状态</span><span class="info-value">${wo.statusName || wo.hsicrmWorkorderstatusname || ''}</span></div>
+  <div class="info-item"><span class="info-label">工单编号</span><span class="info-value">${get('woNo','hsicrmWorkorderid')}</span></div>
+  <div class="info-item"><span class="info-label">客户姓名</span><span class="info-value">${get('customerName','hsicrmConsumername')}</span></div>
+  <div class="info-item"><span class="info-label">联系电话</span><span class="info-value">${get('customerPhone','hsicrmContactnumber','hsicrmOtherphone')}</span></div>
+  <div class="info-item"><span class="info-label">服务地址</span><span class="info-value">${get('address','hsicrmConsumeraddr')}</span></div>
+  <div class="info-item"><span class="info-label">服务类型</span><span class="info-value">${get('serviceTypeName','hsicrmRequireservicetypename')}</span></div>
+  <div class="info-item"><span class="info-label">预约时间</span><span class="info-value">${get('requireTime','hsicrmRequireservicetime')}</span></div>
+  <div class="info-item"><span class="info-label">工程师</span><span class="info-value">${get('employeeName','hsicrmEmployeename')}</span></div>
+  <div class="info-item"><span class="info-label">工单状态</span><span class="info-value">${get('statusName','hsicrmWorkorderstatusname')}</span></div>
+  <div class="info-item"><span class="info-label">产品品牌</span><span class="info-value">${get('brandName','hsicrmBrandname')}</span></div>
+  <div class="info-item"><span class="info-label">产品类别</span><span class="info-value">${get('productName','hsicrmProductcategoryname')}</span></div>
+  <div class="info-item"><span class="info-label">收费(元)</span><span class="info-value">${get('receivedFee','hsicrmReceivedfee')}</span></div>
+  <div class="info-item"><span class="info-label">订单来源</span><span class="info-value">${get('sourceName','hsicrmSourcename')}</span></div>
 </div>
 ${parts.length ? `
 <table>
@@ -650,6 +654,7 @@ ${parts.length ? `
   <div class="sign-box"><p>客户签字：</p></div>
   <div class="sign-box"><p>工程师签字：</p></div>
 </div>
+<script>window.onload = function() { window.print(); }<\/script>
 </body>
 </html>`
 }

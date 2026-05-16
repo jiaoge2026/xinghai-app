@@ -113,10 +113,9 @@ async function fetchTasks() {
   try {
     const isAll = viewMode.value === 'all'
     const res = await request.get('/v1/system/export-tasks', { params: { all: isAll } })
-    // axios: res.data = {code, message, data: [...]}, res.data.data = array
-    tasks.value = (res.data && Array.isArray(res.data.data)) ? res.data.data : []
+    tasks.value = Array.isArray(res.data) ? res.data : []
   } catch (e) {
-    console.error('获取导出任务失败', e)
+    console.error('获取导出任务失败', e.message, e.response?.data)
     tasks.value = []
   } finally {
     loading.value = false
