@@ -126,14 +126,14 @@ const tableData = ref([])
 const loading = ref(false)
 
 // 搜索表单
-const searchForm = reactive({
+let searchForm = reactive({
   code: '',
   name: '',
   status: null
 })
 
 // 分页
-const pagination = reactive({
+let pagination = reactive({
   pageNum: 1,
   pageSize: 10,
   total: 0

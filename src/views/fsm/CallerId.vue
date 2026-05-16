@@ -121,7 +121,7 @@ const popupVisible = ref(false);
 const popupData = ref(null);
 const showRegisterDialog = ref(false);
 
-const registerForm = reactive({
+let registerForm = reactive({
   phone: "",
   customerId: null,
   engineerId: null,

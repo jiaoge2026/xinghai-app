@@ -149,7 +149,7 @@ const submitting = ref(false)
 const isEdit = ref(false)
 const formRef = ref()
 
-const query = reactive({
+let query = reactive({
   page: 1,
   pageSize: 20,
   employeeId: null,
@@ -157,7 +157,7 @@ const query = reactive({
   status: null
 })
 
-const form = reactive(createEmptyForm())
+let form = reactive(createEmptyForm())
 
 const rules = {
   employeeId: [{ required: true, message: '请选择员工', trigger: 'change' }],

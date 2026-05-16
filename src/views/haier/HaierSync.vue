@@ -74,7 +74,7 @@ const syncing = ref(false)
 const tableData = ref([])
 const total = ref(0)
 const pageNum = ref(1)
-const stats = reactive({ totalAccounts: 0, todaySync: 0, todayNew: 0, lastSyncTime: '' })
+let stats = reactive({ totalAccounts: 0, todaySync: 0, todayNew: 0, lastSyncTime: '' })
 
 const loadData = async () => {
   loading.value = true

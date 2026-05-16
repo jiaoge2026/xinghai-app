@@ -60,8 +60,8 @@ import request from '@/utils/request'
 // ============ 数据 ============
 const loading = ref(false)
 const tableData = ref([])
-const pagination = reactive({ page: 1, pageSize: 20, total: 0 })
-const queryParams = reactive({ name: '', deptId: null, status: null })
+let pagination = reactive({ page: 1, pageSize: 20, total: 0 })
+let queryParams = reactive({ name: '', deptId: null, status: null })
 const deptOptions = ref([])
 
 // ============ 搜索 ============
@@ -170,7 +170,7 @@ const defaultForm = () => ({
   status: 'ON_JOB',
 })
 
-const formData = reactive(defaultForm())
+let formData = reactive(defaultForm())
 
 const dialogFields = [
   { key: 'employeeNo', label: '工号', type: 'input', required: true, placeholder: '如：EMP001', disabled: () => dialogMode.value === 'edit' },

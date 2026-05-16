@@ -29,7 +29,7 @@ const router = useRouter()
 const formRef = ref()
 const loading = ref(false)
 
-const form = reactive({ username: 'admin', password: 'admin123' })
+let form = reactive({ username: 'admin', password: 'admin123' })
 const rules = {
   username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
   password: [{ required: true, message: '请输入密码', trigger: 'blur' }]

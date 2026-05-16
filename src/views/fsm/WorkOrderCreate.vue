@@ -63,7 +63,7 @@ import { ElMessage } from 'element-plus'
 const router = useRouter()
 const formRef = ref()
 
-const form = reactive({
+let form = reactive({
   title: '',
   customerName: '',
   customerPhone: '',

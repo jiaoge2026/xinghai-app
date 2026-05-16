@@ -88,10 +88,10 @@ const STATUS_MAP = {
 const loading = ref(false)
 const tableData = ref([])
 const selectedRows = ref([])
-const pagination = reactive({ page: 1, pageSize: 20, total: 0 })
+let pagination = reactive({ page: 1, pageSize: 20, total: 0 })
 
 // ============ 搜索 ============
-const queryParams = reactive({
+let queryParams = reactive({
   subjectCode: '',
   subjectName: '',
   subjectType: null,

@@ -94,8 +94,8 @@ import request from '@/utils/request'
 // ============ 数据 ============
 const loading = ref(false)
 const tableData = ref([])
-const pagination = reactive({ page: 1, pageSize: 20, total: 0 })
-const queryParams = reactive({ username: '', name: '', roleId: null })
+let pagination = reactive({ page: 1, pageSize: 20, total: 0 })
+let queryParams = reactive({ username: '', name: '', roleId: null })
 const roleOptions = ref([])
 
 // ============ 搜索 ============
@@ -200,7 +200,7 @@ const defaultForm = () => ({
   status: 1,
 })
 
-const formData = reactive(defaultForm())
+let formData = reactive(defaultForm())
 
 const dialogFields = computed(() => [
   { key: 'username', label: '用户名', type: 'input', required: true, placeholder: '登录用户名', disabled: dialogMode.value === 'edit' },
@@ -323,7 +323,7 @@ async function loadRoles() {
 // ============ 重置密码 ============
 const resetPwdVisible = ref(false)
 const resetPwdTarget = ref(null)
-const resetPwdForm = reactive({ newPassword: '' })
+let resetPwdForm = reactive({ newPassword: '' })
 
 function openResetPwd(row) {
   resetPwdTarget.value = row

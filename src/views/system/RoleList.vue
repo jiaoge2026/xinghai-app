@@ -98,8 +98,8 @@ import request from '@/utils/request'
 
 const loading = ref(false)
 const tableData = ref([])
-const pagination = reactive({ page: 1, pageSize: 20, total: 0 })
-const queryParams = reactive({ roleName: '', roleCode: '', status: '' })
+let pagination = reactive({ page: 1, pageSize: 20, total: 0 })
+let queryParams = reactive({ roleName: '', roleCode: '', status: '' })
 
 const searchFields = [
   { key: 'roleName', label: '\u89d2\u8272\u540d\u79f0', type: 'input', placeholder: '\u89d2\u8272\u540d\u79f0' },
@@ -178,7 +178,7 @@ const dialogMode = ref('create')
 const submitting = ref(false)
 const editingId = ref(null)
 const defaultForm = () => ({ roleName: '', roleCode: '', roleType: 3, description: '' })
-const formData = reactive({ ...defaultForm() })
+let formData = reactive({ ...defaultForm() })
 const formRules = {
   roleName: [{ required: true, message: '\u8bf7\u8f93\u5165\u89d2\u8272\u540d\u79f0', trigger: 'blur' }],
   roleCode: [

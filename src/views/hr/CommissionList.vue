@@ -269,7 +269,7 @@ const isEditRule = ref(false)
 const ruleSubmitting = ref(false)
 const ruleFormRef = ref()
 const isDefaultRule = ref(false)
-const ruleForm = reactive({
+let ruleForm = reactive({
   id: null, ruleName: '', applianceType: null, serviceType: null,
   calcType: 1, perOrderAmt: 80, commissionRate: 0.1, baseSalary: 0,
   bonusPerStar: 20, minRating: 4, effectiveDate: '', status: 1
@@ -342,7 +342,7 @@ const calcResult = ref(null)
 const settlements = ref([])
 const settlementLoading = ref(false)
 const settlementTotal = ref(0)
-const settlementQuery = reactive({ page: 1, pageSize: 20, month: '' })
+let settlementQuery = reactive({ page: 1, pageSize: 20, month: '' })
 const detailDialogVisible = ref(false)
 const detailSettlement = ref(null)
 const detailList = ref([])

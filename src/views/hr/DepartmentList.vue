@@ -60,8 +60,8 @@ import request from '@/utils/request'
 // ============ 数据 ============
 const loading = ref(false)
 const tableData = ref([])
-const pagination = reactive({ page: 1, pageSize: 20, total: 0 })
-const queryParams = reactive({ name: '', status: null })
+let pagination = reactive({ page: 1, pageSize: 20, total: 0 })
+let queryParams = reactive({ name: '', status: null })
 const statusOptions = [
   { label: '启用', value: 1 },
   { label: '禁用', value: 0 },
@@ -149,7 +149,7 @@ const defaultForm = () => ({
   sort: 0,
 })
 
-const formData = reactive(defaultForm())
+let formData = reactive(defaultForm())
 
 const dialogFields = [
   { key: 'name', label: '部门名称', type: 'input', required: true, placeholder: '如：销售部' },

@@ -102,8 +102,8 @@ import request from '@/utils/request'
 
 const loading = ref(false)
 const tableData = ref([])
-const pagination = reactive({ page: 1, pageSize: 20, total: 0 })
-const queryParams = reactive({ receiptNo: '', customerId: null, status: '', startDate: '', endDate: '' })
+let pagination = reactive({ page: 1, pageSize: 20, total: 0 })
+let queryParams = reactive({ receiptNo: '', customerId: null, status: '', startDate: '', endDate: '' })
 
 const searchFields = [
   { key: 'receiptNo', label: '收款单号', type: 'input', placeholder: '收款单号' },
@@ -207,7 +207,7 @@ const defaultForm = () => ({
   remark: '',
 })
 
-const formData = reactive({ ...defaultForm() })
+let formData = reactive({ ...defaultForm() })
 const formRules = {
   customerId: [{ required: true, message: '\u8bf7\u8f93\u5165\u5ba2\u6237ID', trigger: 'blur' }],
   receiptDate: [{ required: true, message: '\u8bf7\u9009\u62e9\u6536\u6b3e\u65e5\u671f', trigger: 'change' }],

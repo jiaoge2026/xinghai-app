@@ -200,10 +200,10 @@ function getStatusTag(status) {
 const loading = ref(false)
 const tableData = ref([])
 const selectedRows = ref([])
-const pagination = reactive({ page: 1, pageSize: 20, total: 0 })
+let pagination = reactive({ page: 1, pageSize: 20, total: 0 })
 
 // ============ 搜索 ============
-const queryParams = reactive({
+let queryParams = reactive({
   paymentNo: '',
   supplierName: '',
   paymentMethod: null,
@@ -316,7 +316,7 @@ const defaultForm = () => ({
   remark: '',
 })
 
-const formData = reactive({ ...defaultForm() })
+let formData = reactive({ ...defaultForm() })
 
 const formRules = {
   paymentDate: [{ required: true, message: '请选择付款日期', trigger: 'change' }],

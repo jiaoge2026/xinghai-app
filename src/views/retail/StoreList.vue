@@ -88,8 +88,8 @@ const submitting = ref(false)
 const isEdit = ref(false)
 const formRef = ref()
 
-const query = reactive({ page: 1, pageSize: 20 })
-const form = reactive({ id: null, name: '', code: '', address: '', phone: '', managerName: '', businessHours: '', status: 1 })
+let query = reactive({ page: 1, pageSize: 20 })
+let form = reactive({ id: null, name: '', code: '', address: '', phone: '', managerName: '', businessHours: '', status: 1 })
 const rules = { name: [{ required: true, message: '请输入门店名称', trigger: 'blur' }], code: [{ required: true, message: '请输入门店编号', trigger: 'blur' }] }
 const dialogTitle = computed(() => isEdit.value ? '编辑门店' : '新增门店')
 

@@ -50,8 +50,8 @@ import { SearchForm, DataTable } from '@/components/page-components'
 const route = useRoute()
 const loading = ref(false)
 const tableData = ref([])
-const pagination = reactive({ page: 1, pageSize: 20, total: 0 })
-const queryParams = reactive({ accountId: null, status: null, dateRange: null })
+let pagination = reactive({ page: 1, pageSize: 20, total: 0 })
+let queryParams = reactive({ accountId: null, status: null, dateRange: null })
 const accounts = ref([])
 
 // ============ 搜索 ============

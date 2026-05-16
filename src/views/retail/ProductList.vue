@@ -119,7 +119,7 @@ const total = ref(0)
 const catOptions = ref([])
 
 // 查询参数
-const query = reactive({
+let query = reactive({
   page: 1,
   pageSize: 20,
   name: '',
@@ -138,7 +138,7 @@ const getDefaultForm = () => ({
   status: 1,
 })
 
-const form = reactive(getDefaultForm())
+let form = reactive(getDefaultForm())
 
 // 校验规则
 const rules = {

@@ -123,14 +123,14 @@ const dialogVisible = ref(false)
 const viewVisible = ref(false)
 const viewData = ref({})
 
-const orderForm = reactive({
+let orderForm = reactive({
   storeId: null,
   customerName: '',
   payMethod: 'WECHAT',
   remark: '',
 })
 
-const query = reactive({
+let query = reactive({
   page: 1,
   pageSize: 20,
   orderNo: '',

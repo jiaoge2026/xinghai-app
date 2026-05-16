@@ -159,7 +159,7 @@ const typeDialogVisible = ref(false)
 const typeSubmitting = ref(false)
 const typeFormRef = ref()
 
-const typeForm = reactive({
+let typeForm = reactive({
   dictType: '',
   dictLabel: '',
   firstLabel: '',
@@ -232,7 +232,7 @@ const isEditItem = ref(false)
 const editingItemId = ref(null)
 const itemFormRef = ref()
 
-const itemForm = reactive({
+let itemForm = reactive({
   dictType: '',
   dictLabel: '',
   dictValue: '',

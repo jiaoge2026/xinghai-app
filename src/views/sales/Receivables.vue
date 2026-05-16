@@ -76,8 +76,8 @@ import { SearchForm, DataTable, CrudDialog } from '@/components/page-components'
 // ============ 数据 ============
 const loading = ref(false)
 const tableData = ref([])
-const pagination = reactive({ page: 1, pageSize: 20, total: 0 })
-const queryParams = reactive({ keyword: '', status: '' })
+let pagination = reactive({ page: 1, pageSize: 20, total: 0 })
+let queryParams = reactive({ keyword: '', status: '' })
 
 // ============ 搜索 ============
 const searchFields = [
@@ -219,7 +219,7 @@ const defaultForm = () => ({
   remark: '',
 })
 
-const formData = reactive(defaultForm())
+let formData = reactive(defaultForm())
 
 const dialogFields = [
   { key: 'orderNo', label: '项目单号', type: 'input', placeholder: '请输入项目单号', cols: 2 },
@@ -291,7 +291,7 @@ async function handleDelete(row) {
 // ============ 收款弹窗 ============
 const receiveVisible = ref(false)
 const receiveRef = ref()
-const receiveForm = reactive({
+let receiveForm = reactive({
   id: null,
   receivableNo: '',
   amount: 0,

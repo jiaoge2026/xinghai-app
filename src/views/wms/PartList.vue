@@ -62,8 +62,8 @@ import request from '@/utils/request'
 // ============ 数据 ============
 const loading = ref(false)
 const tableData = ref([])
-const pagination = reactive({ page: 1, pageSize: 20, total: 0 })
-const queryParams = reactive({ partNo: '', partName: '', warehouseId: null })
+let pagination = reactive({ page: 1, pageSize: 20, total: 0 })
+let queryParams = reactive({ partNo: '', partName: '', warehouseId: null })
 
 // ============ 仓库列表 ============
 const warehouseList = ref([])
@@ -182,7 +182,7 @@ const defaultForm = () => ({
   remark: '',
 })
 
-const formData = reactive(defaultForm())
+let formData = reactive(defaultForm())
 
 const dialogFields = [
   { key: 'partNo', label: '配件编码', type: 'input', required: true, placeholder: '请输入配件编码', maxlength: 30, disabled: () => dialogMode.value === 'edit' },

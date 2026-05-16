@@ -158,7 +158,7 @@ const formRef = ref()
 const viewData = ref({})
 
 // 查询参数
-const queryParams = reactive({
+let queryParams = reactive({
   page: 1,
   pageSize: 20,
   name: '',
@@ -167,7 +167,7 @@ const queryParams = reactive({
 })
 
 // 表单数据
-const formData = reactive({
+let formData = reactive({
   id: null,
   name: '',
   type: CUSTOMER_TYPE.PERSONAL,

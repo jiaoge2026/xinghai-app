@@ -67,7 +67,7 @@ const dialogVisible = ref(false)
 const isEdit = ref(false)
 const formRef = ref()
 
-const form = reactive({ id: null, accountNo: '', accountName: '', password: '', orgCode: '', orgName: '', status: 'active' })
+let form = reactive({ id: null, accountNo: '', accountName: '', password: '', orgCode: '', orgName: '', status: 'active' })
 const rules = {
   accountNo: [{ required: true, message: '请输入账号', trigger: 'blur' }],
   accountName: [{ required: true, message: '请输入账号名称', trigger: 'blur' }],

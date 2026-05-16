@@ -74,8 +74,8 @@ import request from '@/utils/request'
 // ============ 数据 ============
 const loading = ref(false)
 const tableData = ref([])
-const pagination = reactive({ page: 1, pageSize: 20, total: 0 })
-const queryParams = reactive({ keyword: '' })
+let pagination = reactive({ page: 1, pageSize: 20, total: 0 })
+let queryParams = reactive({ keyword: '' })
 
 // ============ 搜索 ============
 const searchFields = [
@@ -169,7 +169,7 @@ const defaultForm = () => ({
   status: 1,
 })
 
-const formData = reactive(defaultForm())
+let formData = reactive(defaultForm())
 
 const dialogFields = [
   { key: 'customerName', label: '客户名称', type: 'input', required: true, placeholder: '请输入客户名称', cols: 2 },

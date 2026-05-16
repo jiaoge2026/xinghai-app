@@ -227,7 +227,7 @@ import html2canvas from 'html2canvas'
 import { jsPDF } from 'jspdf'
 
 // ============ 搜索 ============
-const queryParams = reactive({
+let queryParams = reactive({
   woNo: '',
   customerName: '',
   phone: '',
@@ -285,7 +285,7 @@ function handleReset(params) {
 // ============ 表格数据 ============
 const loading = ref(false)
 const tableData = ref([])
-const pagination = reactive({ page: 1, pageSize: 20, total: 0 })
+let pagination = reactive({ page: 1, pageSize: 20, total: 0 })
 const tableHeight = computed(() => 'calc(100vh - 300px)')
 const exportDialogVisible = ref(false)
 const exporting = ref(false)

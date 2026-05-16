@@ -81,11 +81,11 @@ const submitting = ref(false)
 const isEdit = ref(false)
 const formRef = ref()
 
-const query = reactive({ page: 1, pageSize: 20, name: '', customerId: null })
+let query = reactive({ page: 1, pageSize: 20, name: '', customerId: null })
 const pagination = computed(() => ({ page: query.page, pageSize: query.pageSize, total: total.value }))
 const total = ref(0)
 
-const form = reactive({ id: null, name: '', customerId: null, position: '', phone: '', email: '', isPrimary: 0, remark: '' })
+let form = reactive({ id: null, name: '', customerId: null, position: '', phone: '', email: '', isPrimary: 0, remark: '' })
 const rules = { name: [{ required: true, message: '请输入姓名', trigger: 'blur' }], customerId: [{ required: true, message: '请选择客户', trigger: 'change' }], phone: [{ required: true, message: '请输入手机', trigger: 'blur' }] }
 const dialogTitle = computed(() => isEdit.value ? '编辑联系人' : '新增联系人')
 

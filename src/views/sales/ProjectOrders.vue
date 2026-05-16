@@ -108,8 +108,8 @@ import request from '@/utils/request'
 
 const loading = ref(false)
 const tableData = ref([])
-const pagination = reactive({ page: 1, pageSize: 20, total: 0 })
-const queryParams = reactive({ keyword: '', startDate: '', endDate: '', status: '' })
+let pagination = reactive({ page: 1, pageSize: 20, total: 0 })
+let queryParams = reactive({ keyword: '', startDate: '', endDate: '', status: '' })
 
 const searchFields = [
   { key: 'keyword', label: '关键词', type: 'input', placeholder: '订单号/客户ID' },
@@ -206,7 +206,7 @@ const defaultForm = () => ({
   remark: '',
 })
 
-const formData = reactive({ ...defaultForm() })
+let formData = reactive({ ...defaultForm() })
 const formRules = {
   customerId: [{ required: true, message: '请输入客户ID', trigger: 'blur' }],
   orderDate: [{ required: true, message: '请选择订单日期', trigger: 'change' }],

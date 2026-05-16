@@ -201,8 +201,8 @@ import request from '@/utils/request'
 // ============ 数据 ============
 const loading = ref(false)
 const tableData = ref([])
-const pagination = reactive({ page: 1, pageSize: 20, total: 0 })
-const queryParams = reactive({ partCode: '', partName: '', warehouseId: null })
+let pagination = reactive({ page: 1, pageSize: 20, total: 0 })
+let queryParams = reactive({ partCode: '', partName: '', warehouseId: null })
 
 // ============ 仓库列表 ============
 const warehouseList = ref([])
@@ -332,7 +332,7 @@ const defaultStockForm = () => ({
   remark: '',
 })
 
-const stockForm = reactive(defaultStockForm())
+let stockForm = reactive(defaultStockForm())
 
 const stockFormRules = {
   partId: [{ required: true, message: '请选择配件', trigger: 'change' }],

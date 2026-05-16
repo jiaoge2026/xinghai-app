@@ -94,9 +94,9 @@ const loading = ref(false)
 const tableData = ref([])
 const total = ref(0)
 const dateRange = ref([])
-const stats = reactive({ total: 0, completed: 0, inProgress: 0, totalRevenue: 0 })
+let stats = reactive({ total: 0, completed: 0, inProgress: 0, totalRevenue: 0 })
 
-const query = reactive({
+let query = reactive({
   pageNum: 1,
   pageSize: 20,
   status: '',
@@ -107,7 +107,7 @@ const query = reactive({
 })
 
 // 动态筛选选项（从API获取）
-const filterOptions = reactive({
+let filterOptions = reactive({
   statusList: [],
   workTypeList: []
 })

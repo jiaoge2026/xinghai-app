@@ -145,12 +145,12 @@ const tableData = ref([])
 const detailVisible = ref(false)
 const detailData = ref({})
 
-const searchForm = reactive({
+let searchForm = reactive({
   templateType: '',
   dateRange: [],
 })
 
-const pagination = reactive({
+let pagination = reactive({
   page: 1,
   pageSize: 20,
   total: 0,

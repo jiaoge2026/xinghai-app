@@ -106,8 +106,8 @@ import request from '@/utils/request'
 
 const loading = ref(false)
 const tableData = ref([])
-const pagination = reactive({ page: 1, pageSize: 20, total: 0 })
-const queryParams = reactive({ username: '', module: '', startDate: '', endDate: '' })
+let pagination = reactive({ page: 1, pageSize: 20, total: 0 })
+let queryParams = reactive({ username: '', module: '', startDate: '', endDate: '' })
 const exporting = ref(false)
 const detailVisible = ref(false)
 const currentLog = ref(null)

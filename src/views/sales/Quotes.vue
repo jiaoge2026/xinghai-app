@@ -61,8 +61,8 @@ import request from '@/utils/request'
 // ============ 数据 ============
 const loading = ref(false)
 const tableData = ref([])
-const pagination = reactive({ page: 1, pageSize: 20, total: 0 })
-const queryParams = reactive({ keyword: '', status: null })
+let pagination = reactive({ page: 1, pageSize: 20, total: 0 })
+let queryParams = reactive({ keyword: '', status: null })
 
 // ============ 搜索 ============
 // Backend status values unknown - using placeholder, verify from actual data
@@ -173,7 +173,7 @@ const defaultForm = () => ({
   remark: '',
 })
 
-const formData = reactive(defaultForm())
+let formData = reactive(defaultForm())
 
 const dialogFields = [
   { key: 'customerId', label: '客户', type: 'input', required: true, placeholder: '客户ID' },

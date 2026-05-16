@@ -123,7 +123,7 @@ const createEmptyForm = () => ({
   status: 1
 })
 
-const form = reactive(createEmptyForm())
+let form = reactive(createEmptyForm())
 
 const formRules = {
   name: [{ required: true, message: '请输入权限名称', trigger: 'blur' }],

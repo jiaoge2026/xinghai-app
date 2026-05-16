@@ -116,8 +116,8 @@ const groupOptions = ['系统', '业务', '财务', 'FSM', 'WMS', 'CRM', '安全
 // ============ 数据 ============
 const loading = ref(false)
 const tableData = ref([])
-const pagination = reactive({ page: 1, pageSize: 20, total: 0 })
-const queryParams = reactive({ keyword: '' })
+let pagination = reactive({ page: 1, pageSize: 20, total: 0 })
+let queryParams = reactive({ keyword: '' })
 
 // ============ 搜索 ============
 const searchFields = [
@@ -198,7 +198,7 @@ const defaultForm = () => ({
   remark: '',
 })
 
-const formData = reactive(defaultForm())
+let formData = reactive(defaultForm())
 
 const formRules = {
   configKey: [{ required: true, message: '请输入配置项名', trigger: 'blur' }],

@@ -83,8 +83,8 @@ import request from '@/utils/request'
 
 const loading = ref(false)
 const tableData = ref([])
-const pagination = reactive({ page: 1, pageSize: 20, total: 0 })
-const queryParams = reactive({ accountName: '', bankName: '' })
+let pagination = reactive({ page: 1, pageSize: 20, total: 0 })
+let queryParams = reactive({ accountName: '', bankName: '' })
 
 const searchFields = [
   { key: 'accountName', label: '账户名称', type: 'input', placeholder: '账户名称' },
@@ -173,7 +173,7 @@ const defaultForm = () => ({
   status: 1,
 })
 
-const formData = reactive({ ...defaultForm() })
+let formData = reactive({ ...defaultForm() })
 const formRules = {
   accountName: [{ required: true, message: '\u8bf7\u8f93\u5165\u8d26\u6237\u540d\u79f0', trigger: 'blur' }],
   accountNo: [{ required: true, message: '\u8bf7\u8f93\u5165\u8d26\u53f7', trigger: 'blur' }],

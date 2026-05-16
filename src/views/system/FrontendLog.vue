@@ -120,13 +120,13 @@ const stats = ref({ total: 0, error: 0, warning: 0, today: 0 })
 const detailVisible = ref(false)
 const detail = ref(null)
 
-const searchForm = reactive({
+let searchForm = reactive({
   level: 'all',
   keyword: '',
   dateRange: null
 })
 
-const pagination = reactive({
+let pagination = reactive({
   current: 1,
   size: 20,
   total: 0

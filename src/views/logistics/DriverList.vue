@@ -63,8 +63,8 @@ const statusType = { 1: 'success', 2: 'primary', 3: 'info' }
 // ============ 数据 ============
 const loading = ref(false)
 const tableData = ref([])
-const pagination = reactive({ page: 1, pageSize: 20, total: 0 })
-const queryParams = reactive({ name: '', plateNo: '', status: null })
+let pagination = reactive({ page: 1, pageSize: 20, total: 0 })
+let queryParams = reactive({ name: '', plateNo: '', status: null })
 
 // ============ 搜索 ============
 const searchFields = [
@@ -155,7 +155,7 @@ const defaultForm = () => ({
   status: 1,
 })
 
-const formData = reactive(defaultForm())
+let formData = reactive(defaultForm())
 
 const dialogFields = [
   { key: 'name', label: '姓名', type: 'input', required: true, placeholder: '司机姓名' },

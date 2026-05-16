@@ -108,8 +108,8 @@ import request from '@/utils/request'
 
 const loading = ref(false)
 const tableData = ref([])
-const pagination = reactive({ page: 1, pageSize: 20, total: 0 })
-const queryParams = reactive({ voucherNo: '', startDate: '', endDate: '' })
+let pagination = reactive({ page: 1, pageSize: 20, total: 0 })
+let queryParams = reactive({ voucherNo: '', startDate: '', endDate: '' })
 
 const searchFields = [
   { key: 'voucherNo', label: '凭证号', type: 'input', placeholder: '凭证号' },
@@ -202,7 +202,7 @@ const defaultForm = () => ({
   remark: '',
 })
 
-const formData = reactive({ ...defaultForm() })
+let formData = reactive({ ...defaultForm() })
 const formRules = {
   voucherDate: [{ required: true, message: '请选择制单日期', trigger: 'change' }],
 }

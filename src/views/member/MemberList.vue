@@ -163,14 +163,14 @@ const pointsVisible = ref(false)
 const isEdit = ref(false)
 const formRef = ref()
 
-const queryParams = reactive({
+let queryParams = reactive({
   page: 1,
   pageSize: 20,
   phone: '',
   level: ''
 })
 
-const formData = reactive({ ...DEFAULT_FORM })
+let formData = reactive({ ...DEFAULT_FORM })
 
 const formRules = {
   name: [{ required: true, message: '请输入姓名', trigger: 'blur' }],
@@ -178,7 +178,7 @@ const formRules = {
 }
 
 const currentMember = ref({})
-const pointsForm = reactive({
+let pointsForm = reactive({
   type: 'ADD',
   points: 0,
   reason: ''
