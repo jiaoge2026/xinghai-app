@@ -47,20 +47,13 @@
           <div class="section-title">菜单权限（勾选该角色可访问的菜单）</div>
           <el-tree
             ref="menuTreeRef"
-            :data="menuTree"
+            :data="menuTreeState.list"
             node-key="id"
             :props="treeProps"
             show-checkbox
             check-strictly
             default-expand-all
-          >
-            <template #default="{ data }">
-              <span class="tree-node">
-                <span>{{ data.name }}</span>
-                <span class="node-path">{{ data.path }}</span>
-              </span>
-            </template>
-          </el-tree>
+          />
         </div>
 
         <!-- 功能权限 -->
@@ -89,7 +82,6 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted, nextTick, computed } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
 import RoleDialog from '@/components/page-components/system/RoleDialog.vue'
 import PermissionModules from '@/components/page-components/system/PermissionModules.vue'
 import request from '@/utils/request'
@@ -97,7 +89,8 @@ import request from '@/utils/request'
 // 角色列表
 const roleList = ref([])
 const selectedRole = ref<any>(null)
-const menuTree = ref([])
+// 菜单树数据（用 reactive 对象包装，避免 Vue 响应式 Proxy 直接干扰 el-tree 内部数据访问）
+const menuTreeState = reactive<any>({ list: [] })
 const permissionModules = ref([])
 const menuTreeRef = ref<any>(null)
 const checkedPermissions = ref<number[]>([])
@@ -118,7 +111,7 @@ onMounted(async () => {
     request.get('/system/menus/tree'),
     request.get('/system/menus/permissions/grouped'),
   ])
-  if (treeRes.code === 0) menuTree.value = treeRes.data
+  menuTreeState.list = (treeRes.data || []).map((item: any) => ({ ...item, label: item.name }))
   if (permRes.code === 0) permissionModules.value = permRes.data
 })
 
@@ -260,6 +253,7 @@ function rowClassName({ row }: { row: any }) {
   justify-content: center;
 }
 .empty-tip {
+  font-family: 'PingFang SC', 'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   color: #999;
   font-size: 16px;
 }
@@ -275,22 +269,14 @@ function rowClassName({ row }: { row: any }) {
   margin-bottom: 24px;
 }
 .section-title {
+  font-family: 'PingFang SC', 'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   font-weight: 600;
   font-size: 14px;
   margin-bottom: 12px;
   color: #333;
 }
-.tree-node {
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
-}
-.node-path {
-  color: #999;
-  font-size: 12px;
-  margin-left: 16px;
-}
 :deep(.selected-row) {
   background-color: #ecf5ff;
 }
 </style>
+
