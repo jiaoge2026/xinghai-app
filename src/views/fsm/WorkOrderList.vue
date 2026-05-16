@@ -16,6 +16,7 @@
       <div class="table-toolbar">
         <el-button icon="Download" @click="openExport">导出</el-button>
         <el-button icon="Printer" @click="handlePrint" :disabled="!selectedRows.length">打印</el-button>
+        <el-button icon="Document" @click="handleExportPdf" :disabled="!selectedRows.length">PDF导出</el-button>
         <el-button type="primary" icon="Plus" @click="openAdd">新建工单</el-button>
       </div>
       <DataTable
@@ -222,6 +223,8 @@ import request from '@/utils/request'
 import { SearchForm, DataTable } from '@/components/page-components'
 import ColumnSettings from '@/views/components/ColumnSettings.vue'
 import { printTemplates } from '@/components/print/registry'
+import html2canvas from 'html2canvas'
+import { jsPDF } from 'jspdf'
 
 // ============ 搜索 ============
 const queryParams = reactive({
@@ -576,25 +579,83 @@ const handlePrint = async () => {
     ElMessage.warning('请先选择要打印的工单')
     return
   }
-  const row = selectedRows.value[0]
-  // 调工单详情接口获取完整数据
-  try {
-    const res = await request.get(`/fsm/work-orders/${row.id}`)
-    const data = res.data || res
-    // 打开打印窗口
-    const printWindow = window.open('/print.html?id=' + row.id, '_blank', 'width=900,height=700')
-    if (!printWindow) {
-      ElMessage.error('请允许弹出窗口')
-      return
+  const rows = selectedRows.value
+  const printOne = async (index) => {
+    if (index >= rows.length) return
+    const row = rows[index]
+    try {
+      const res = await request.get(`/fsm/work-orders/${row.id}`)
+      const data = res.data || res
+      const printWindow = window.open('/print.html?id=' + row.id, '_blank', 'width=900,height=700')
+      if (!printWindow) {
+        ElMessage.error('请允许弹出窗口')
+        return
+      }
+      printWindow.onload = () => {
+        printWindow.document.write(buildPrintHtml(data))
+        printWindow.document.close()
+        if (index < rows.length - 1) {
+          printWindow.onbeforeunload = () => { printOne(index + 1) }
+          setTimeout(() => { printWindow.close() }, 1500)
+        }
+      }
+    } catch (e) {
+      ElMessage.error(`获取工单 ${row.hsermWorkorderid || row.id} 详情失败`)
     }
-    // 等页面加载完成后写入内容
-    printWindow.onload = () => {
-      printWindow.document.write(buildPrintHtml(data))
-      printWindow.document.close()
-    }
-  } catch (e) {
-    ElMessage.error('获取工单详情失败')
   }
+  printOne(0)
+}
+
+// ============ PDF导出 ============
+const handleExportPdf = async () => {
+  if (!selectedRows.value.length) {
+    ElMessage.warning('请先选择要导出的工单')
+    return
+  }
+  const rows = selectedRows.value
+  const exportOne = async (index) => {
+    if (index >= rows.length) return
+    const row = rows[index]
+    try {
+      const res = await request.get(`/fsm/work-orders/${row.id}`)
+      const data = res.data || res
+      const tempDiv = document.createElement('div')
+      tempDiv.innerHTML = buildPrintHtml(data)
+      tempDiv.style.position = 'absolute'
+      tempDiv.style.left = '-9999px'
+      tempDiv.style.top = '0'
+      tempDiv.style.background = '#fff'
+      tempDiv.style.width = '800px'
+      document.body.appendChild(tempDiv)
+      const imgs = tempDiv.querySelectorAll('img')
+      let loaded = 0
+      const total = imgs.length
+      const doCapture = () => {
+        html2canvas(tempDiv, { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff' }).then(canvas => {
+          document.body.removeChild(tempDiv)
+          const imgData = canvas.toDataURL('image/jpeg', 0.95)
+          const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
+          const pxToMm = 1 / 3.78
+          pdf.addImage(imgData, 'JPEG', 0, 0, canvas.width * pxToMm, canvas.height * pxToMm)
+          const woNo = (data.workOrder?.woNo || data.woNo || 'workorder').substring(0, 20)
+          pdf.save(`工单_${woNo}.pdf`)
+          if (index < rows.length - 1) setTimeout(() => exportOne(index + 1), 500)
+          else ElMessage.success(`PDF导出成功，共${rows.length}份`)
+        }).catch(() => {
+          document.body.removeChild(tempDiv)
+          ElMessage.error(`工单 ${row.hsermWorkorderid || row.id} PDF生成失败`)
+        })
+      }
+      if (total === 0) doCapture()
+      else {
+        imgs.forEach(img => { if (img.complete) { loaded++; if (loaded === total) doCapture() } else { img.onload = () => { loaded++; if (loaded === total) doCapture() } } })
+        setTimeout(doCapture, 2000)
+      }
+    } catch (e) {
+      ElMessage.error(`获取工单详情失败`)
+    }
+  }
+  exportOne(0)
 }
 
 // 构建打印HTML内容
