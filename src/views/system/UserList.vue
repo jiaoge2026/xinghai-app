@@ -310,7 +310,7 @@ async function loadData() {
 
 async function loadRoles() {
   try {
-    const res = await request.get('/system/roles')
+    const res = await request.get('/system/roles/page')
     roleOptions.value = res.data?.list || []
     const roleMap = roleOptions.value.map(r => ({ label: r.roleName, value: r.id }))
     const roleField = searchFields.find(f => f.key === 'roleId')
