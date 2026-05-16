@@ -6,6 +6,7 @@ import zhCn from 'element-plus/dist/locale/zh-cn.mjs'
 import 'element-plus/dist/index.css'
 import router from './router'
 import App from './App.vue'
+import { authDirective } from '@/composables/usePermission'
 
 const app = createApp(App)
 
@@ -18,6 +19,9 @@ const pinia = createPinia()
 app.use(pinia)
 app.use(router)
 app.use(ElementPlus, { locale: zhCn })
+
+// 注册权限指令 v-auth="['perm1', 'perm2']"
+app.directive('auth', authDirective)
 
 // ── Auth guard: block API calls until router confirms token ──
 // 1. Sync check localStorage token before any component mounts
