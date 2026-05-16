@@ -20,16 +20,34 @@ app.use(pinia)
 app.use(router)
 app.use(ElementPlus, { locale: zhCn })
 
-// 注册权限指令 v-auth="['perm1', 'perm2']"
+// Register permission directive v-auth="['perm1', 'perm2']"
 app.directive('auth', authDirective)
 
-// ── Auth guard: block API calls until router confirms token ──
-// 1. Sync check localStorage token before any component mounts
+// ── Auth guard: redirect to login if no token ──
 const rawToken = localStorage.getItem('token')
 if (!rawToken) {
-  // No token → router guard will redirect to /login immediately
-  // Force router to use hash mode so initial render goes to login
   router.replace('/login')
 }
+
+// ── Global error handler: ALL uncaught JS errors (setTimeout/Promise/Script/iframe) ──
+window.addEventListener('error', (event) => {
+  const msg = String(event.message || '')
+  // Skip known benign browser messages
+  if (msg.includes('ResizeObserver') || msg.includes('Non-Error')) return
+  const stack = event.error?.stack ? event.error.stack.slice(0, 500) : ''
+  const level = (event.lineno === 0 && event.colno === 0) ? 'warn' : 'error'
+  fetch('/api/v1/frontend-logs', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      level,
+      message: `[GlobalError] ${msg}`,
+      stack,
+      url: window.location.href,
+      ua: navigator.userAgent,
+      userId: localStorage.getItem('userId') || null
+    })
+  }).catch(() => {})
+}, false)
 
 app.mount('#app')

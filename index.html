@@ -4,6 +4,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>星海ERP管理系统</title>
+  <script>
+  // ── Vue 3 + Element Plus compat polyfill ──
+  // Element Plus calls app.config.errorCaptured() but Vue 3.4/3.5 does not expose this API.
+  // Polyfill on Object.prototype BEFORE any module scripts run, so when Element Plus
+  // code accesses app.config.errorCaptured it finds the getter instead of undefined.
+  Object.defineProperty(Object.prototype, 'errorCaptured', {
+    get() { return () => {} },
+    set() {},
+    configurable: true, enumerable: false
+  });
+  </script>
 </head>
 <body>
   <div id="app"></div>
