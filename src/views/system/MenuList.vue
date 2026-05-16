@@ -16,7 +16,12 @@
       >
         <el-table-column prop="name" label="权限名称" min-width="150" />
         <el-table-column prop="path" label="路由路径" min-width="150" />
-        <el-table-column prop="icon" label="图标" width="120" />
+        <el-table-column prop="icon" label="图标" width="100" align="center">
+          <template #default="{row}">
+            <el-icon v-if="row.icon" style="font-size:18px"><component :is="row.icon" /></el-icon>
+            <span v-else style="color:#ccc">-</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="sort" label="排序" width="80" align="center" />
         <el-table-column prop="type" label="类型" width="100" align="center">
           <template #default="{ row }">
@@ -72,7 +77,7 @@
           />
         </el-form-item>
         <el-form-item label="图标">
-          <el-input v-model="form.icon" placeholder="Element Plus 图标名，如：Document" />
+          <IconSelect v-model="form.icon" />
         </el-form-item>
         <el-form-item label="排序">
           <el-input-number v-model="form.sort" :min="0" :max="999" />
@@ -97,6 +102,7 @@ import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Edit, Delete } from '@element-plus/icons-vue'
 import request from '@/utils/request'
+import IconSelect from '@/components/IconSelect.vue'
 
 // 状态
 const menuTree = ref([])
